@@ -2,7 +2,7 @@ export const dummyPosts = [
   {
     id: 1,
     profilePhoto: require("../assets/user_photo.jpg"), // Replace with actual image path
-    name: "John Doe",
+    name: "John cyka",
     time: "10:00 AM",
     date: "14/3/2024",
     club: "Example Club 1",
