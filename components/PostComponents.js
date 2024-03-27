@@ -120,7 +120,6 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     color: "#FFFFFF",
     marginLeft: 5,
-    fontFamily: "sans-serif",
   },
   icon: {
     marginRight: 5,
@@ -131,7 +130,6 @@ const styles = StyleSheet.create({
   text: {
     fontSize: FONT_SIZE_BASE * fontScaleFactor,
     color: "#FFFFFF",
-    fontFamily: "sans-serif",
   },
 });
 

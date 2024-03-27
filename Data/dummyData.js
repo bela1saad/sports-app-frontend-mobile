@@ -75,3 +75,183 @@ export const dummyPosts = [
     lon: -122.4194,
   },
 ];
+export const dummyPlayers = [
+  {
+    id: 1,
+    photo: require("../assets/user_photo.jpg"),
+    username: "John Doe",
+    sport: "Football",
+    position: "Striker",
+    city: "New York",
+    country: "USA",
+    isFriend: true,
+    type: "player",
+  },
+  {
+    id: 2,
+    photo: require("../assets/user_photo.jpg"),
+    name: "Real Madrid",
+    city: "Madrid",
+    country: "Spain",
+    sports: ["Football"],
+    rating: 4.7,
+    type: "club",
+  },
+  {
+    id: 3,
+    photo: require("../assets/user_photo.jpg"),
+    name: "Los Angeles Lakers",
+    city: "Los Angeles",
+    country: "USA",
+    sports: ["Basketball"],
+    rating: 4.9,
+    type: "club",
+  },
+  // Add more player data as needed
+];
+
+export const dummyClubs = [
+  {
+    id: 1,
+    photo: require("../assets/user_photo.jpg"),
+    name: "FC Barcelona",
+    city: "Barcelona",
+    country: "Spain",
+    sports: ["Football", "Basketball"],
+    rating: 4.5,
+    type: "club",
+  },
+  {
+    id: 2,
+    photo: require("../assets/user_photo.jpg"),
+    name: "FC Bayern Munich",
+    sport: "Football",
+    city: "Munich",
+    country: "Germany",
+    type: "team",
+  },
+
+  // Add more club data as needed
+];
+
+export const dummyTeams = [
+  {
+    id: 1,
+    photo: require("../assets/user_photo.jpg"),
+    name: "Golden State Warriors",
+    sport: "Basketball",
+    city: "San Francisco",
+    country: "USA",
+    type: "team",
+  },
+  {
+    id: 2,
+    photo: require("../assets/user_photo.jpg"),
+    name: "FC Bayern Munich",
+    sport: "Football",
+    city: "Munich",
+    country: "Germany",
+    type: "team",
+  },
+  {
+    id: 3,
+    photo: require("../assets/user_photo.jpg"),
+    name: "Los Angeles Dodgers",
+    sport: "Baseball",
+    city: "Los Angeles",
+    country: "USA",
+    type: "team",
+  },
+  // Add more team data as needed
+];
+
+export const dummyTournaments = [
+  {
+    id: 1,
+    photo: require("../assets/user_photo.jpg"),
+    name: "FIFA World Cup",
+    sport: "Football",
+    city: "Various",
+    country: "Various",
+    state: "Finished",
+    type: "tournament",
+  },
+  {
+    id: 2,
+    photo: require("../assets/user_photo.jpg"),
+    name: "NBA Finals",
+    sport: "Basketball",
+    city: "Various",
+    country: "USA",
+    state: "Ongoing",
+    type: "tournament",
+  },
+  {
+    id: 3,
+    photo: require("../assets/user_photo.jpg"),
+    name: "UEFA Champions League",
+    sport: "Football",
+    city: "Various",
+    country: "Various",
+    state: "Upcoming",
+    type: "tournament",
+  },
+  // Add more tournament data as needed
+];
+// Dummy data for notifications
+export const notifications = [
+  {
+    id: 1,
+    type: "friend_request",
+    senderName: "John Doe",
+    senderPhoto: require("../assets/user_photo.jpg"),
+    receivedDate: "2024-02-28", // Example received date
+    receivedTime: "10:30", // Example received time
+  },
+
+  {
+    id: 2,
+    type: "team_request",
+    teamName: "FC Barcelona",
+    teamPhoto: require("../assets/user_photo.jpg"),
+  },
+  {
+    id: 3,
+    type: "challenge_match_request",
+    challengerName: "Real Madrid",
+    challengerPhoto: require("../assets/user_photo.jpg"),
+    challengeType: "Football",
+  },
+  {
+    id: 4,
+    type: "join_team_request",
+    teamName: "Los Angeles Lakers",
+    teamPhoto: require("../assets/user_photo.jpg"),
+  },
+  {
+    id: 5,
+    type: "invite_to_team",
+    inviterName: "Golden State Warriors",
+    inviterPhoto: require("../assets/user_photo.jpg"),
+    teamName: "Golden State Warriors",
+    teamPhoto: require("../assets/user_photo.jpg"),
+  },
+  {
+    id: 6,
+    type: "invite_to_tournament",
+    inviterName: "FIFA World Cup",
+    inviterPhoto: require("../assets/user_photo.jpg"),
+    tournamentName: "FIFA World Cup",
+    tournamentPhoto: require("../assets/user_photo.jpg"),
+  },
+  {
+    id: 7,
+    type: "booking_reminder",
+    bookingDetails: {
+      location: "Stadium",
+      time: "12:00 PM",
+      sport: "Football",
+    },
+  },
+  // Add more notification data as needed
+];

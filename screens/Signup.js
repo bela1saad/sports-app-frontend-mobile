@@ -47,7 +47,7 @@ const Signup = ({ navigation }) => {
               style={styles.countryCodeInput}
             />
             <TextInput
-              placeholder="Enter your phone number"
+              placeholder=" Enter your phone number"
               placeholderTextColor={COLORS.black}
               keyboardType="numeric"
               style={styles.phoneNumberInput}
@@ -70,6 +70,7 @@ const Signup = ({ navigation }) => {
               <Ionicons
                 name={isPasswordShown ? "eye-off" : "eye"}
                 size={24}
+                marginRight={10}
                 color={COLORS.black}
               />
             </TouchableOpacity>
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
     paddingLeft: 22,
   },
   countryCodeInput: {
-    width: "20%",
+    width: "16%",
     height: "100%",
     color: COLORS.black,
     borderRightWidth: 1,

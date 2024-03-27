@@ -1,6 +1,7 @@
 import React from "react";
+import { Platform } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { FontAwesome5 } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import HomeScreen from "../screens/HomeScreen";
 import FieldsScreen from "../screens/FieldsScreen";
 import TeamScreen from "../screens/TeamScreen";
@@ -18,24 +19,31 @@ const BottomTabNavigator = () => {
           if (route.name === "Home") {
             iconName = "home";
           } else if (route.name === "Fields") {
-            iconName = "th-large";
+            iconName = "soccer-field";
           } else if (route.name === "Team") {
-            iconName = "users";
+            iconName = "account-group-outline";
           } else if (route.name === "Tournaments") {
             iconName = "trophy";
           }
 
-          return <FontAwesome5 name={iconName} size={24} color={color} />;
+          return (
+            <MaterialCommunityIcons name={iconName} size={24} color={color} />
+          );
+        },
+        tabBarActiveTintColor: "#05a759",
+        tabBarInactiveTintColor: "#BDBDBD",
+        tabBarLabelStyle: {
+          display: "none",
+        },
+        tabBarStyle: {
+          display: "flex",
+          height: Platform.OS === "ios" ? 80 : 50, // Adjusted height for Android
+          paddingTop: Platform.OS === "ios" ? 20 : 0,
+          borderTopWidth: Platform.OS === "ios" ? 2 : 2,
+          borderTopColor: "#05a759",
+          backgroundColor: "#000000",
         },
       })}
-      tabBarOptions={{
-        activeTintColor: "#05a759",
-        inactiveTintColor: "#000000",
-        style: {
-          backgroundColor: "#000000", // Set background color of tab bar to black
-        },
-        showLabel: false, // Hide labels
-      }}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Fields" component={FieldsScreen} />

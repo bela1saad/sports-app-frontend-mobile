@@ -2,15 +2,19 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faBell } from "@fortawesome/free-solid-svg-icons";
+import { useNavigation } from "@react-navigation/native";
 
 const NotificationsIcon = ({ count, size }) => {
+  const navigation = useNavigation();
   const [hasNotifications, setHasNotifications] = useState(false);
 
   const handlePress = () => {
-    // Handle notification icon press here (e.g., navigate to notifications screen)
-    console.log("Notification icon pressed");
+    // Navigate to the notification screen
+    navigation.navigate("Notification");
+
     // Simulate a new notification
     setHasNotifications(true);
+
     // Simulate resetting notification after 3 seconds
     setTimeout(() => setHasNotifications(false), 3000);
   };

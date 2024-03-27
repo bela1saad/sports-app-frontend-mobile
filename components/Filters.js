@@ -5,13 +5,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   Modal,
-  Platform,
   Dimensions,
+  Platform,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import Icon from "react-native-vector-icons/FontAwesome";
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 
 const sportsContent = [
   "All",
@@ -52,25 +52,23 @@ const Filters = ({
 
   return (
     <View style={styles.container}>
-      {["All", "Team", "Player"].map((filter) => (
-        <TouchableOpacity
-          key={filter}
+      <TouchableOpacity
+        key="All"
+        style={[
+          styles.filterButton,
+          selectedFilter === "All" && styles.selectedFilter,
+        ]}
+        onPress={() => handleFilterSelect("All")}
+      >
+        <Text
           style={[
-            styles.filterButton,
-            selectedFilter === filter && styles.selectedFilter,
+            styles.filterButtonText,
+            selectedFilter === "All" && styles.selectedText,
           ]}
-          onPress={() => handleFilterSelect(filter)}
         >
-          <Text
-            style={[
-              styles.filterButtonText,
-              selectedFilter === filter && styles.selectedText,
-            ]}
-          >
-            {filter}
-          </Text>
-        </TouchableOpacity>
-      ))}
+          All
+        </Text>
+      </TouchableOpacity>
 
       <TouchableOpacity
         style={[
@@ -95,6 +93,42 @@ const Filters = ({
         />
       </TouchableOpacity>
 
+      <TouchableOpacity
+        key="Team"
+        style={[
+          styles.filterButton,
+          selectedFilter === "Team" && styles.selectedFilter,
+        ]}
+        onPress={() => handleFilterSelect("Team")}
+      >
+        <Text
+          style={[
+            styles.filterButtonText,
+            selectedFilter === "Team" && styles.selectedText,
+          ]}
+        >
+          Team
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        key="Player"
+        style={[
+          styles.filterButton,
+          selectedFilter === "Player" && styles.selectedFilter,
+        ]}
+        onPress={() => handleFilterSelect("Player")}
+      >
+        <Text
+          style={[
+            styles.filterButtonText,
+            selectedFilter === "Player" && styles.selectedText,
+          ]}
+        >
+          Player
+        </Text>
+      </TouchableOpacity>
+
       <Modal
         visible={showModal}
         animationType="slide"
@@ -106,7 +140,6 @@ const Filters = ({
             <Picker
               selectedValue={selectedSport}
               onValueChange={(itemValue) => handleSportSelect(itemValue)}
-              style={Platform.OS === "ios" ? { width: "100%" } : {}}
             >
               {sportsContent.map((sport) => (
                 <Picker.Item label={sport} value={sport} key={sport} />
@@ -123,33 +156,31 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: width * 0.1,
-    paddingVertical: width * 0.02,
+    borderRadius: width * 0.08,
+    paddingVertical: height * 0.015,
     paddingHorizontal: width * 0.03,
     backgroundColor: "#1a1a1a",
     elevation: 2,
     marginHorizontal: width * 0.03,
-    marginTop: width * 0.03,
+    marginTop: height * 0.02,
     width: "90%",
   },
   filterButton: {
-    paddingHorizontal: width * 0.02,
-    paddingVertical: width * 0.01,
-    borderRadius: width * 0.05,
+    paddingHorizontal: width * 0.03,
+    paddingVertical: height * 0.01,
+    borderRadius: width * 0.04,
     marginHorizontal: width * 0.01,
     backgroundColor: "#333333",
   },
   filterButtonText: {
     color: "#555",
-    fontSize: width * 0.035,
+    fontSize: Math.min(width, height) * 0.035,
   },
   selectedText: {
     color: "#555",
   },
   selectedFilter: {
     backgroundColor: "#05a759",
-    minWidth: width * 0.15,
-    paddingHorizontal: width * 0.03,
   },
   modalContainer: {
     flex: 1,
@@ -162,6 +193,7 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.05,
     padding: width * 0.04,
     minWidth: width * 0.5,
+    minHeight: height * 0.3,
   },
   sportsButton: {
     flexDirection: "row",
