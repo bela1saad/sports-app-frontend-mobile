@@ -13,6 +13,12 @@ import BottomTabNavigator from "./components/BottomTabNavigator";
 import Sidebar from "./screens/Sidebar";
 import Notification from "./screens/Notification";
 import SearchScreen from "./screens/SearchScreen";
+import AboutScreen from "./screens/SidebarScreens/AboutScreen";
+import BookingsHistoryScreen from "./screens/SidebarScreens/BookingsHistoryScreen";
+import EditProfileScreen from "./screens/SidebarScreens/EditProfileScreen";
+import FavoritesScreen from "./screens/SidebarScreens/FavoritesScreen";
+import FriendsScreen from "./screens/SidebarScreens/FriendsScreen";
+import WalletScreen from "./screens/SidebarScreens/WalletScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -35,6 +41,15 @@ const App = () => {
         <Stack.Screen name="Sidebar" component={Sidebar} />
         <Stack.Screen name="Notification" component={Notification} />
         <Stack.Screen name="Search" component={SearchScreen} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+        <Stack.Screen name="Friends" component={FriendsScreen} />
+        <Stack.Screen name="Wallet" component={WalletScreen} />
+        <Stack.Screen
+          name="BookingsHistory"
+          component={BookingsHistoryScreen}
+        />
+        <Stack.Screen name="Favorites" component={FavoritesScreen} />
+        <Stack.Screen name="About" component={AboutScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

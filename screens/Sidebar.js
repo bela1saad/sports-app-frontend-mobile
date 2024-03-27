@@ -23,10 +23,35 @@ const Sidebar = () => {
 
   // Function to handle navigation to other sections
   const navigateToSection = (section) => {
-    // Navigate to the respective screen or perform the desired action
-    console.log(`Navigating to ${section}`);
+    switch (section) {
+      case "Friends":
+        navigation.navigate("Friends");
+        break;
+      case "Wallet":
+        navigation.navigate("Wallet");
+        break;
+      case "Bookings History":
+        navigation.navigate("BookingsHistory");
+        break;
+      case "My Favorites":
+        navigation.navigate("Favorites");
+        break;
+      case "About":
+        navigation.navigate("About");
+        break;
+      default:
+        console.log(`Navigating to ${section}`);
+    }
   };
 
+  // Function to handle logout
+  const handleLogout = () => {
+    // Perform logout actions, such as clearing session/token
+    // For example:
+    // clearSession();
+    // Navigate back to the login screen
+    navigation.navigate("Login");
+  };
   useEffect(() => {
     navigation.setOptions({
       headerShown: false,
@@ -34,7 +59,7 @@ const Sidebar = () => {
   }, [navigation]);
 
   return (
-    <LinearGradient colors={["#333", "#1a1a1a"]} style={styles.container}>
+    <LinearGradient colors={["#3333", "#1a1a1a"]} style={styles.container}>
       {/* Return Arrow */}
       <TouchableOpacity
         style={styles.returnArrow}
@@ -109,7 +134,7 @@ const Sidebar = () => {
             About
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigateToSection("Logout")}>
+        <TouchableOpacity onPress={handleLogout}>
           <Text style={styles.navigationLink}>
             <Icon name="logout" size={20} color="#05a759" style={styles.icon} />
             {"  "}
@@ -193,6 +218,7 @@ const styles = StyleSheet.create({
     color: "#999",
     fontSize: 12,
     textAlign: "center",
+    height: 40,
   },
 });
 
