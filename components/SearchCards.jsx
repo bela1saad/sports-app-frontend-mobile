@@ -70,8 +70,8 @@ const PlayerCard = ({ player, onPress }) => {
       <Image source={photo} style={styles.photo} />
       <View style={styles.detailsContainer}>
         <Text style={styles.name}>{username}</Text>
-        <Text style={styles.details}>Sport: {sport || "-"}</Text>
-        <Text style={styles.details}>Position: {position || "-"}</Text>
+        <Text style={styles.details}>Sport: {sport || ""}</Text>
+        <Text style={styles.details}>Position: {position || ""}</Text>
         <Text style={styles.details}>
           {city}, {country}
         </Text>
@@ -173,6 +173,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#222", // Dark background color
     borderRadius: 15,
     marginVertical: 5,
+    paddingHorizontal: 15, // Adjusted paddingHorizontal for better spacing
   },
   photo: {
     width: 60,
@@ -185,13 +186,13 @@ const styles = StyleSheet.create({
   },
   name: {
     fontWeight: "bold",
-    fontSize: 18,
-    color: "#fff", // Text color
+    fontSize: 16,
+    color: "#fff",
     marginBottom: 5,
   },
   details: {
     fontSize: 14,
-    color: "#aaa", // Text color
+    color: "#aaa",
     marginBottom: 3,
   },
   sportsContainer: {
@@ -203,7 +204,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     marginRight: 5,
-    color: "#05a759", // Icon color
+    color: "#05a759",
   },
   rating: {
     fontSize: 14,
@@ -216,16 +217,22 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   friend: {
+    fontSize: 14,
     color: "#05a759",
     fontWeight: "bold",
   },
   addFriend: {
     backgroundColor: "#05a759",
-    padding: 5,
-    borderRadius: 5,
+    paddingVertical: 8, // Adjusted paddingVertical for better spacing
+    paddingHorizontal: 12, // Adjusted paddingHorizontal for better spacing
+    borderRadius: 8,
+    width: 100,
+    alignItems: "center", // Center aligning the button
+    justifyContent: "center", // Center aligning the button
   },
   addFriendText: {
-    color: "#fff", // Text color
+    fontSize: 14,
+    color: "#fff",
   },
 });
 

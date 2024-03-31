@@ -80,18 +80,45 @@ export const dummyPlayers = [
     id: 1,
     photo: require("../assets/user_photo.jpg"),
     username: "John Doe",
-    sport: "Football",
-    position: "Striker",
-    city: "New York",
-    country: "USA",
+    age: 25,
+    gamesPlayed: 50,
+    team: "FC Barcelona",
+    trophies: ["Champions League Winner 2020", "World Cup Winner 2018"],
+    profilePhotos: [
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+    ],
+    position: "Forward",
+    city: "Barcelona",
+    country: "Spain",
+    sport: "Football", // Adding the sport property
     isFriend: true,
     type: "player",
-    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
   },
-
-  // Add more player data as needed
+  {
+    id: 2,
+    photo: require("../assets/user_photo.jpg"),
+    username: "Jane Smith",
+    age: 28,
+    gamesPlayed: 70,
+    team: "Real Madrid",
+    trophies: ["La Liga Winner 2019", "UEFA Super Cup Winner 2021"],
+    profilePhotos: [
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+    ],
+    position: "Midfielder",
+    city: "Madrid",
+    country: "Spain",
+    sport: "Football", // Adding the sport property
+    isFriend: false,
+    type: "player",
+  },
 ];
 
+// Dummy data for clubs
 export const dummyClubs = [
   {
     id: 1,
@@ -101,23 +128,13 @@ export const dummyClubs = [
     country: "Spain",
     sports: ["Football", "Basketball"],
     rating: 4.5,
+    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
     type: "club",
-    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
   },
-  {
-    id: 2,
-    photo: require("../assets/user_photo.jpg"),
-    name: "FC Bayern Munich",
-    sport: "Football",
-    city: "Munich",
-    country: "Germany",
-    type: "team",
-    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
-  },
-
   // Add more club data as needed
 ];
 
+// Dummy data for teams
 export const dummyTeams = [
   {
     id: 1,
@@ -126,32 +143,13 @@ export const dummyTeams = [
     sport: "Basketball",
     city: "San Francisco",
     country: "USA",
-    type: "team",
     profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
-  },
-  {
-    id: 2,
-    photo: require("../assets/user_photo.jpg"),
-    name: "FC Bayern Munich",
-    sport: "Football",
-    city: "Munich",
-    country: "Germany",
     type: "team",
-    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
-  },
-  {
-    id: 3,
-    photo: require("../assets/user_photo.jpg"),
-    name: "Los Angeles Dodgers",
-    sport: "Baseball",
-    city: "Los Angeles",
-    country: "USA",
-    type: "team",
-    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
   },
   // Add more team data as needed
 ];
 
+// Dummy data for tournaments
 export const dummyTournaments = [
   {
     id: 1,
@@ -161,30 +159,8 @@ export const dummyTournaments = [
     city: "Various",
     country: "Various",
     state: "Finished",
-    type: "tournament",
     profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
-  },
-  {
-    id: 2,
-    photo: require("../assets/user_photo.jpg"),
-    name: "NBA Finals",
-    sport: "Basketball",
-    city: "Various",
-    country: "USA",
-    state: "Ongoing",
     type: "tournament",
-    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
-  },
-  {
-    id: 3,
-    photo: require("../assets/user_photo.jpg"),
-    name: "UEFA Champions League",
-    sport: "Football",
-    city: "Various",
-    country: "Various",
-    state: "Upcoming",
-    type: "tournament",
-    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
   },
   // Add more tournament data as needed
 ];
