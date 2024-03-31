@@ -8,8 +8,16 @@ import {
   Platform,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useNavigation } from "@react-navigation/native"; // Import the useNavigation hook
 
-const SearchCards = ({ data, onPress }) => {
+const SearchCards = ({ data }) => {
+  const navigation = useNavigation(); // Initialize the navigation object
+
+  const navigateToProfile = (profileType, id) => {
+    // Navigate to the ProfileScreen with profileType and id parameters
+    navigation.navigate("Profile", { profileType, profileId: id });
+  };
+
   return (
     <View>
       {data.map((item, index) => {
@@ -19,23 +27,31 @@ const SearchCards = ({ data, onPress }) => {
               <PlayerCard
                 key={index}
                 player={item}
-                onPress={() => onPress(item)}
+                onPress={() => navigateToProfile("player", item.id)}
               />
             );
           case "club":
             return (
-              <ClubCard key={index} club={item} onPress={() => onPress(item)} />
+              <ClubCard
+                key={index}
+                club={item}
+                onPress={() => navigateToProfile("club", item.id)}
+              />
             );
           case "team":
             return (
-              <TeamCard key={index} team={item} onPress={() => onPress(item)} />
+              <TeamCard
+                key={index}
+                team={item}
+                onPress={() => navigateToProfile("team", item.id)}
+              />
             );
           case "tournament":
             return (
               <TournamentCard
                 key={index}
                 tournament={item}
-                onPress={() => onPress(item)}
+                onPress={() => navigateToProfile("tournament", item.id)}
               />
             );
           default:
@@ -47,15 +63,14 @@ const SearchCards = ({ data, onPress }) => {
 };
 
 const PlayerCard = ({ player, onPress }) => {
-  const { photo, username, preferredSport, position, city, country, isFriend } =
-    player;
+  const { photo, username, sport, position, city, country, isFriend } = player;
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <Image source={photo} style={styles.photo} />
       <View style={styles.detailsContainer}>
         <Text style={styles.name}>{username}</Text>
-        <Text style={styles.details}>Sport: {preferredSport || "-"}</Text>
+        <Text style={styles.details}>Sport: {sport || "-"}</Text>
         <Text style={styles.details}>Position: {position || "-"}</Text>
         <Text style={styles.details}>
           {city}, {country}

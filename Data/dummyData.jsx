@@ -86,27 +86,9 @@ export const dummyPlayers = [
     country: "USA",
     isFriend: true,
     type: "player",
+    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
   },
-  {
-    id: 2,
-    photo: require("../assets/user_photo.jpg"),
-    name: "Real Madrid",
-    city: "Madrid",
-    country: "Spain",
-    sports: ["Football"],
-    rating: 4.7,
-    type: "club",
-  },
-  {
-    id: 3,
-    photo: require("../assets/user_photo.jpg"),
-    name: "Los Angeles Lakers",
-    city: "Los Angeles",
-    country: "USA",
-    sports: ["Basketball"],
-    rating: 4.9,
-    type: "club",
-  },
+
   // Add more player data as needed
 ];
 
@@ -120,6 +102,7 @@ export const dummyClubs = [
     sports: ["Football", "Basketball"],
     rating: 4.5,
     type: "club",
+    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
   },
   {
     id: 2,
@@ -129,6 +112,7 @@ export const dummyClubs = [
     city: "Munich",
     country: "Germany",
     type: "team",
+    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
   },
 
   // Add more club data as needed
@@ -143,6 +127,7 @@ export const dummyTeams = [
     city: "San Francisco",
     country: "USA",
     type: "team",
+    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
   },
   {
     id: 2,
@@ -152,6 +137,7 @@ export const dummyTeams = [
     city: "Munich",
     country: "Germany",
     type: "team",
+    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
   },
   {
     id: 3,
@@ -161,6 +147,7 @@ export const dummyTeams = [
     city: "Los Angeles",
     country: "USA",
     type: "team",
+    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
   },
   // Add more team data as needed
 ];
@@ -175,6 +162,7 @@ export const dummyTournaments = [
     country: "Various",
     state: "Finished",
     type: "tournament",
+    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
   },
   {
     id: 2,
@@ -185,6 +173,7 @@ export const dummyTournaments = [
     country: "USA",
     state: "Ongoing",
     type: "tournament",
+    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
   },
   {
     id: 3,
@@ -195,6 +184,7 @@ export const dummyTournaments = [
     country: "Various",
     state: "Upcoming",
     type: "tournament",
+    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
   },
   // Add more tournament data as needed
 ];

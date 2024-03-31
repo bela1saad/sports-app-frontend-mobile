@@ -140,7 +140,7 @@ const Welcome = () => {
                   color: COLORS.white,
                 }}
               >
-                Calling, Enjoy Safe and private texting
+                Enjoy Safe and private sports
               </Text>
             </View>
 
