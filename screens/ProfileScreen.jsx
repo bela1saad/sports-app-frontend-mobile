@@ -6,7 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  SafeAreaView,
+  Dimensions,
   Platform,
+  PixelRatio,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -14,15 +17,15 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 // Import dummy data
 import {
   dummyPlayers,
-  dummyClubs,
   dummyTeams,
+  dummyClubs,
   dummyTournaments,
 } from "../Data/dummyData";
 
 const ProfileScreen = ({ route }) => {
   const { profileType, profileId } = route.params;
   const [profileData, setProfileData] = useState(null);
-  const [isFriend, setIsFriend] = useState(false);
+  const [isFollower, setIsFollower] = useState(false); // Track if current user is a follower
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -35,11 +38,11 @@ const ProfileScreen = ({ route }) => {
       case "player":
         setProfileData(dummyPlayers.find((player) => player.id === profileId));
         break;
-      case "club":
-        setProfileData(dummyClubs.find((club) => club.id === profileId));
-        break;
       case "team":
         setProfileData(dummyTeams.find((team) => team.id === profileId));
+        break;
+      case "club":
+        setProfileData(dummyClubs.find((club) => club.id === profileId));
         break;
       case "tournament":
         setProfileData(
@@ -56,14 +59,34 @@ const ProfileScreen = ({ route }) => {
     navigation.navigate("ProfilePhotos", { photos: profileData.profilePhotos });
   };
 
-  const handleAddFriend = () => {
-    setIsFriend(true);
-    // Perform actions to add friend
+  const navigateToFollowers = () => {
+    // Navigate to the FollowersScreen with profile data
+    navigation.navigate("Followers", { profileData });
   };
 
-  const handleRemoveFriend = () => {
-    setIsFriend(false);
-    // Perform actions to remove friend
+  const navigateToFollowing = () => {
+    // Navigate to the FollowingScreen with profile data
+    navigation.navigate("Following", { profileData });
+  };
+
+  const navigateToTrophies = () => {
+    // Navigate to the TrophiesScreen with profile data
+    navigation.navigate("Trophies", { trophies: profileData.trophies });
+  };
+
+  const handleFollow = () => {
+    setIsFollower(true); // Follow the user
+    // Perform actions to follow the user
+  };
+
+  const handleUnfollow = () => {
+    setIsFollower(false); // Unfollow the user
+    // Perform actions to unfollow the user
+  };
+  const handleInviteToTeam = () => {
+    // Implement the logic for inviting to team
+    // This could involve showing a modal, navigating to a screen, etc.
+    console.log("Invite to team button clicked");
   };
 
   if (!profileData) {
@@ -74,174 +97,361 @@ const ProfileScreen = ({ route }) => {
     );
   }
 
-  return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: "#1a1a1a", padding: 20 },
-      ]}
-    >
-      {/* Profile header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={navigateToProfilePhotos}>
-          <Image source={profileData.photo} style={styles.profilePhoto} />
-        </TouchableOpacity>
-        <View style={styles.headerText}>
-          <Text style={styles.name}>
-            {profileData.type === "player"
-              ? profileData.username
-              : profileData.name}
-          </Text>
-          {profileData.type === "player" && (
-            <View style={styles.buttonContainer}>
-              {!isFriend ? (
+  // Render profile UI based on profileType
+  switch (profileType) {
+    case "player":
+      return renderPlayerProfile();
+    case "team":
+      return renderTeamProfile();
+    case "club":
+      return renderClubProfile();
+    case "tournament":
+      return renderTournamentProfile();
+    default:
+      return null;
+  }
+
+  // Render player profile UI
+  function renderPlayerProfile() {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#1a1a1a" }}>
+        <ScrollView
+          contentContainerStyle={[styles.container]}
+          scrollEnabled={true} // Ensure scrolling is enabled
+        >
+          {/* Return Arrow */}
+          <TouchableOpacity
+            style={styles.returnArrow}
+            onPress={() => navigation.goBack()}
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }} // Increase touch area
+          >
+            <Icon name="arrow-left" size={24} color="#05a759" />
+          </TouchableOpacity>
+          {/* Profile header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={navigateToProfilePhotos}>
+              <Image source={profileData.photo} style={styles.profilePhoto} />
+            </TouchableOpacity>
+            <View style={styles.headerText}>
+              <Text style={styles.name}>{profileData.username}</Text>
+              {/* Followers, Following, Trophies */}
+              <View style={styles.countContainer}>
                 <TouchableOpacity
-                  style={[styles.button, { backgroundColor: "#05a759" }]}
-                  onPress={handleAddFriend}
+                  onPress={navigateToFollowers}
+                  style={styles.countItem}
                 >
-                  <Text style={styles.buttonText}>Add Friend</Text>
+                  <Text style={styles.countNumber}>
+                    {formatCount(profileData.followers)}
+                  </Text>
+                  <Text style={styles.countLabel}>Followers</Text>
                 </TouchableOpacity>
-              ) : (
                 <TouchableOpacity
-                  style={[styles.button, { backgroundColor: "#E91E63" }]}
-                  onPress={handleRemoveFriend}
+                  onPress={navigateToFollowing}
+                  style={styles.countItem}
                 >
-                  <Text style={styles.buttonText}>Remove Friend</Text>
+                  <Text style={styles.countNumber}>
+                    {formatCount(profileData.following)}
+                  </Text>
+                  <Text style={styles.countLabel}>Following</Text>
                 </TouchableOpacity>
-              )}
+                <TouchableOpacity
+                  onPress={navigateToTrophies}
+                  style={styles.countItem}
+                >
+                  <Text style={styles.countNumber}>
+                    {profileData.trophies.length}
+                  </Text>
+                  <Text style={styles.countLabel}>Trophies</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+          {/* Profile info */}
+          <View style={styles.infoContainer}>
+            <Text style={styles.infoTitle}>Profile Information</Text>
+            <View style={styles.infoItem}>
+              <Icon name="cake" size={20} color="#05a759" style={styles.icon} />
+              <Text style={styles.infoText}>Age: {profileData.age}</Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Icon
+                name="soccer"
+                size={20}
+                color="#05a759"
+                style={styles.icon}
+              />
+              <Text style={styles.infoText}>Team: {profileData.team}</Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Icon
+                name="map-marker"
+                size={20}
+                color="#05a759"
+                style={styles.icon}
+              />
+              <Text style={styles.infoText}>
+                Location: {profileData.city}, {profileData.country}
+              </Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Icon
+                name="trophy"
+                size={20}
+                color="#05a759"
+                style={styles.icon}
+              />
+              <Text style={styles.infoText}>
+                Position: {profileData.position}
+              </Text>
+            </View>
+            <View style={styles.infoItem}>
+              <Icon
+                name="soccer"
+                size={20}
+                color="#05a759"
+                style={styles.icon}
+              />
+              <Text style={styles.infoText}>Sport: {profileData.sport}</Text>
+            </View>
+            {/* Additional info like trophies */}
+            <Text style={styles.infoTitle}>Achievements</Text>
+            {profileData.trophies.map((trophy, index) => (
+              <View key={index} style={styles.infoItem}>
+                <Icon
+                  name="trophy"
+                  size={20}
+                  color="#05a759"
+                  style={styles.icon}
+                />
+                <Text style={styles.achievement}>{trophy}</Text>
+              </View>
+            ))}
+          </View>
+          {/* Follow and Invite buttons */}
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={isFollower ? handleUnfollow : handleFollow}
+            >
+              <Text style={styles.buttonText}>
+                {isFollower ? "Unfollow" : "Follow"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.inviteButton}
+              onPress={handleInviteToTeam}
+            >
+              <Text style={styles.buttonText}>Invite to Team</Text>
+            </TouchableOpacity>
+          </View>
+          {/* Barrier */}
+          <View style={styles.barrier} />
+          {/* Profile photos */}
+          <View style={styles.photosContainer}>
+            {profileData.profilePhotos.map((photo, index) => (
               <TouchableOpacity
-                style={[styles.button, { backgroundColor: "#05a759" }]}
-                onPress={() => {}}
+                key={index}
+                onPress={navigateToProfilePhotos}
+                style={styles.photoItem}
               >
-                <Text style={styles.buttonText}>Invite to Team</Text>
+                <Image source={photo} style={styles.photo} />
               </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      </View>
+            ))}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+  // Render team profile UI
+  function renderTeamProfile() {
+    return <View>{/* Team profile UI */}</View>;
+  }
 
-      {/* Additional profile information */}
-      {profileData.type === "player" && (
-        <View style={styles.playerInfoContainer}>
-          <View style={styles.infoContainer}>
-            <Icon name="cake" size={20} color="#aaa" />
-            <Text style={styles.info}>{profileData.age}</Text>
-          </View>
-          <View style={styles.infoContainer}>
-            <Icon name="soccer" size={20} color="#aaa" />
-            <Text style={styles.info}>{profileData.gamesPlayed}</Text>
-          </View>
-          <View style={styles.infoContainer}>
-            <Icon name="account-group" size={20} color="#aaa" />
-            <Text style={styles.info}>{profileData.team}</Text>
-          </View>
-          <View style={styles.infoContainer}>
-            <Icon name="trophy" size={20} color="#aaa" />
-            <View style={styles.trophyContainer}>
-              {profileData.trophies.map((trophy, index) => (
-                <Text key={index} style={styles.trophy}>
-                  {trophy}
-                </Text>
-              ))}
-            </View>
-          </View>
-        </View>
-      )}
+  // Render club profile UI
+  function renderClubProfile() {
+    return <View>{/* Club profile UI */}</View>;
+  }
 
-      {/* Additional profile information for club and tournament */}
-      {(profileData.type === "club" || profileData.type === "tournament") && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {profileData.type === "club" ? "Club" : "Tournament"} Details
-          </Text>
-          <Text style={styles.info}>Name: {profileData.name}</Text>
-          <Text style={styles.info}>City: {profileData.city}</Text>
-          <Text style={styles.info}>Country: {profileData.country}</Text>
-        </View>
-      )}
-    </ScrollView>
-  );
+  // Render tournament profile UI
+  function renderTournamentProfile() {
+    return <View>{/* Tournament profile UI */}</View>;
+  }
+
+  // Format the count to display as "1k" for 1000 and "1M" for 1,000,000
+  function formatCount(count) {
+    if (count >= 1000000) {
+      return (count / 1000000).toFixed(1) + "M";
+    } else if (count >= 1000) {
+      return (count / 1000).toFixed(0) + "k";
+    } else {
+      return count.toString();
+    }
+  }
 };
+
+const windowWidth = Dimensions.get("window").width;
+const windowHeight = Dimensions.get("window").height;
+const { width, height } = Dimensions.get("window");
+const SPACING = windowWidth * 0.1; // Adjusted for responsiveness
+const scaleFactor = 1; // Base scale factor for font sizes
+
+const maxFontSize = 19; // Maximum font size for text
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingVertical: Platform.OS === "ios" ? 40 : 20,
+    paddingHorizontal: windowWidth * 0.05,
+    paddingTop: Platform.OS === "ios" ? 5 : 0, // Adjust for iOS status bar
+    paddingBottom: windowWidth * 0.05, // Add padding bottom here
+    backgroundColor: "#1a1a1a",
   },
+  infoItem: {
+    flexDirection: "row", // Display icon and text on the same line
+    alignItems: "center", // Align items vertically in the center
+    marginBottom: windowWidth * 0.01, // Adjusted for responsiveness
+  },
+  icon: {
+    marginRight: windowWidth * 0.02, // Adjusted for responsiveness
+  },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: windowWidth * 0.05,
+  },
+  returnArrow: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? windowWidth * 0.001 : windowWidth * 0.04, // Adjusted top value for iOS
+    left: windowWidth * 0.05,
+    width: windowWidth * 0.1,
+    height: windowWidth * 0.1,
+    zIndex: 1,
+    marginBottom: windowWidth * 0.02, // Adjusted for responsiveness
+  },
+
+  buttonRow: {
+    flexDirection: "row",
+    marginTop: windowWidth * 0.02, // Adjusted for responsiveness
+    marginBottom: windowHeight * 0.03,
   },
   profilePhoto: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginRight: 15,
+    width: windowWidth * 0.2,
+    height: windowWidth * 0.2,
+    marginBottom: windowHeight * 0.01,
+    marginTop: Platform.OS === "ios" ? height * 0.15 : SPACING,
+    marginTop: Platform.OS === "android" ? height * 0.09 : SPACING,
+    borderRadius: windowWidth * 0.1,
+    borderRadius: windowWidth * 0.1,
+    marginRight: windowWidth * 0.05,
   },
   headerText: {
     flex: 1,
+    marginTop: windowHeight * 0.03,
   },
   name: {
-    fontSize: 24,
+    fontSize: Math.min(windowWidth * 0.06, maxFontSize), // Adjusted font size capped at maxFontSize
     fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 10,
+    color: "#05a759",
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+    letterSpacing: 0.5,
+    top: 12,
+    marginTop: windowHeight * 0.003,
+    marginBottom: windowHeight * 0.01,
   },
-  buttonContainer: {
+
+  countContainer: {
     flexDirection: "row",
-    marginTop: 10,
-  },
-  button: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    marginRight: 10,
     alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: windowWidth * 0.01,
+    marginTop: windowWidth * 0.05,
   },
-  buttonText: {
-    color: "#fff",
+  countItem: {
+    marginRight: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  countNumber: {
+    fontSize: Math.min(windowWidth * 0.06, maxFontSize),
     fontWeight: "bold",
+    color: "#fff",
   },
-  playerInfoContainer: {
-    marginBottom: 20,
+  countLabel: {
+    fontSize: Math.min(windowWidth * 0.03 * scaleFactor, maxFontSize * 0.5),
+    color: "#ccc",
+    flexShrink: 1,
   },
   infoContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 5,
+    backgroundColor: "#333",
+    padding: windowWidth * 0.05,
+    borderRadius: 10,
+    marginBottom: windowWidth * 0.05,
+    marginTop: windowWidth * 0.0012,
   },
-  info: {
-    fontSize: 16,
-    color: "#fff",
-    marginLeft: 5,
-  },
-  trophyContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  trophy: {
-    fontSize: 16,
-    color: "#fff",
-    backgroundColor: "#05a759",
-    padding: 5,
-    borderRadius: 5,
-    marginRight: 5,
-    marginBottom: 5,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
+  infoTitle: {
+    fontSize: Math.min(windowWidth * 0.04 * scaleFactor, maxFontSize * 0.75), // Adjusted font size capped at 75% of maxFontSize
     fontWeight: "bold",
     color: "#fff",
-    marginBottom: 10,
+    flex: 1,
+    paddingStart: 20,
+    paddingHorizontal: 20,
+    marginBottom: windowWidth * 0.02 * scaleFactor, // Adjusted margin based on font size
   },
-  errorText: {
+  infoText: {
+    fontSize: Math.min(windowWidth * 0.035 * scaleFactor, maxFontSize * 0.75), // Adjusted font size capped at 75% of maxFontSize
     color: "#fff",
-    textAlign: "center",
+    flex: 1,
+    marginBottom: windowWidth * 0.01 * scaleFactor, // Adjusted margin based on font size
+  },
+  barrier: {
+    height: 1,
+    backgroundColor: "#666",
+    marginBottom: windowWidth * 0.05,
+  },
+  photosContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  photoItem: {
+    width: "32%",
+    aspectRatio: 1,
+    marginBottom: 10,
+    borderRadius: 10,
+    overflow: "hidden",
+    backgroundColor: "#333",
+  },
+  photo: {
+    width: "100%",
+    height: "100%",
+  },
+  button: {
+    paddingVertical: windowWidth * 0.03,
+    paddingHorizontal: windowWidth * 0.11,
+    borderRadius: 5,
+    backgroundColor: "#05a759",
+    alignItems: "center",
+    marginRight: windowWidth * 0.02,
+  },
+  buttonText: {
+    fontSize: Math.min(windowWidth * 0.04, maxFontSize), // Adjusted font size capped at maxFontSize
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  inviteButton: {
+    paddingVertical: windowWidth * 0.03,
+    paddingHorizontal: windowWidth * 0.06,
+    borderRadius: 5,
+    backgroundColor: "#003366",
+    alignItems: "center",
+    marginRight: windowWidth * 0.02,
+  },
+  inviteButtonText: {
+    fontSize: Math.min(windowWidth * 0.04, maxFontSize), // Adjusted font size capped at maxFontSize
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
-
 export default ProfileScreen;
