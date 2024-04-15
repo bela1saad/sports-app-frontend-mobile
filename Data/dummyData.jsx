@@ -85,10 +85,10 @@ export const dummyPlayers = [
     team: "FC Barcelona",
     trophies: ["Champions League Winner 2020", "World Cup Winner 2018"],
     profilePhotos: [
-      require("../assets/user_photo.jpg"),
-      require("../assets/user_photo.jpg"),
-      require("../assets/user_photo.jpg"),
-      require("../assets/user_photo.jpg"),
+      require("../assets/player1.jpg"),
+      require("../assets/player5.jpg"),
+      require("../assets/player6.jpg"),
+      require("../assets/player6.jpg"),
       require("../assets/user_photo.jpg"),
       require("../assets/user_photo.jpg"),
       require("../assets/user_photo.jpg"),
@@ -126,6 +126,39 @@ export const dummyPlayers = [
     sport: "Football", // Adding the sport property
     isFriend: false,
     type: "player",
+    followers: 0,
+    following: 0,
+  },
+  {
+    id: 3, // Unique ID for this player
+    photo: require("../assets/user_photo.jpg"),
+    username: "Nelal Doe",
+    age: 30,
+    gamesPlayed: 5,
+    team: "FC Barcelona",
+    trophies: ["Champions League Winner 2020", "World Cup Winner 2018"],
+    profilePhotos: [
+      require("../assets/player4.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+    ],
+    position: "Forward",
+    city: "Barcelona",
+    country: "Spain",
+    sport: "Football", // Adding the sport property
+    isFriend: true,
+    type: "player",
+    followers: 500,
+    following: 460000,
   },
 ];
 
@@ -145,7 +178,6 @@ export const dummyClubs = [
   // Add more club data as needed
 ];
 
-// Dummy data for teams
 export const dummyTeams = [
   {
     id: 1,
@@ -154,10 +186,130 @@ export const dummyTeams = [
     sport: "Basketball",
     city: "San Francisco",
     country: "USA",
-    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
+    profilePhotos: [require("../assets/user_photo.jpg")],
     type: "team",
+    username: "GSW Team",
+    description: "Welcome to the Golden State Warriors team profile!",
+    up_for_game: true,
+    lineup: [
+      {
+        id: 1,
+        name: "Player 1",
+        photo: require("../assets/player1.jpg"),
+        position: "ST",
+        x: 165,
+        y: 25,
+      },
+      {
+        id: 2,
+        name: "Player 2",
+        photo: require("../assets/player5.jpg"),
+        position: "LW",
+        x: 100,
+        y: 150,
+      },
+      {
+        id: 3,
+        name: "Player 3",
+        photo: require("../assets/player6.jpg"),
+        position: "RW",
+        x: 250,
+        y: 150,
+      },
+      {
+        id: 4,
+        name: "Player 4",
+        photo: require("../assets/player4.jpg"),
+        position: "CM",
+        x: 165,
+        y: 200,
+      },
+      {
+        id: 5,
+        name: "Player 5",
+        photo: require("../assets/player6.jpg"),
+        position: "CB",
+        x: 165,
+        y: 400,
+      },
+      {
+        id: 6,
+        name: "Player 6",
+        photo: require("../assets/player6.jpg"),
+        position: "Gk",
+        x: 165,
+        y: 550,
+      },
+    ],
+    followers: 1000,
+    following: 500,
+    trophies: ["Champions 2020", "MVP Team"],
+    teamPhotos: [
+      require("../assets/user_photo.jpg"),
+      require("../assets/player6.jpg"),
+      require("../assets/player6.jpg"),
+      require("../assets/player7.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+    ], // Add team photos here
   },
-  // Add more team data as needed
+  {
+    id: 2,
+    photo: require("../assets/user_photo.jpg"),
+    name: "Los Angeles Lakers",
+    sport: "Basketball",
+    city: "Los Angeles",
+    country: "USA",
+    profilePhotos: [require("../assets/user_photo.jpg")],
+    type: "team",
+    username: "Lakers Team",
+    description: "Welcome to the Los Angeles Lakers team profile!",
+    up_for_game: true,
+    lineup: [
+      { id: 1, name: "Player 1", photo: require("../assets/player4.jpg") },
+      { id: 2, name: "Player 2", photo: require("../assets/player5.jpg") },
+      { id: 3, name: "Player 3", photo: require("../assets/player6.jpg") },
+    ],
+    followers: 1500,
+    following: 700,
+    trophies: ["Western Conference Champions", "Best Defensive Team"],
+    teamPhotos: [
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+    ], // Add team photos here
+  },
+  {
+    id: 3,
+    photo: require("../assets/user_photo.jpg"),
+    name: "Chicago Bulls",
+    sport: "Basketball",
+    city: "Chicago",
+    country: "USA",
+    profilePhotos: [require("../assets/user_photo.jpg")],
+    type: "team",
+    username: "Bulls Team",
+    description: "Welcome to the Chicago Bulls team profile!",
+    up_for_game: true,
+    lineup: [
+      { id: 1, name: "Player 1", photo: require("../assets/user_photo.jpg") },
+      { id: 2, name: "Player 2", photo: require("../assets/user_photo.jpg") },
+      { id: 3, name: "Player 3", photo: require("../assets/user_photo.jpg") },
+    ],
+    followers: 800,
+    following: 400,
+    trophies: ["NBA Champions", "Eastern Conference Winners"],
+    teamPhotos: [
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+    ], // Add team photos here
+  },
+  // Add more teams here
 ];
 
 // Dummy data for tournaments
