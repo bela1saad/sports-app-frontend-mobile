@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Image, StyleSheet, Dimensions, Text } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 const footballFieldImage = require("../assets/football_field.jpg");
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
@@ -8,21 +9,33 @@ const LineupGrid = ({ lineup }) => {
   return (
     <View style={styles.container}>
       <Image source={footballFieldImage} style={styles.backgroundImage} />
-      {lineup.map((player, index) => (
+      {lineup.map((player) => (
         <View
-          key={index}
+          key={player.id}
           style={[
             styles.playerContainer,
             {
-              left: (player.x / screenWidth) * 100 + "%",
-              top: (player.y / screenHeight) * 100 + "%",
+              left: player.x * screenWidth,
+              top: player.y * screenHeight,
             },
           ]}
         >
           <Image source={player.photo} style={styles.playerImage} />
-          <View style={styles.textContainer}>
-            <Text style={styles.playerName}>{player.name}</Text>
-            <Text style={styles.playerPosition}>{player.position}</Text>
+          {player.isCaptain && (
+            <View style={styles.captainIconContainer}>
+              <Ionicons
+                name="star"
+                size={screenWidth * 0.05} // Adjust size dynamically
+                color="gold"
+              />
+            </View>
+          )}
+          <Text style={styles.playerName}>{player.name}</Text>
+          <View style={styles.positionContainer}>
+            <Text style={styles.position}>{player.position}</Text>
+          </View>
+          <View style={styles.jerseyContainer}>
+            <Text style={styles.jerseyNumber}>{player.jerseyNumber}</Text>
           </View>
         </View>
       ))}
@@ -37,32 +50,65 @@ const styles = StyleSheet.create({
     aspectRatio: 1.16,
   },
   backgroundImage: {
-    position: "absolute",
-    width: "111%", // Adjust as needed
-    height: "130%", // Adjust as needed
+    ...StyleSheet.absoluteFillObject,
+    resizeMode: "cover",
+    width: screenWidth * 0.99, // Use screenWidth as the width
+    height: screenHeight * 0.6, // Use screenHeight as the height
+    marginHorizontal: -20,
   },
+
   playerContainer: {
     position: "absolute",
-    justifyContent: "center",
     alignItems: "center",
   },
   playerImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: screenWidth * 0.12, // Adjust size dynamically
+    height: screenWidth * 0.12, // Adjust size dynamically
+    borderRadius: (screenWidth * 0.1) / 2, // Adjust size dynamically
   },
-  textContainer: {
-    alignItems: "center",
-    marginTop: 10,
+  captainIconContainer: {
+    position: "absolute",
+    top: -screenWidth * 0.03, // Adjust position dynamically
+    left: 0, // Adjust position dynamically
+    right: screenWidth * 0.07, // Center horizontally
+    alignItems: "center", // Center vertically
   },
   playerName: {
-    fontSize: 14,
+    bottom: screenWidth * 0.0001, // Adjust position dynamically
+    top: screenWidth * 0.02, // Adjust position dynamically
+    textAlign: "center",
+    fontSize: screenWidth * 0.025, // Adjust size dynamically
+    color: "#d3d3d3",
+    fontWeight: "bold",
+  },
+  positionContainer: {
+    position: "absolute",
+    right: screenWidth * 0.099, // Adjust position dynamically
+    bottom: screenWidth * 0.02, // Adjust position dynamically
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    paddingHorizontal: screenWidth * 0.01, // Adjust size dynamically
+    paddingVertical: screenWidth * 0.005, // Adjust size dynamically
+    borderRadius: screenWidth * 0.02, // Adjust size dynamically
+    marginLeft: screenWidth * 0.02,
+  },
+  jerseyContainer: {
+    position: "absolute",
+    left: screenWidth * 0.099,
+    bottom: screenWidth * 0.02, // Adjust position dynamically
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    paddingHorizontal: screenWidth * 0.01, // Adjust size dynamically
+    paddingVertical: screenWidth * 0.003, // Adjust size dynamically
+    borderRadius: screenWidth * 0.02, // Adjust size dynamically
+  },
+  position: {
+    fontSize: screenWidth * 0.02, // Adjust size dynamically
     color: "white",
     fontWeight: "bold",
   },
-  playerPosition: {
-    fontSize: 12,
+  jerseyNumber: {
+    fontSize: screenWidth * 0.02, // Adjust size dynamically
     color: "white",
+    fontWeight: "bold",
   },
 });
 

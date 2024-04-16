@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,8 @@ import {
   PixelRatio,
   Modal,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import LineupGrid from "../components/LineupGrid";
 // Import dummy data
@@ -22,6 +23,7 @@ import {
   dummyClubs,
   dummyTournaments,
 } from "../Data/dummyData";
+import { Ionicons } from "@expo/vector-icons";
 
 const ProfileScreen = ({ route }) => {
   const { profileType, profileId } = route.params;
@@ -31,6 +33,8 @@ const ProfileScreen = ({ route }) => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [showUnfollowConfirmation, setShowUnfollowConfirmation] =
     useState(false);
+  const scrollViewRef = useRef(null); // Ref for ScrollView
+
   useEffect(() => {
     console.log("Profile Type:", profileType);
     console.log("Profile ID:", profileId);
@@ -65,6 +69,15 @@ const ProfileScreen = ({ route }) => {
     }
   }, [navigation, profileId, profileType]);
 
+  useEffect(() => {
+    // Scroll to the top when profile screen is rendered
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ y: 0, animated: false });
+    }
+  }, [profileData]); // Trigger scroll to top whenever profileData changes
+
+  // Rest of your component code...
+
   const navigateToProfilePhotos = () => {
     // Navigate to the ProfilePhotosScreen with profile data
     navigation.navigate("ProfilePhotos", { photos: profileData.profilePhotos });
@@ -83,6 +96,9 @@ const ProfileScreen = ({ route }) => {
   const navigateToTrophies = () => {
     // Navigate to the TrophiesScreen with profile data
     navigation.navigate("Trophies", { trophies: profileData.trophies });
+  };
+  const navigateToProfile = (profileType, id) => {
+    navigation.navigate("Profile", { profileType, profileId: id });
   };
 
   const handleFollow = () => {
@@ -136,6 +152,7 @@ const ProfileScreen = ({ route }) => {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: "#1a1a1a" }}>
         <ScrollView
+          ref={scrollViewRef}
           contentContainerStyle={[styles.container]}
           scrollEnabled={true} // Ensure scrolling is enabled
         >
@@ -489,23 +506,48 @@ const ProfileScreen = ({ route }) => {
           </View>
           {/* Barrier */}
           <View style={styles.barrier} />
-          {/* Lineup */}
-          <View style={styles.lineupContainer}>
-            <Text style={styles.infoTitle}>Lineup</Text>
-            <View style={styles.lineupGrid}>
-              {profileData.lineup.map((player, index) => (
-                <View key={index} style={styles.playerContainer}>
-                  <Image source={player.photo} style={styles.playerPhoto} />
-                  <Text style={styles.playerName}>{player.name}</Text>
-                  <Text style={styles.playerPosition}>{player.position}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
           {/*formation*/}
           <View style={styles.lineupGrid}>
-            <LineupGrid lineup={profileData.lineup} width={300} height={400} />
+            <LineupGrid lineup={profileData.lineup} />
           </View>
+          {/* Barrier */}
+          <View style={styles.barrier2} />
+          {/* Lineup */}
+          <View style={styles.lineupContainer}>
+            <Text style={styles.lineupTitle}>Lineup</Text>
+            {profileData.lineup.map((player, index) => (
+              <View key={index} style={styles.playerContainer}>
+                <Image source={player.photo} style={styles.playerPhoto} />
+                <View style={styles.playerInfo}>
+                  <View>
+                    <TouchableOpacity
+                      onPress={() => navigateToProfile("player", player.id)}
+                    >
+                      <Text style={styles.playerName}>
+                        {player.name}{" "}
+                        {player.isCaptain && (
+                          <Ionicons
+                            name="star"
+                            size={24}
+                            color="#FFD700"
+                            style={styles.captainIcon}
+                          />
+                        )}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <Text style={styles.playerPosition}>{player.position}</Text>
+                  </View>
+                  <View style={styles.jerseyNumberContainer}>
+                    <Text style={styles.jerseyNumberText}>
+                      {player.jerseyNumber}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+
           {/* Barrier */}
           <View style={styles.barrier} />
           {/* Profile photos */}
@@ -667,8 +709,14 @@ const styles = StyleSheet.create({
   barrier: {
     height: 1,
     backgroundColor: "#666",
-    marginBottom: windowWidth * 0.05,
-    marginTop: windowWidth * 0.3,
+    marginBottom: 20, // Add margin bottom to provide space for other elements below
+    marginTop: 20,
+  },
+  barrier2: {
+    height: 1,
+    backgroundColor: "#666",
+    marginBottom: windowHeight * -0.09, // Add margin bottom to provide space for other elements below
+    marginTop: windowHeight * 0.28,
   },
   photosContainer: {
     flexDirection: "row",
@@ -710,15 +758,16 @@ const styles = StyleSheet.create({
     marginRight: windowWidth * 0.02,
   },
   inviteTeamButton: {
-    paddingVertical: windowWidth * 0.03,
-    paddingHorizontal: windowWidth * 0.03,
+    flex: 1,
+    paddingVertical: "1%",
+    paddingHorizontal: "1%",
     borderRadius: 5,
     backgroundColor: "#05a759",
     alignItems: "center",
-    marginRight: windowWidth * 0.02,
+    marginRight: "2%",
   },
   inviteButtonText: {
-    fontSize: Math.min(windowWidth * 0.04, maxFontSize), // Adjusted font size capped at maxFontSize
+    fontSize: "4%", // Adjusted font size as a percentage
     color: "#fff",
     fontWeight: "bold",
   },
@@ -748,7 +797,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   lineupContainer: {
-    marginVertical: windowWidth * 0.05, // Adjust the vertical margin as needed
+    marginVertical: windowWidth * 0.31, // Adjust the vertical margin as needed
+    marginBottom: 20,
   },
 
   lineupTitle: {
@@ -758,34 +808,61 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   lineup: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-start",
+
+    marginBottom: 10,
   },
   lineupGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    right: 10,
     justifyContent: "center",
+    marginBottom: windowHeight * 0.01, // Add margin bottom to provide space for other elements below
+    paddingHorizontal: 10, // Add horizontal padding to adjust spacing
+    alignItems: "center", // Center items vertically
   },
+
   playerContainer: {
+    flexDirection: "row",
     alignItems: "center",
-    margin: 10,
+    marginBottom: 16,
   },
   playerPhoto: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 16,
+  },
+  playerInfo: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+    paddingBottom: 8,
   },
   playerName: {
-    marginTop: 5,
-    fontSize: 16,
-
-    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#ffffff",
   },
   playerPosition: {
-    fontSize: 14,
+    fontSize: 16,
     color: "#05a759",
+  },
+  jerseyNumberContainer: {
+    backgroundColor: "#05a759",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  jerseyNumberText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  captainIcon: {
+    marginRight: 8,
   },
 });
 export default ProfileScreen;
