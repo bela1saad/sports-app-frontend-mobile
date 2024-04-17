@@ -10,6 +10,7 @@ import {
   Dimensions,
   Platform,
   PixelRatio,
+  FlatList,
   Modal,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -24,6 +25,17 @@ import {
   dummyTournaments,
 } from "../Data/dummyData";
 import { Ionicons } from "@expo/vector-icons";
+import moment from "moment";
+
+function convertTo12HourFormat(time24) {
+  // Parse the 24-hour time string using Moment.js
+  const timeMoment = moment(time24, "HH:mm:ss");
+
+  // Format the time in 12-hour format with AM/PM
+  const time12 = timeMoment.format("h:mm:ss A");
+
+  return time12;
+}
 
 const ProfileScreen = ({ route }) => {
   const { profileType, profileId } = route.params;
@@ -77,7 +89,13 @@ const ProfileScreen = ({ route }) => {
   }, [profileData]); // Trigger scroll to top whenever profileData changes
 
   // Rest of your component code...
-
+  // Define the formatOpeningHours function outside the component
+  const formatOpeningHours = (open = "00:00:00", close = "00:00:00") => {
+    // Format opening and closing time using Moment.js
+    const openingTime = moment(open, "HH:mm:ss").format("h:mm A");
+    const closingTime = moment(close, "HH:mm:ss").format("h:mm A");
+    return `${openingTime} - ${closingTime}`;
+  };
   const navigateToProfilePhotos = () => {
     // Navigate to the ProfilePhotosScreen with profile data
     navigation.navigate("ProfilePhotos", { photos: profileData.profilePhotos });
@@ -100,6 +118,9 @@ const ProfileScreen = ({ route }) => {
   const navigateToProfile = (profileType, id) => {
     navigation.navigate("Profile", { profileType, profileId: id });
   };
+  const navigateToFields = () => {
+    // Navigate to the club fields screen
+  };
 
   const handleFollow = () => {
     setIsFollowing(true);
@@ -119,6 +140,9 @@ const ProfileScreen = ({ route }) => {
     // Implement the logic for inviting to team
     // This could involve showing a modal, navigating to a screen, etc.
     console.log("Invite to team button clicked");
+  };
+  const handleBookField = () => {
+    // Logic to handle booking a field
   };
 
   if (!profileData) {
@@ -569,7 +593,227 @@ const ProfileScreen = ({ route }) => {
 
   // Render club profile UI
   function renderClubProfile() {
-    return <View>{/* Club profile UI */}</View>;
+    console.log("Profile Data:", profileData);
+    if (!profileData) {
+      return null;
+    }
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#1a1a1a" }}>
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={[styles.container]}
+          scrollEnabled={true} // Ensure scrolling is enabled
+        >
+          {/* Return Arrow */}
+          <TouchableOpacity
+            style={styles.returnArrow}
+            onPress={() => navigation.goBack()}
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }} // Increase touch area
+          >
+            <Icon name="arrow-left" size={24} color="#05a759" />
+          </TouchableOpacity>
+          {/* Club header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={navigateToProfilePhotos}>
+              <Image source={profileData.photo} style={styles.profilePhoto} />
+            </TouchableOpacity>
+            <View style={styles.headerText}>
+              <Text style={styles.name}>{profileData.name}</Text>
+              {/* Followers, Following, Trophies */}
+              <View style={styles.countContainer}>
+                <TouchableOpacity
+                  onPress={navigateToFollowers}
+                  style={styles.countItem}
+                >
+                  <Text style={styles.countNumber}>
+                    {formatCount(profileData.followers)}
+                  </Text>
+                  <Text style={styles.countLabel}>Followers</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={navigateToFollowing}
+                  style={styles.countItem}
+                >
+                  <Text style={styles.countNumber}>
+                    {formatCount(profileData.following)}
+                  </Text>
+                  <Text style={styles.countLabel}>Following</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={navigateToFields}
+                  style={styles.countItem}
+                >
+                  <Text style={styles.countNumber}>{profileData.fields}</Text>
+                  <Text style={styles.countLabel}>Fields</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+          {/* Follow and Invite buttons */}
+          <View style={styles.buttonRow}>
+            {/* Follow/Unfollow button */}
+            <TouchableOpacity
+              style={[
+                styles.button,
+                isFollowing ? styles.unfollowButton : null,
+              ]}
+              onPress={isFollowing ? handleUnfollow : handleFollow}
+            >
+              <Text style={styles.buttonText}>
+                {isFollowing ? "Unfollow" : "Follow"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.BookButton}
+              nPress={handleBookField}
+            >
+              <Text style={styles.buttonText}>Book a Field</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Unfollow confirmation modal */}
+          <Modal
+            visible={showUnfollowConfirmation}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowUnfollowConfirmation(false)}
+          >
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+              }}
+            >
+              <View style={styles.modal}>
+                <Text style={styles.modalText}>
+                  Are you sure you want to unfollow?
+                </Text>
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={confirmUnfollow}
+                >
+                  <Text style={styles.modalButtonText}>Yes</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={() => setShowUnfollowConfirmation(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+          {/* Club information */}
+          <View style={styles.infoContainer}>
+            {/* Sports */}
+            <View style={styles.infoItemclub}>
+              <Icon
+                name="soccer"
+                size={20}
+                color="#05a759"
+                style={styles.iconclub}
+              />
+              <View style={styles.infoTextContainerclub}>
+                <Text style={styles.infoLabelclub}>Sports:</Text>
+                <Text style={styles.infoTextclub}>
+                  {profileData.sports.join(", ")}
+                </Text>
+              </View>
+            </View>
+
+            {/* Rating */}
+            <View style={styles.infoItemclub}>
+              <Icon
+                name="star"
+                size={20}
+                color="#05a759"
+                style={styles.iconclub}
+              />
+              <View style={styles.infoTextContainerclub}>
+                <Text style={styles.infoLabelclub}>Rating:</Text>
+                <Text style={styles.infoTextclub}>{profileData.rating}</Text>
+              </View>
+            </View>
+
+            {/* Opening Hours */}
+            <View style={styles.infoItemclub}>
+              <Icon
+                name="clock-outline"
+                size={20}
+                color="#05a759"
+                style={styles.iconclub}
+              />
+              <View style={styles.infoTextContainerclub}>
+                <Text style={styles.infoLabelclub}>Opening Hours:</Text>
+                <Text style={styles.infoTextclub}>
+                  {formatOpeningHours(
+                    profileData.openingHours.open,
+                    profileData.openingHours.close
+                  )}
+                </Text>
+              </View>
+            </View>
+            {/* Location */}
+            <View style={styles.infoItemclub}>
+              <Icon
+                name="map-marker"
+                size={20}
+                color="#05a759"
+                style={styles.iconclub}
+              />
+              <View style={styles.infoTextContainerclub}>
+                <Text style={styles.infoLabelclub}>Location:</Text>
+                <Text style={styles.infoTextclub}>
+                  {profileData.city}, {profileData.country}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Utilities */}
+          <View style={styles.utilityContainer}>
+            <Text style={styles.utilityTitle}>Utilities</Text>
+            <View style={styles.utilityList}>
+              {profileData.utilities.map((utility, index) => (
+                <View
+                  key={index}
+                  style={index % 2 === 0 ? styles.utilityColumn : null}
+                >
+                  <View style={styles.utilityItem}>
+                    <Icon
+                      name={getIconNameForUtility(utility.name)}
+                      size={20}
+                      color="#05a759"
+                      style={styles.utilityIcon}
+                    />
+                    <Text style={styles.utilityText}>
+                      {utility.description}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* Barrier */}
+          <View style={styles.barrier} />
+          {/* Profile photos */}
+          <View style={styles.photosContainer}>
+            {profileData.profilePhotos.map((photo, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={navigateToProfilePhotos}
+                style={styles.photoItem}
+              >
+                <Image source={photo} style={styles.photo} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
   }
 
   // Render tournament profile UI
@@ -588,6 +832,29 @@ const ProfileScreen = ({ route }) => {
     }
   }
 };
+const getIconNameForUtility = (utilityName) => {
+  if (typeof utilityName !== "string") {
+    return "information-outline"; // Default icon if utilityName is not a string
+  }
+
+  const utility = utilityName.toLowerCase();
+  switch (utility) {
+    case "wifi":
+      return "wifi";
+    case "parking":
+      return "parking";
+    case "hot tub":
+      return "hot-tub";
+    case "gym":
+      return "dumbbell";
+    case "swimming pool":
+      return "pool";
+    case "restaurant":
+      return "silverware";
+    default:
+      return "information-outline"; // Default icon
+  }
+};
 
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
@@ -596,6 +863,14 @@ const SPACING = windowWidth * 0.1; // Adjusted for responsiveness
 const scaleFactor = 1; // Base scale factor for font sizes
 
 const maxFontSize = 19; // Maximum font size for text
+// Calculate responsive font size
+const responsiveFontSize = (fontSize) => {
+  const { width, height } = Dimensions.get("window");
+  const scale = Math.min(width, height) / 360; // You can adjust the base width (360) as needed
+  const ratio = fontSize / 10;
+  const newSize = Math.round(PixelRatio.roundToNearestPixel(scale * ratio));
+  return newSize;
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -757,6 +1032,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: windowWidth * 0.02,
   },
+  BookButton: {
+    paddingVertical: windowWidth * 0.03,
+    paddingHorizontal: windowWidth * 0.09,
+    borderRadius: 5,
+    backgroundColor: "#05a759",
+    alignItems: "center",
+    marginRight: windowWidth * 0.02,
+  },
   inviteTeamButton: {
     flex: 1,
     paddingVertical: "1%",
@@ -864,5 +1147,92 @@ const styles = StyleSheet.create({
   captainIcon: {
     marginRight: 8,
   },
+
+  infoTitleclub: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#05a759",
+    marginBottom: 15,
+  },
+  infoItemclub: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  iconclub: {
+    marginRight: 15,
+  },
+  infoTextContainerclub: {
+    flex: 1,
+    marginLeft: 5,
+  },
+  infoLabelclub: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "white",
+  },
+  infoTextclub: {
+    fontSize: 16,
+    color: "#BDBDBD",
+  },
+
+  utilityList: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flexWrap: "wrap", // Allow items to wrap to the next line
+  },
+  utilityColumn: {
+    width: "48%", // Adjust as needed to fit two columns
+    marginBottom: "3%", // Adjust as needed for spacing between items
+  },
+  utilityContainer: {
+    marginTop: "5%", // Responsive margin top
+  },
+  utilityTitle: {
+    fontSize: 20, // Adjust as needed
+    fontWeight: "bold",
+    color: "#05a759",
+    marginBottom: "2%", // Responsive margin bottom
+  },
+  utilityList: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flexWrap: "wrap", // Allow items to wrap to the next line
+  },
+  utilityColumn: {
+    width: "48%", // Adjust as needed to fit two columns
+    marginBottom: "2%", // Adjust as needed for spacing between columns
+  },
+  utilityItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: "2%", // Responsive margin bottom
+  },
+  utilityIcon: {
+    marginRight: "3%", // Responsive margin right
+    marginTop: "1%", // Responsive margin top
+  },
+  utilityText: {
+    fontSize: 16, // Adjust as needed
+    color: "#555",
+  },
+  openingHoursContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  dayContainer: {
+    marginRight: 20,
+    marginBottom: 10,
+  },
+  dayLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#05a759",
+  },
+  daySchedule: {
+    fontSize: 16,
+    color: "white",
+  },
 });
+
 export default ProfileScreen;

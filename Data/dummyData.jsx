@@ -270,17 +270,29 @@ export const dummyPlayers = [
   },
 ];
 
-// Dummy data for clubs
 export const dummyClubs = [
   {
     id: 1,
-    photo: require("../assets/user_photo.jpg"),
+    photo: require("../assets/player6.jpg"),
     name: "FC Barcelona",
     city: "Barcelona",
     country: "Spain",
     sports: ["Football", "Basketball"],
     rating: 4.5,
-    profilePhotos: [require("../assets/user_photo.jpg")], // Add profilePhotos property
+    followers: 16000,
+    following: 6500,
+    fields: 30,
+    profilePhotos: Array(12).fill(require("../assets/player4.jpg")),
+    openingHours: { open: "8:00:00 ", close: "23:30:00" },
+    location: { latitude: 41.3809, longitude: 2.1228 },
+    utilities: [
+      { name: "Wifi", description: "Available" },
+      { name: "Parking", description: "Free parking" },
+      { name: "Hot Tub", description: "Private hot tub" },
+      { name: "Gym", description: "Free gym" },
+      { name: "Swimming Pool", description: "Available pool" },
+      { name: "Restaurant", description: "Available" },
+    ],
     type: "club",
   },
   // Add more club data as needed
