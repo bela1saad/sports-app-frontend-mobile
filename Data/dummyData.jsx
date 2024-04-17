@@ -273,7 +273,7 @@ export const dummyPlayers = [
 export const dummyClubs = [
   {
     id: 1,
-    photo: require("../assets/player6.jpg"),
+    photo: require("../assets/clubphoto.jpg"),
     name: "FC Barcelona",
     city: "Barcelona",
     country: "Spain",
@@ -282,7 +282,7 @@ export const dummyClubs = [
     followers: 16000,
     following: 6500,
     fields: 30,
-    profilePhotos: Array(12).fill(require("../assets/player4.jpg")),
+    profilePhotos: Array(12).fill(require("../assets/clubphoto.jpg")),
     openingHours: { open: "8:00:00 ", close: "23:30:00" },
     location: { latitude: 41.3809, longitude: 2.1228 },
     utilities: [

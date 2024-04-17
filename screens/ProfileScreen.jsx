@@ -26,6 +26,7 @@ import {
 } from "../Data/dummyData";
 import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
+import MapView, { Marker } from "react-native-maps";
 
 function convertTo12HourFormat(time24) {
   // Parse the 24-hour time string using Moment.js
@@ -799,6 +800,35 @@ const ProfileScreen = ({ route }) => {
 
           {/* Barrier */}
           <View style={styles.barrier} />
+          {/* Location map */}
+          {/* Location */}
+          <View style={styles.infoItemclub}>
+            <View style={styles.infoTextContainerclub}>
+              <Text style={styles.infoLabelclub}>Location:</Text>
+            </View>
+          </View>
+          <View style={styles.mapContainer}>
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: 37.78825,
+                longitude: -122.4324,
+                latitudeDelta: 0.0922,
+                longitudeDelta: 0.0421,
+              }} // Set initial region
+            >
+              {/* Add marker for the club location */}
+              <Marker
+                coordinate={{
+                  latitude: profileData.location.latitude,
+                  longitude: profileData.location.longitude,
+                }}
+                title={profileData.name} // Club name as marker title
+              />
+            </MapView>
+          </View>
+          {/* Barrier */}
+          <View style={styles.barrier} />
           {/* Profile photos */}
           <View style={styles.photosContainer}>
             {profileData.profilePhotos.map((photo, index) => (
@@ -1232,6 +1262,15 @@ const styles = StyleSheet.create({
   daySchedule: {
     fontSize: 16,
     color: "white",
+  },
+  mapContainer: {
+    height: 300, // Adjust the height as needed
+    marginVertical: 30,
+    borderRadius: 10,
+    overflow: "hidden", // Ensure the map stays within the container
+  },
+  map: {
+    flex: 1, // Ensure the map takes up all available space
   },
 });
 
