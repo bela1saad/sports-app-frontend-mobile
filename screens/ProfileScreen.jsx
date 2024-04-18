@@ -97,21 +97,25 @@ const ProfileScreen = ({ route }) => {
     const closingTime = moment(close, "HH:mm:ss").format("h:mm A");
     return `${openingTime} - ${closingTime}`;
   };
-  const navigateToProfilePhotos = () => {
-    // Navigate to the ProfilePhotosScreen with profile data
-    navigation.navigate("ProfilePhotos", { photos: profileData.profilePhotos });
+  const navigateToProfilePhotos = (photoUrl) => {
+    // Navigate to the PhotoFullScreen screen with the provided photoUrl
+    navigation.navigate("PhotoFullScreen", {
+      photoUrl: photoUrl,
+    });
   };
 
-  const navigateToFollowers = () => {
-    // Navigate to the FollowersScreen with profile data
-    navigation.navigate("Followers", { profileData });
+  // ProfileScreen.js
+  const navigateToFollowersFollowing = (profileType, profileId) => {
+    navigation.navigate("FollowersFollowing", {
+      profileType,
+      userId: profileId,
+    });
   };
 
-  const navigateToFollowing = () => {
+  const navigateToRating = () => {
     // Navigate to the FollowingScreen with profile data
-    navigation.navigate("Following", { profileData });
+    navigation.navigate("Rating", { profileData });
   };
-
   const navigateToTrophies = () => {
     // Navigate to the TrophiesScreen with profile data
     navigation.navigate("Trophies", { trophies: profileData.trophies });
@@ -191,15 +195,20 @@ const ProfileScreen = ({ route }) => {
           </TouchableOpacity>
           {/* Profile header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={navigateToProfilePhotos}>
+            <TouchableOpacity
+              onPress={() => navigateToProfilePhotos(profileData.photo)}
+            >
               <Image source={profileData.photo} style={styles.profilePhoto} />
             </TouchableOpacity>
+
             <View style={styles.headerText}>
               <Text style={styles.name}>{profileData.username}</Text>
               {/* Followers, Following, Trophies */}
               <View style={styles.countContainer}>
                 <TouchableOpacity
-                  onPress={navigateToFollowers}
+                  onPress={() =>
+                    navigateToFollowersFollowing(profileType, profileId)
+                  }
                   style={styles.countItem}
                 >
                   <Text style={styles.countNumber}>
@@ -207,8 +216,11 @@ const ProfileScreen = ({ route }) => {
                   </Text>
                   <Text style={styles.countLabel}>Followers</Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
-                  onPress={navigateToFollowing}
+                  onPress={() =>
+                    navigateToFollowersFollowing(profileType, profileId)
+                  }
                   style={styles.countItem}
                 >
                   <Text style={styles.countNumber}>
@@ -216,6 +228,7 @@ const ProfileScreen = ({ route }) => {
                   </Text>
                   <Text style={styles.countLabel}>Following</Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
                   onPress={navigateToTrophies}
                   style={styles.countItem}
@@ -353,7 +366,7 @@ const ProfileScreen = ({ route }) => {
             {profileData.profilePhotos.map((photo, index) => (
               <TouchableOpacity
                 key={index}
-                onPress={navigateToProfilePhotos}
+                onPress={() => navigateToProfilePhotos(photo)}
                 style={styles.photoItem}
               >
                 <Image source={photo} style={styles.photo} />
@@ -388,16 +401,19 @@ const ProfileScreen = ({ route }) => {
           </TouchableOpacity>
           {/* Profile header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={navigateToProfilePhotos}>
+            <TouchableOpacity
+              onPress={() => navigateToProfilePhotos(profileData.photo)}
+            >
               <Image source={profileData.photo} style={styles.profilePhoto} />
             </TouchableOpacity>
+
             <View style={styles.headerText}>
               <Text style={styles.name}>{profileData.name}</Text>
 
               {/* Followers, Following, Trophies */}
               <View style={styles.countContainer}>
                 <TouchableOpacity
-                  onPress={navigateToFollowers}
+                  onPress={navigateToFollowersFollowing}
                   style={styles.countItem}
                 >
                   <Text style={styles.countNumber}>
@@ -406,7 +422,7 @@ const ProfileScreen = ({ route }) => {
                   <Text style={styles.countLabel}>Followers</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={navigateToFollowing}
+                  onPress={navigateToFollowersFollowing}
                   style={styles.countItem}
                 >
                   <Text style={styles.countNumber}>
@@ -577,10 +593,10 @@ const ProfileScreen = ({ route }) => {
           <View style={styles.barrier} />
           {/* Profile photos */}
           <View style={styles.photosContainer}>
-            {profileData.teamPhotos.map((photo, index) => (
+            {profileData.profilePhotos.map((photo, index) => (
               <TouchableOpacity
                 key={index}
-                onPress={navigateToProfilePhotos}
+                onPress={() => navigateToProfilePhotos(photo)}
                 style={styles.photoItem}
               >
                 <Image source={photo} style={styles.photo} />
@@ -615,15 +631,18 @@ const ProfileScreen = ({ route }) => {
           </TouchableOpacity>
           {/* Club header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={navigateToProfilePhotos}>
+            <TouchableOpacity
+              onPress={() => navigateToProfilePhotos(profileData.photo)}
+            >
               <Image source={profileData.photo} style={styles.profilePhoto} />
             </TouchableOpacity>
+
             <View style={styles.headerText}>
               <Text style={styles.name}>{profileData.name}</Text>
               {/* Followers, Following, Trophies */}
               <View style={styles.countContainer}>
                 <TouchableOpacity
-                  onPress={navigateToFollowers}
+                  onPress={navigateToFollowersFollowing}
                   style={styles.countItem}
                 >
                   <Text style={styles.countNumber}>
@@ -631,21 +650,24 @@ const ProfileScreen = ({ route }) => {
                   </Text>
                   <Text style={styles.countLabel}>Followers</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={navigateToFollowing}
-                  style={styles.countItem}
-                >
-                  <Text style={styles.countNumber}>
-                    {formatCount(profileData.following)}
-                  </Text>
-                  <Text style={styles.countLabel}>Following</Text>
-                </TouchableOpacity>
+
                 <TouchableOpacity
                   onPress={navigateToFields}
                   style={styles.countItem}
                 >
                   <Text style={styles.countNumber}>{profileData.fields}</Text>
                   <Text style={styles.countLabel}>Fields</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={navigateToFollowersFollowing}
+                  style={styles.countItem}
+                >
+                  <Text style={styles.countNumberRating}>
+                    {" "}
+                    {profileData.rating}
+                  </Text>
+
+                  <Text style={styles.countLabelRating}>Rating </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -724,20 +746,6 @@ const ProfileScreen = ({ route }) => {
               </View>
             </View>
 
-            {/* Rating */}
-            <View style={styles.infoItemclub}>
-              <Icon
-                name="star"
-                size={20}
-                color="#05a759"
-                style={styles.iconclub}
-              />
-              <View style={styles.infoTextContainerclub}>
-                <Text style={styles.infoLabelclub}>Rating:</Text>
-                <Text style={styles.infoTextclub}>{profileData.rating}</Text>
-              </View>
-            </View>
-
             {/* Opening Hours */}
             <View style={styles.infoItemclub}>
               <Icon
@@ -810,12 +818,12 @@ const ProfileScreen = ({ route }) => {
           <View style={styles.mapContainer}>
             <MapView
               style={styles.map}
-              initialRegion={{
-                latitude: 37.78825,
-                longitude: -122.4324,
-                latitudeDelta: 0.0922,
-                longitudeDelta: 0.0421,
-              }} // Set initial region
+              region={{
+                latitude: profileData.location.latitude,
+                longitude: profileData.location.longitude,
+                latitudeDelta: 0.05, // Adjust the delta values as needed
+                longitudeDelta: 0.05,
+              }} // Set region to club's location
             >
               {/* Add marker for the club location */}
               <Marker
@@ -834,7 +842,7 @@ const ProfileScreen = ({ route }) => {
             {profileData.profilePhotos.map((photo, index) => (
               <TouchableOpacity
                 key={index}
-                onPress={navigateToProfilePhotos}
+                onPress={() => navigateToProfilePhotos(photo)}
                 style={styles.photoItem}
               >
                 <Image source={photo} style={styles.photo} />
@@ -987,6 +995,16 @@ const styles = StyleSheet.create({
   countLabel: {
     fontSize: Math.min(windowWidth * 0.03 * scaleFactor, maxFontSize * 0.5),
     color: "#ccc",
+    flexShrink: 1,
+  },
+  countNumberRating: {
+    fontSize: Math.min(windowWidth * 0.06, maxFontSize),
+    fontWeight: "bold",
+    color: "#FFD700",
+  },
+  countLabelRating: {
+    fontSize: Math.min(windowWidth * 0.03 * scaleFactor, maxFontSize * 0.5),
+    color: "#FFD700",
     flexShrink: 1,
   },
   infoContainer: {

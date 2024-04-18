@@ -20,6 +20,8 @@ import FavoritesScreen from "./screens/SidebarScreens/FavoritesScreen";
 import FriendsScreen from "./screens/SidebarScreens/FriendsScreen";
 import WalletScreen from "./screens/SidebarScreens/WalletScreen";
 import ProfileScreen from "./screens/ProfileScreen";
+import PhotoFullScreen from "./screens/PhotoFullScreen";
+import FollowersFollowingScreen from "./screens/FollowersFollowingScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -52,6 +54,11 @@ const App = () => {
         <Stack.Screen name="Favorites" component={FavoritesScreen} />
         <Stack.Screen name="About" component={AboutScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="PhotoFullScreen" component={PhotoFullScreen} />
+        <Stack.Screen
+          name="FollowersFollowing"
+          component={FollowersFollowingScreen}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

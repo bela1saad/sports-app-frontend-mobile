@@ -106,6 +106,32 @@ export const dummyPlayers = [
     type: "player",
     followers: 500,
     following: 460000,
+    followersP: [
+      {
+        id: 2,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Jane Smith",
+      },
+      {
+        id: 3,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Nelal Doe",
+      },
+      // Add more followers as needed
+    ],
+    followingP: [
+      {
+        id: 4,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Belal Doe",
+      },
+      {
+        id: 5,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Mahdi Doe",
+      },
+      // Add more users being followed as needed
+    ],
   },
   {
     id: 2,
@@ -283,6 +309,30 @@ export const dummyClubs = [
     following: 6500,
     fields: 30,
     profilePhotos: Array(12).fill(require("../assets/clubphoto.jpg")),
+    openingHours: { open: "8:00:00 ", close: "23:30:00" },
+    location: { latitude: 41.3809, longitude: 2.1228 },
+    utilities: [
+      { name: "Wifi", description: "Available" },
+      { name: "Parking", description: "Free parking" },
+      { name: "Hot Tub", description: "Private hot tub" },
+      { name: "Gym", description: "Free gym" },
+      { name: "Swimming Pool", description: "Available pool" },
+      { name: "Restaurant", description: "Available" },
+    ],
+    type: "club",
+  },
+  {
+    id: 2,
+    photo: require("../assets/realmadrid.jpeg"),
+    name: "Real Madrid ",
+    city: "Madrid",
+    country: "Spain",
+    sports: ["Football", "Basketball"],
+    rating: 4.9,
+    followers: 19000,
+    following: 6500,
+    fields: 40,
+    profilePhotos: Array(12).fill(require("../assets/realmadrid.jpeg")),
     openingHours: { open: "8:00:00 ", close: "23:30:00" },
     location: { latitude: 41.3809, longitude: 2.1228 },
     utilities: [
