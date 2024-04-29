@@ -111,11 +111,13 @@ export const dummyPlayers = [
         id: 2,
         photo: require("../assets/user_photo.jpg"),
         username: "Jane Smith",
+        type: "player",
       },
       {
         id: 3,
         photo: require("../assets/user_photo.jpg"),
         username: "Nelal Doe",
+        type: "player",
       },
       // Add more followers as needed
     ],
@@ -124,11 +126,13 @@ export const dummyPlayers = [
         id: 4,
         photo: require("../assets/user_photo.jpg"),
         username: "Belal Doe",
+        type: "player",
       },
       {
         id: 5,
         photo: require("../assets/user_photo.jpg"),
         username: "Mahdi Doe",
+        type: "player",
       },
       // Add more users being followed as needed
     ],
@@ -152,8 +156,38 @@ export const dummyPlayers = [
     sport: "Football", // Adding the sport property
     isFriend: false,
     type: "player",
-    followers: 0,
-    following: 0,
+    followers: 2,
+    following: 2,
+    followersP: [
+      {
+        id: 2,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Jane Smith",
+        type: "player",
+      },
+      {
+        id: 3,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Nelal Doe",
+        type: "player",
+      },
+      // Add more followers as needed
+    ],
+    followingP: [
+      {
+        id: 4,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Belal Doe",
+        type: "player",
+      },
+      {
+        id: 5,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Mahdi Doe",
+        type: "player",
+      },
+      // Add more users being followed as needed
+    ],
   },
   {
     id: 3, // Unique ID for this player
@@ -185,6 +219,36 @@ export const dummyPlayers = [
     type: "player",
     followers: 500,
     following: 460000,
+    followersP: [
+      {
+        id: 2,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Jane Smith",
+        type: "player",
+      },
+      {
+        id: 3,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Nelal Doe",
+        type: "player",
+      },
+      // Add more followers as needed
+    ],
+    followingP: [
+      {
+        id: 4,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Belal Doe",
+        type: "player",
+      },
+      {
+        id: 5,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Mahdi Doe",
+        type: "player",
+      },
+      // Add more users being followed as needed
+    ],
   },
   {
     id: 4,
@@ -203,6 +267,36 @@ export const dummyPlayers = [
     type: "player",
     followers: 10000,
     following: 5000,
+    followersP: [
+      {
+        id: 2,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Jane Smith",
+        type: "player",
+      },
+      {
+        id: 3,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Nelal Doe",
+        type: "player",
+      },
+      // Add more followers as needed
+    ],
+    followingP: [
+      {
+        id: 4,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Belal Doe",
+        type: "player",
+      },
+      {
+        id: 5,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Mahdi Doe",
+        type: "player",
+      },
+      // Add more users being followed as needed
+    ],
   },
   {
     id: 5,
@@ -221,6 +315,43 @@ export const dummyPlayers = [
     type: "player",
     followers: 15000,
     following: 6000,
+    followersP: [
+      {
+        id: 2,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Jane Smith",
+        type: "player",
+      },
+      {
+        id: 3,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Nelal Doe",
+        type: "player",
+      },
+      {
+        id: 6,
+        photo: require("../assets/user_photo.jpg"),
+        username: "MTarsha Doe",
+        type: "player",
+      },
+      // Add more followers as needed
+    ],
+    followingP: [
+      {
+        id: 4,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Belal Doe",
+        type: "player",
+      },
+      {
+        id: 5,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Mahdi Doe",
+        type: "player",
+      },
+
+      // Add more users being followed as needed
+    ],
   },
   {
     id: 6,
@@ -239,6 +370,36 @@ export const dummyPlayers = [
     type: "player",
     followers: 8000,
     following: 4000,
+    followersP: [
+      {
+        id: 2,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Jane Smith",
+        type: "player",
+      },
+      {
+        id: 3,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Nelal Doe",
+        type: "player",
+      },
+      // Add more followers as needed
+    ],
+    followingP: [
+      {
+        id: 4,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Belal Doe",
+        type: "player",
+      },
+      {
+        id: 5,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Mahdi Doe",
+        type: "player",
+      },
+      // Add more users being followed as needed
+    ],
   },
   {
     id: 7,
@@ -257,6 +418,36 @@ export const dummyPlayers = [
     type: "player",
     followers: 20000,
     following: 10000,
+    followersP: [
+      {
+        id: 2,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Jane Smith",
+        type: "player",
+      },
+      {
+        id: 3,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Nelal Doe",
+        type: "player",
+      },
+      // Add more followers as needed
+    ],
+    followingP: [
+      {
+        id: 4,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Belal Doe",
+        type: "player",
+      },
+      {
+        id: 5,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Mahdi Doe",
+        type: "player",
+      },
+      // Add more users being followed as needed
+    ],
   },
   {
     id: 8,
@@ -275,6 +466,36 @@ export const dummyPlayers = [
     type: "player",
     followers: 11000,
     following: 5300,
+    followersP: [
+      {
+        id: 2,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Jane Smith",
+        type: "player",
+      },
+      {
+        id: 3,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Nelal Doe",
+        type: "player",
+      },
+      // Add more followers as needed
+    ],
+    followingP: [
+      {
+        id: 4,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Belal Doe",
+        type: "player",
+      },
+      {
+        id: 5,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Mahdi Doe",
+        type: "player",
+      },
+      // Add more users being followed as needed
+    ],
   },
   {
     id: 9,
@@ -293,6 +514,36 @@ export const dummyPlayers = [
     type: "player",
     followers: 16000,
     following: 6500,
+    followersP: [
+      {
+        id: 2,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Jane Smith",
+        type: "player",
+      },
+      {
+        id: 3,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Nelal Doe",
+        type: "player",
+      },
+      // Add more followers as needed
+    ],
+    followingP: [
+      {
+        id: 4,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Belal Doe",
+        type: "player",
+      },
+      {
+        id: 5,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Mahdi Doe",
+        type: "player",
+      },
+      // Add more users being followed as needed
+    ],
   },
 ];
 
@@ -440,6 +691,48 @@ export const dummyTeams = [
       require("../assets/user_photo.jpg"),
       require("../assets/user_photo.jpg"),
     ], // Add team photos here
+    followersP: [
+      {
+        id: 2,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Jane Smith",
+        type: "player",
+      },
+      {
+        id: 3,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Nelal Doe",
+        type: "player",
+      },
+      {
+        id: 3,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Chicago Bulls",
+        type: "team",
+      },
+      // Add more followers as needed
+    ],
+    followingP: [
+      {
+        id: 4,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Belal Doe",
+        type: "player",
+      },
+      {
+        id: 5,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Mahdi Doe",
+        type: "player",
+      },
+      {
+        id: 2,
+        photo: require("../assets/user_photo.jpg"),
+        username: "Los Angeles Lakers",
+        type: "team",
+      },
+      // Add more users being followed as needed
+    ],
   },
   {
     id: 2,
@@ -454,14 +747,81 @@ export const dummyTeams = [
     description: "Welcome to the Los Angeles Lakers team profile!",
     up_for_game: true,
     lineup: [
-      { id: 1, name: "Player 1", photo: require("../assets/player4.jpg") },
-      { id: 2, name: "Player 2", photo: require("../assets/player5.jpg") },
-      { id: 3, name: "Player 3", photo: require("../assets/player6.jpg") },
+      {
+        id: 4,
+        name: "Belal",
+        photo: require("../assets/player1.jpg"),
+        position: "ST",
+        jerseyNumber: 9,
+        isCaptain: false,
+        x: 0.4,
+        y: 0.07,
+      },
+      {
+        id: 5,
+        name: "Mahdi ",
+        photo: require("../assets/player5.jpg"),
+        position: "LW",
+        jerseyNumber: 11,
+        isCaptain: true,
+        x: 0.1,
+        y: 0.11,
+      },
+      {
+        id: 6,
+        name: "MTarsha",
+        photo: require("../assets/player6.jpg"),
+        position: "RW",
+        jerseyNumber: 7,
+        isCaptain: false,
+        x: 0.63,
+        y: 0.11,
+      },
+      {
+        id: 7,
+        name: "Ibrahim",
+        photo: require("../assets/player4.jpg"),
+        position: "CM",
+        jerseyNumber: 8,
+        isCaptain: false,
+        x: 0.37,
+        y: 0.21,
+      },
+      {
+        id: 8,
+        name: "Anas",
+        photo: require("../assets/player6.jpg"),
+        position: "CB",
+        jerseyNumber: 4,
+        isCaptain: false,
+        x: 0.37,
+        y: 0.35,
+      },
+      {
+        id: 9,
+        name: "van der sar",
+        photo: require("../assets/player6.jpg"),
+        position: "Gk",
+        jerseyNumber: 1,
+        isCaptain: false,
+        x: 0.37,
+        y: 0.45,
+      },
     ],
-    followers: 1500,
-    following: 700,
-    trophies: ["Western Conference Champions", "Best Defensive Team"],
+    followers: 1000,
+    following: 500,
+    trophies: ["Champions 2020", "MVP Team"],
     teamPhotos: [
+      require("../assets/user_photo.jpg"),
+      require("../assets/player6.jpg"),
+      require("../assets/player6.jpg"),
+      require("../assets/player7.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
       require("../assets/user_photo.jpg"),
       require("../assets/user_photo.jpg"),
     ], // Add team photos here
@@ -479,14 +839,81 @@ export const dummyTeams = [
     description: "Welcome to the Chicago Bulls team profile!",
     up_for_game: true,
     lineup: [
-      { id: 1, name: "Player 1", photo: require("../assets/user_photo.jpg") },
-      { id: 2, name: "Player 2", photo: require("../assets/user_photo.jpg") },
-      { id: 3, name: "Player 3", photo: require("../assets/user_photo.jpg") },
+      {
+        id: 4,
+        name: "Belal",
+        photo: require("../assets/player1.jpg"),
+        position: "ST",
+        jerseyNumber: 9,
+        isCaptain: false,
+        x: 0.4,
+        y: 0.07,
+      },
+      {
+        id: 5,
+        name: "Mahdi ",
+        photo: require("../assets/player5.jpg"),
+        position: "LW",
+        jerseyNumber: 11,
+        isCaptain: true,
+        x: 0.1,
+        y: 0.11,
+      },
+      {
+        id: 6,
+        name: "MTarsha",
+        photo: require("../assets/player6.jpg"),
+        position: "RW",
+        jerseyNumber: 7,
+        isCaptain: false,
+        x: 0.63,
+        y: 0.11,
+      },
+      {
+        id: 7,
+        name: "Ibrahim",
+        photo: require("../assets/player4.jpg"),
+        position: "CM",
+        jerseyNumber: 8,
+        isCaptain: false,
+        x: 0.37,
+        y: 0.21,
+      },
+      {
+        id: 8,
+        name: "Anas",
+        photo: require("../assets/player6.jpg"),
+        position: "CB",
+        jerseyNumber: 4,
+        isCaptain: false,
+        x: 0.37,
+        y: 0.35,
+      },
+      {
+        id: 9,
+        name: "van der sar",
+        photo: require("../assets/player6.jpg"),
+        position: "Gk",
+        jerseyNumber: 1,
+        isCaptain: false,
+        x: 0.37,
+        y: 0.45,
+      },
     ],
-    followers: 800,
-    following: 400,
-    trophies: ["NBA Champions", "Eastern Conference Winners"],
+    followers: 1000,
+    following: 500,
+    trophies: ["Champions 2020", "MVP Team"],
     teamPhotos: [
+      require("../assets/user_photo.jpg"),
+      require("../assets/player6.jpg"),
+      require("../assets/player6.jpg"),
+      require("../assets/player7.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
+      require("../assets/user_photo.jpg"),
       require("../assets/user_photo.jpg"),
       require("../assets/user_photo.jpg"),
     ], // Add team photos here

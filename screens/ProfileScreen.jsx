@@ -413,7 +413,9 @@ const ProfileScreen = ({ route }) => {
               {/* Followers, Following, Trophies */}
               <View style={styles.countContainer}>
                 <TouchableOpacity
-                  onPress={navigateToFollowersFollowing}
+                  onPress={() =>
+                    navigateToFollowersFollowing(profileType, profileId)
+                  }
                   style={styles.countItem}
                 >
                   <Text style={styles.countNumber}>
@@ -422,7 +424,9 @@ const ProfileScreen = ({ route }) => {
                   <Text style={styles.countLabel}>Followers</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={navigateToFollowersFollowing}
+                  onPress={() =>
+                    navigateToFollowersFollowing(profileType, profileId)
+                  }
                   style={styles.countItem}
                 >
                   <Text style={styles.countNumber}>
@@ -642,7 +646,9 @@ const ProfileScreen = ({ route }) => {
               {/* Followers, Following, Trophies */}
               <View style={styles.countContainer}>
                 <TouchableOpacity
-                  onPress={navigateToFollowersFollowing}
+                  onPress={() =>
+                    navigateToFollowersFollowing(profileType, profileId)
+                  }
                   style={styles.countItem}
                 >
                   <Text style={styles.countNumber}>
