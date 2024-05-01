@@ -1,4 +1,4 @@
-import React from "react";
+import { React, useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -22,45 +22,48 @@ import WalletScreen from "./screens/SidebarScreens/WalletScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import PhotoFullScreen from "./screens/PhotoFullScreen";
 import FollowersFollowingScreen from "./screens/FollowersFollowingScreen";
+import { AuthProvider } from "./auth/AuthContext";
 
 const Stack = createNativeStackNavigator();
 
 const App = () => {
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="Welcome" component={Welcome} />
-        <Stack.Screen name="Signup" component={Signup} />
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Fields" component={FieldsScreen} />
-        <Stack.Screen name="Team" component={TeamScreen} />
-        <Stack.Screen name="Tournaments" component={TournamentsScreen} />
-        <Stack.Screen
-          name="MainTabs"
-          component={BottomTabNavigator}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen name="Sidebar" component={Sidebar} />
-        <Stack.Screen name="Notification" component={Notification} />
-        <Stack.Screen name="Search" component={SearchScreen} />
-        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-        <Stack.Screen name="Friends" component={FriendsScreen} />
-        <Stack.Screen name="Wallet" component={WalletScreen} />
-        <Stack.Screen
-          name="BookingsHistory"
-          component={BookingsHistoryScreen}
-        />
-        <Stack.Screen name="Favorites" component={FavoritesScreen} />
-        <Stack.Screen name="About" component={AboutScreen} />
-        <Stack.Screen name="Profile" component={ProfileScreen} />
-        <Stack.Screen name="PhotoFullScreen" component={PhotoFullScreen} />
-        <Stack.Screen
-          name="FollowersFollowing"
-          component={FollowersFollowingScreen}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <AuthProvider>
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen name="Welcome" component={Welcome} />
+          <Stack.Screen name="Signup" component={Signup} />
+          <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Fields" component={FieldsScreen} />
+          <Stack.Screen name="Team" component={TeamScreen} />
+          <Stack.Screen name="Tournaments" component={TournamentsScreen} />
+          <Stack.Screen
+            name="MainTabs"
+            component={BottomTabNavigator}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen name="Sidebar" component={Sidebar} />
+          <Stack.Screen name="Notification" component={Notification} />
+          <Stack.Screen name="Search" component={SearchScreen} />
+          <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+          <Stack.Screen name="Friends" component={FriendsScreen} />
+          <Stack.Screen name="Wallet" component={WalletScreen} />
+          <Stack.Screen
+            name="BookingsHistory"
+            component={BookingsHistoryScreen}
+          />
+          <Stack.Screen name="Favorites" component={FavoritesScreen} />
+          <Stack.Screen name="About" component={AboutScreen} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="PhotoFullScreen" component={PhotoFullScreen} />
+          <Stack.Screen
+            name="FollowersFollowing"
+            component={FollowersFollowingScreen}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </AuthProvider>
   );
 };
 
