@@ -15,6 +15,7 @@ import Checkbox from "expo-checkbox";
 import COLORS from "../../constants/colors";
 import Button from "../../components/Button";
 import { useAuth } from "../../auth/AuthContext"; // Import useAuth hook
+import { CommonActions } from "@react-navigation/native";
 
 const { width } = Dimensions.get("window");
 
@@ -34,8 +35,13 @@ const Login = ({ navigation }) => {
     try {
       const success = await login(email, password);
       if (success) {
-        // Navigate to the main screen upon successful login
-        navigation.replace("Home");
+        // Reset the navigation stack and navigate to the Home screen upon successful login
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: "Home" }],
+          })
+        );
       } else {
         // Handle login failure (optional)
         console.log("Login failed");

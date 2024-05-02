@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "./axios"; // Import axios from the correct location
+import axiosInstance from "./axios";
 
 const AuthContext = createContext();
 
@@ -10,13 +10,15 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [userId, setUserId] = useState(null);
   const [roleId, setRoleId] = useState(null);
-  const [error, setError] = useState(null); // State to hold backend errors
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const loadToken = async () => {
       try {
         const storedToken = await AsyncStorage.getItem("token");
+        console.log("Retrieved token from AsyncStorage:", storedToken);
         if (storedToken) {
+          console.log("Setting token in state:", storedToken);
           setToken(storedToken);
         }
       } catch (error) {
@@ -28,13 +30,18 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post("/auth/login", { email, password });
+      const response = await axiosInstance.post("/auth/login", {
+        email,
+        password,
+      });
       const { token, id, role_id } = response.data;
-      setToken(token);
+      await AsyncStorage.setItem("token", token); // Set token in AsyncStorage first
+      setToken(token); // Then set token in the state
       setUserId(id);
       setRoleId(role_id);
-      await AsyncStorage.setItem("token", token);
-      return true; // Login successful
+      console.log("Token set in AsyncStorage:", token);
+
+      return true;
     } catch (error) {
       if (
         error.response &&

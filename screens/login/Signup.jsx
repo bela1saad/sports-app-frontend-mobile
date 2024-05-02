@@ -30,7 +30,7 @@ const Signup = ({ navigation }) => {
     countryCode: "+963",
     phone_number: "",
     password: "",
-    roleId: "1",
+    role_id: "1",
   });
 
   useEffect(() => {

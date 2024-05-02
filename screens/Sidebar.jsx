@@ -14,6 +14,7 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import COLORS from "../constants/colors";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "../auth/AuthContext";
+import { CommonActions } from "@react-navigation/native";
 
 const Sidebar = () => {
   const navigation = useNavigation();
@@ -54,7 +55,12 @@ const Sidebar = () => {
 
   const confirmLogout = async () => {
     await logout();
-    navigation.replace("Login");
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: "Login" }],
+      })
+    );
     setShowConfirmation(false); // Close the modal immediately after logout
   };
 
