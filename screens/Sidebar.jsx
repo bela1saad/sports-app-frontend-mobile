@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,14 +7,18 @@ import {
   Image,
   Platform,
   Dimensions,
+  Modal,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import COLORS from "../constants/colors";
 import { LinearGradient } from "expo-linear-gradient";
+import { useAuth } from "../auth/AuthContext";
 
 const Sidebar = () => {
   const navigation = useNavigation();
+  const { logout } = useAuth(); // Get the logout function from useAuth
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   // Function to navigate to the Edit Profile screen
   const goToEditProfile = () => {
@@ -44,14 +48,20 @@ const Sidebar = () => {
     }
   };
 
-  // Function to handle logout
-  const handleLogout = () => {
-    // Perform logout actions, such as clearing session/token
-    // For example:
-    // clearSession();
-    // Navigate back to the login screen
-    navigation.navigate("Login");
+  const handleLogout = async () => {
+    setShowConfirmation(true);
   };
+
+  const confirmLogout = async () => {
+    await logout();
+    navigation.replace("Login");
+    setShowConfirmation(false); // Close the modal immediately after logout
+  };
+
+  const cancelLogout = () => {
+    setShowConfirmation(false);
+  };
+
   useEffect(() => {
     navigation.setOptions({
       headerShown: false,
@@ -141,6 +151,33 @@ const Sidebar = () => {
             Logout
           </Text>
         </TouchableOpacity>
+        {/* Logout Confirmation Modal */}
+        <Modal
+          visible={showConfirmation}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowConfirmation(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalText}>
+                Are you sure you want to log out?
+              </Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={confirmLogout}
+              >
+                <Text style={styles.modalButtonText}>Yes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={cancelLogout}
+              >
+                <Text style={styles.modalButtonText}>No</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
 
       {/* Copyright Section */}
@@ -219,6 +256,35 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     height: 40,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    width: "80%",
+  },
+  modalText: {
+    marginBottom: 20,
+    fontSize: 18,
+    textAlign: "center",
+  },
+  modalButton: {
+    backgroundColor: COLORS.Green,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontSize: 16,
   },
 });
 

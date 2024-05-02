@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Dimensions,
   StatusBar,
+  RefreshControl,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import COLORS from "../constants/colors";
@@ -27,10 +28,17 @@ const HomeScreen = ({ navigation }) => {
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [selectedSport, setSelectedSport] = useState("All");
   const [filteredPosts, setFilteredPosts] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     filterPosts();
   }, [selectedFilter, selectedSport]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    filterPosts();
+    setRefreshing(false);
+  };
 
   const filterPosts = () => {
     let filtered = dummyPosts;
@@ -63,7 +71,12 @@ const HomeScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.grey1000} />
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollViewContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <TouchableOpacity onPress={goToEditProfile} style={styles.profilePhoto}>
           <Image
             source={require("../assets/profile_photo.png")}

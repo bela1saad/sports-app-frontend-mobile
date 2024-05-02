@@ -8,8 +8,8 @@ import {
   Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import COLORS from "../constants/colors";
-import Button from "../components/Button";
+import COLORS from "../../constants/colors";
+import Button from "../../components/Button";
 import { useNavigation } from "@react-navigation/native";
 
 const Welcome = () => {
@@ -28,7 +28,7 @@ const Welcome = () => {
         <View style={{ flex: 1 }}>
           <View>
             <Image
-              source={require("../assets/hero1.jpg")}
+              source={require("../../assets/hero1.jpg")}
               style={{
                 height: 100,
                 width: 100,
@@ -44,7 +44,7 @@ const Welcome = () => {
             />
 
             <Image
-              source={require("../assets/hero3.jpg")}
+              source={require("../../assets/hero3.jpg")}
               style={{
                 height: 100,
                 width: 100,
@@ -61,7 +61,7 @@ const Welcome = () => {
             />
 
             <Image
-              source={require("../assets/hero4.jpg")}
+              source={require("../../assets/hero4.jpg")}
               style={{
                 width: 100,
                 height: 100,
@@ -78,7 +78,7 @@ const Welcome = () => {
             />
 
             <Image
-              source={require("../assets/hero2.jpg")}
+              source={require("../../assets/hero2.jpg")}
               style={{
                 height: 200,
                 width: 200,
@@ -132,7 +132,7 @@ const Welcome = () => {
                   marginVertical: 4,
                 }}
               >
-                Connect with each other with chatting
+                Connect with each other with sport
               </Text>
               <Text
                 style={{

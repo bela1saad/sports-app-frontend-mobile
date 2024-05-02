@@ -12,10 +12,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import COLORS from "../constants/colors";
+import COLORS from "../../constants/colors";
 import Checkbox from "expo-checkbox";
-import Button from "../components/Button";
-import { useAuth } from "../auth/AuthContext"; // Import useAuth hook
+import Button from "../../components/Button";
+import { useAuth } from "../../auth/AuthContext"; // Import useAuth hook
 
 const { width, height } = Dimensions.get("window");
 
@@ -51,10 +51,11 @@ const Signup = ({ navigation }) => {
       const phone_number = formData.countryCode + formData.phone_number;
       const updatedFormData = { ...formData, phone_number };
       console.log("Form Data:", updatedFormData); // Log the updatedFormData
-      await register(updatedFormData); // Call register function with updatedFormData
-      navigation.navigate("MainTabs");
+      const registrationSuccessful = await register(updatedFormData); // Call register function with updatedFormData
+      if (registrationSuccessful) {
+        navigation.navigate("Verification"); // Navigate to the verification screen
+      }
     } catch (error) {
-      console.error("Error:", error);
       Alert.alert(
         "Registration Error",
         error.message || "An error occurred. Please try again later."
