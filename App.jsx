@@ -27,6 +27,7 @@ import PhotoFullScreen from "./screens/PhotoFullScreen";
 import FollowersFollowingScreen from "./screens/FollowersFollowingScreen";
 import LoadingIndicator from "./components/LoadingIndicator";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import ProtectedRoute from "./auth/ProtectedRoute";
 
 const Stack = createStackNavigator();
 
@@ -35,20 +36,39 @@ const App = () => {
     <NavigationContainer>
       <AuthProvider>
         <Stack.Navigator>
-          <Stack.Screen
-            name="MainTabs"
-            component={MainTabs}
-            options={{ headerShown: false }} // Hide the header for MainTabs screen
-          />
+          {/* Public Screens (no protection needed) */}
           <Stack.Screen name="Welcome" component={Welcome} />
           <Stack.Screen name="Signup" component={Signup} />
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Verification" component={VerificationScreen} />
           <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
-          <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="Fields" component={FieldsScreen} />
-          <Stack.Screen name="Team" component={TeamScreen} />
-          <Stack.Screen name="Tournaments" component={TournamentsScreen} />
+
+          {/* Protected Screens (wrap with ProtectedRoute) */}
+          <Stack.Screen
+            name="MainTabs"
+            component={BottomTabNavigator} // Pass the BottomTabNavigator component directly
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Fields"
+            component={FieldsScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Team"
+            component={TeamScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Tournaments"
+            component={TournamentsScreen}
+            options={{ headerShown: false }}
+          />
           <Stack.Screen name="Sidebar" component={Sidebar} />
           <Stack.Screen name="Notification" component={Notification} />
           <Stack.Screen name="Search" component={SearchScreen} />

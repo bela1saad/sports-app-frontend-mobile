@@ -39,16 +39,20 @@ const EditProfileScreen = ({ navigation }) => {
     try {
       setLoading(true);
 
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("location", location);
+      const requestData = {
+        name: name,
+        location: location,
+      };
+
+      const token = await AsyncStorage.getItem("token");
+      console.log("Retrieved token from AsyncStorage:", token);
 
       const response = await axios.post(
         "http://192.168.43.48:4000/api/player/create",
-        formData,
+        requestData,
         {
           headers: {
-            Authorization: "Bearer " + AsyncStorage.getItem("token"),
+            Authorization: "Bearer " + token,
             "Content-Type": "application/json",
           },
         }

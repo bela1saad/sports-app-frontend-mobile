@@ -6,28 +6,22 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use(
-  (config) => {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // Add a small delay to allow AsyncStorage to fully set the token
-        setTimeout(async () => {
-          const token = await AsyncStorage.getItem("token");
-          console.log("Retrieved token from AsyncStorage:", token);
-
-          if (token) {
-            console.log("Token found. Adding to request headers.");
-            config.headers.Authorization = `Bearer ${token}`;
-          } else {
-            console.warn("Token not found in AsyncStorage");
-          }
-
-          resolve(config);
-        }, 100); // Adjust the delay time as needed
-      } catch (error) {
-        console.error("Error loading token:", error);
-        reject(error);
+  async (config) => {
+    try {
+      // Retrieve token from AsyncStorage
+      const token = await AsyncStorage.getItem("token");
+      if (token) {
+        // Add token to request headers
+        config.headers.Authorization = "Bearer " + token;
+        console.log("Token found. Adding to request headers.");
+      } else {
+        console.warn("Token not found in AsyncStorage");
       }
-    });
+    } catch (error) {
+      console.error("Error loading token:", error);
+    }
+
+    return config;
   },
   (error) => {
     console.error("Request interceptor error:", error);

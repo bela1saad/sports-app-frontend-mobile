@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await axios.post("/auth/register", userData);
+      const response = await axiosInstance.post("/auth/register", userData);
       const responseData = response.data;
       if (responseData.message && responseData.token) {
         // If the response contains a message and token, move to VerificationScreen
