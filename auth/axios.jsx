@@ -15,7 +15,7 @@ axiosInstance.interceptors.request.use(
         config.headers.Authorization = "Bearer " + token;
         console.log("Token found. Adding to request headers.");
       } else {
-        console.warn("Token not found in AsyncStorage");
+        console.log("Token not found in AsyncStorage");
       }
     } catch (error) {
       console.error("Error loading token:", error);

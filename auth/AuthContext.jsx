@@ -12,22 +12,27 @@ export const AuthProvider = ({ children }) => {
   const [roleId, setRoleId] = useState(null);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const loadToken = async () => {
-      try {
-        const storedToken = await AsyncStorage.getItem("token");
-        console.log("Retrieved token from AsyncStorage:", storedToken);
-        if (storedToken) {
-          console.log("Setting token in state:", storedToken);
-          setToken(storedToken);
-        }
-      } catch (error) {
-        console.error("Error loading token:", error);
+  // Function to load user data from AsyncStorage
+  const loadUserData = async () => {
+    try {
+      const storedToken = await AsyncStorage.getItem("token");
+      console.log("Retrieved token from AsyncStorage2:", storedToken);
+      if (storedToken) {
+        // If token is found, set it in state
+        setToken(storedToken);
+        // Optionally, load other user data here if needed
       }
-    };
-    loadToken();
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    }
+  };
+
+  useEffect(() => {
+    // Load user data when component mounts
+    loadUserData();
   }, []);
 
+  // Function to handle user login
   const login = async (email, password) => {
     try {
       const response = await axiosInstance.post("/auth/login", {
@@ -35,10 +40,11 @@ export const AuthProvider = ({ children }) => {
         password,
       });
       const { token, id, role_id } = response.data;
-      await AsyncStorage.setItem("token", token); // Set token in AsyncStorage first
-      setToken(token); // Then set token in the state
-      setUserId(id);
-      setRoleId(role_id);
+      await AsyncStorage.setItem("token", token); // Set token in AsyncStorage
+      setToken(token); // Update token in the state
+      setUserId(id); // Update user ID in the state
+      setRoleId(role_id); // Update role ID in the state
+
       console.log("Token set in AsyncStorage:", token);
 
       return true;
@@ -56,6 +62,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Function to handle user registration
   const register = async (userData) => {
     try {
       const response = await axiosInstance.post("/auth/register", userData);
@@ -79,6 +86,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Function to handle password reset
   const resetPassword = async (username, email, newPassword, phone_number) => {
     try {
       const response = await axios.post("/auth/reset-password", {
@@ -95,6 +103,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Function to handle user logout
   const logout = async () => {
     setToken(null);
     setUserId(null);
