@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axiosInstance from "./axios";
+import axiosInstance from "../utils/axios";
 
 const AuthContext = createContext();
 
@@ -32,7 +32,6 @@ export const AuthProvider = ({ children }) => {
     loadUserData();
   }, []);
 
-  // Function to handle user login
   const login = async (email, password) => {
     try {
       const response = await axiosInstance.post("/auth/login", {
@@ -62,7 +61,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Function to handle user registration
   const register = async (userData) => {
     try {
       const response = await axiosInstance.post("/auth/register", userData);
@@ -75,12 +73,19 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Unexpected response from server");
       }
     } catch (error) {
-      // Handle errors as before
-      if (error.response && error.response.data && error.response.data.error) {
-        throw new Error(error.response.data.error);
+      // Handle errors from the backend response
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        // If the error response contains a message, throw it as an error
+        throw new Error(error.response.data.message);
       } else if (error.message) {
+        // If the error is a general axios error, throw its message
         throw new Error(error.message);
       } else {
+        // If the error is not recognized, throw a generic error message
         throw new Error("An error occurred. Please try again later.");
       }
     }
@@ -113,7 +118,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ token, userId, roleId, login, register, resetPassword, logout }}
+      value={{ token, login, register, resetPassword, logout }}
     >
       {children}
     </AuthContext.Provider>

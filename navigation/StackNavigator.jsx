@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { AuthProvider } from "../auth/AuthContext";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -24,45 +24,71 @@ import WalletScreen from "../screens/SidebarScreens/WalletScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import PhotoFullScreen from "../screens/PhotoFullScreen";
 import FollowersFollowingScreen from "../screens/FollowersFollowingScreen";
-import LoadingIndicator from "../components/LoadingIndicator";
+import AuthContext from "../auth/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import LoadingIndicator from "../components/LoadingIndicator";
 
 const Stack = createStackNavigator();
 
 const StackNavigator = () => {
+  const { token } = useContext(AuthContext);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkToken = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem("token");
+        if (storedToken) {
+          setLoading(false); // Set loading to false after token check
+        }
+      } catch (error) {
+        console.error("Error loading token from AsyncStorage:", error);
+        setLoading(false); // Set loading to false in case of error
+      }
+    };
+
+    checkToken();
+  }, []);
+
+  if (loading) {
+    // Render loading indicator while checking for token
+    return <LoadingIndicator />;
+  }
+
   return (
     <Stack.Navigator>
-      <Stack.Screen
-        name="MainTabs"
-        component={BottomTabNavigator} // Pass the BottomTabNavigator component directly
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="Fields" component={FieldsScreen} />
-      <Stack.Screen name="Team" component={TeamScreen} />
-      <Stack.Screen name="Tournaments" component={TournamentsScreen} />
-      <Stack.Screen name="Sidebar" component={Sidebar} />
-      <Stack.Screen name="Notification" component={Notification} />
-      <Stack.Screen name="Search" component={SearchScreen} />
-      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-      <Stack.Screen name="Friends" component={FriendsScreen} />
-      <Stack.Screen name="Wallet" component={WalletScreen} />
-      <Stack.Screen name="BookingsHistory" component={BookingsHistoryScreen} />
-      <Stack.Screen name="Favorites" component={FavoritesScreen} />
-      <Stack.Screen name="About" component={AboutScreen} />
-      <Stack.Screen name="Profile" component={ProfileScreen} />
-      <Stack.Screen name="PhotoFullScreen" component={PhotoFullScreen} />
-      <Stack.Screen
-        name="FollowersFollowing"
-        component={FollowersFollowingScreen}
-      />
-      {/* Public Screens (no protection needed) */}
-      <Stack.Screen name="Welcome" component={Welcome} />
-      <Stack.Screen name="Signup" component={Signup} />
-      <Stack.Screen name="Login" component={Login} />
-      <Stack.Screen name="Verification" component={VerificationScreen} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+      {/* Public Screens */}
+      {token ? (
+        <>
+          <Stack.Screen
+            name="MainTabs"
+            component={BottomTabNavigator}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen name="Sidebar" component={Sidebar} />
+          <Stack.Screen name="Notification" component={Notification} />
+          <Stack.Screen name="Search" component={SearchScreen} />
+          <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+          <Stack.Screen name="Friends" component={FriendsScreen} />
+          <Stack.Screen name="Wallet" component={WalletScreen} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="PhotoFullScreen" component={PhotoFullScreen} />
+          <Stack.Screen
+            name="FollowersFollowing"
+            component={FollowersFollowingScreen}
+          />
+        </>
+      ) : (
+        <>
+          <Stack.Screen name="Welcome" component={Welcome} />
+          <Stack.Screen name="Signup" component={Signup} />
+          <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="Verification" component={VerificationScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+        </>
+      )}
     </Stack.Navigator>
   );
 };
+
 export default StackNavigator;
