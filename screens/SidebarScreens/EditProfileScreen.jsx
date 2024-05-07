@@ -1,62 +1,91 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, Alert, Image } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import * as Permissions from "expo-permissions";
-import axios from "axios";
-import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  Alert,
+  Modal,
+  Dimensions,
+  StyleSheet,
+} from "react-native";
+import axiosInstance from "../../utils/axios";
+import CountryPicker, {
+  CountryModalProvider,
+} from "react-native-country-picker-modal";
+import { Picker } from "@react-native-picker/picker";
+const { width, height } = Dimensions.get("window");
 
-const EditProfileScreen = ({ navigation }) => {
+const EditProfileScreen = () => {
   const [name, setName] = useState("");
-  const [location, setLocation] = useState("");
-  const [image, setImage] = useState(null);
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [sports, setSports] = useState([]);
+  const [chosenSport, setChosenSport] = useState("");
+  const [chosenSportId, setChosenSportId] = useState(""); // New state to store the sport ID
   const [loading, setLoading] = useState(false);
+  const [playerId, setPlayerId] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    navigation.setOptions({ headerShown: false });
+    const fetchData = async () => {
+      try {
+        // Fetch sports data from the backend
+        const sportResponse = await axiosInstance.get("/sport/all");
+        setSports(sportResponse.data);
+
+        // Fetch player data from the backend
+        const playerResponse = await axiosInstance.get("/player");
+        const playerData = playerResponse.data;
+        if (playerData && playerData.id) {
+          setPlayerId(playerData.id);
+          setName(playerData.name);
+          setSelectedCountry(playerData.location);
+          // Set the chosen sport and its ID from playerData
+          setChosenSport(playerData.sport);
+          setChosenSportId(playerData.sport_id);
+        } else {
+          console.log("Player account does not exist");
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const handleImageUpload = async () => {
-    try {
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        throw new Error("Camera roll permission denied");
-      }
-
-      const imagePickerResult = await ImagePicker.launchImageLibraryAsync();
-      if (imagePickerResult.cancelled) {
-        throw new Error("Image selection cancelled");
-      }
-
-      setImage(imagePickerResult.uri);
-    } catch (error) {
-      Alert.alert("Error", error.message);
-    }
+  const handleSelectSport = (sport) => {
+    // Set the chosen sport and its ID
+    setChosenSport(sport.name);
+    setChosenSportId(sport.id);
+    setShowModal(false);
   };
 
   const handleSubmit = async () => {
     try {
       setLoading(true);
 
+      // Log the chosenSportId state
+      console.log("Chosen Sport ID:", chosenSportId);
+
       const requestData = {
         name: name,
-        location: location,
+        location: selectedCountry,
+        sport_id: chosenSportId, // Send the chosen sport ID instead of the name
       };
 
-      const token = await AsyncStorage.getItem("token");
-      console.log("Retrieved token from AsyncStorage:", token);
+      console.log("Data:", requestData);
 
-      const response = await axios.post(
-        "http://192.168.43.48:4000/api/player/create",
-        requestData,
-        {
-          headers: {
-            Authorization: "Bearer " + token,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const endpoint = playerId
+        ? `/player/update/${playerId}`
+        : "/player/create";
+      const method = playerId ? "PUT" : "POST";
+
+      const response = await axiosInstance({
+        method: method,
+        url: endpoint,
+        data: requestData,
+      });
 
       setLoading(false);
       Alert.alert(
@@ -72,7 +101,6 @@ const EditProfileScreen = ({ navigation }) => {
       );
     }
   };
-
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text>Edit Profile</Text>
@@ -88,10 +116,24 @@ const EditProfileScreen = ({ navigation }) => {
           width: 200,
         }}
       />
+      <CountryModalProvider>
+        <CountryPicker
+          countryCode={selectedCountry && selectedCountry.cca2}
+          withFlag={true}
+          withCountryNameButton
+          withFilter
+          withAlphaFilter
+          withEmoji
+          onSelect={(value) => {
+            const countryName = value.name; // Extract the country name
+            setSelectedCountry(countryName); // Pass only the country name
+          }}
+        />
+      </CountryModalProvider>
       <TextInput
-        placeholder="Location"
-        value={location}
-        onChangeText={setLocation}
+        placeholder="Country"
+        value={selectedCountry}
+        onChangeText={setSelectedCountry}
         style={{
           borderWidth: 1,
           borderColor: "gray",
@@ -100,18 +142,61 @@ const EditProfileScreen = ({ navigation }) => {
           width: 200,
         }}
       />
-      <Button
-        title="Upload Image"
-        onPress={handleImageUpload}
-        disabled={loading}
-      />
-      {image && (
-        <Image
-          source={{ uri: image }}
-          style={{ width: 200, height: 200, margin: 10 }}
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <TextInput
+          placeholder="Sport"
+          value={chosenSport || "Choose a sport"}
+          editable={false}
+          style={{
+            borderWidth: 1,
+            borderColor: "gray",
+            padding: 10,
+            margin: 10,
+            width: 150,
+          }}
+          onTouchStart={() => setShowModal(true)}
         />
-      )}
-      <Button title="Save" onPress={handleSubmit} disabled={loading} />
+        <Button title="Save" onPress={handleSubmit} disabled={loading} />
+      </View>
+      <Modal
+        visible={showModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowModal(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.5)",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "white",
+              padding: 20,
+              width: 300,
+              borderRadius: 20,
+            }}
+          >
+            <Picker
+              selectedValue={chosenSportId} // Use the sport ID as the selected value
+              onValueChange={(itemValue) => handleSelectSport(itemValue)}
+            >
+              <Picker.Item label="Select Sport" value="" />
+              {sports.map((sport) => (
+                <Picker.Item
+                  label={sport.name}
+                  value={sport.id} // Use the sport ID as the value
+                  key={sport.id}
+                />
+              ))}
+            </Picker>
+            <Button title="Close" onPress={() => setShowModal(false)} />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };

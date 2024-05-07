@@ -50,11 +50,6 @@ const StackNavigator = () => {
     checkToken();
   }, []);
 
-  if (loading) {
-    // Render loading indicator while checking for token
-    return <LoadingIndicator />;
-  }
-
   return (
     <Stack.Navigator>
       {/* Public Screens */}
@@ -71,6 +66,13 @@ const StackNavigator = () => {
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
           <Stack.Screen name="Friends" component={FriendsScreen} />
           <Stack.Screen name="Wallet" component={WalletScreen} />
+          <Stack.Screen name="About" component={AboutScreen} />
+
+          <Stack.Screen
+            name="BookingsHistory"
+            component={BookingsHistoryScreen}
+          />
+          <Stack.Screen name="Favorites" component={FavoritesScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="PhotoFullScreen" component={PhotoFullScreen} />
           <Stack.Screen
