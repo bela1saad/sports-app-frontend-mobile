@@ -25,17 +25,21 @@ const EditProfileScreen = () => {
   const [sports, setSports] = useState([]);
   const [chosenSport, setChosenSport] = useState("");
   const [chosenSportId, setChosenSportId] = useState(null);
-
+  const [, setShowCountryPickerState] = useState(false); // Use this syntax
   const [loading, setLoading] = useState(false);
   const [playerId, setPlayerId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [positions, setPositions] = useState([]);
   const [chosenPosition, setChosenPosition] = useState("");
   const [chosenPositionId, setChosenPositionId] = useState(null);
+  const [showPositionModal, setShowPositionModal] = useState(false);
+  const [showSportPicker, setShowSportPicker] = useState(false); // Use separate state for sport picker
 
   const handleCountrySelect = (countryName) => {
+    console.log("Selected country:", countryName);
     setSelectedCountry(countryName);
-    setShowCountryPicker(false); // Close the country picker after selection
+    setShowCountryPickerState(false); // Forced update
+    console.log("showCountryPicker state after update:", showCountryPicker); // Might still show true
   };
 
   useEffect(() => {
@@ -43,11 +47,11 @@ const EditProfileScreen = () => {
       try {
         // Fetch sports data from the backend
         const sportResponse = await axiosInstance.get("/sport/all");
+        console.log("Fetched sports data:", sportResponse.data);
         setSports(sportResponse.data);
 
-        // Fetch positions data from the backend
-        const positionResponse = await axiosInstance.get("/position/all");
-        setPositions(positionResponse.data);
+        // Fetch positions data (initially empty)
+        setPositions([]); // Reset positions initially
 
         // Fetch player data from the backend
         const playerResponse = await axiosInstance.get("/player");
@@ -59,6 +63,19 @@ const EditProfileScreen = () => {
           setChosenSport(playerData.sport);
           setChosenSportId(playerData.sport_id);
           setChosenPosition(playerData.position); // If position data is available
+          setChosenPositionId(playerData.position_id); // Set chosen position ID if available
+
+          // If player has a sport selected, fetch positions for that sport
+          if (playerData.sport_id) {
+            const positionResponse = await axiosInstance.get(
+              `/sport/positions/${playerData.sport_id}`
+            );
+            console.log(
+              "Fetched positions data for player's sport:",
+              positionResponse.data
+            );
+            setPositions(positionResponse.data);
+          }
         } else {
           console.log("Player account does not exist");
         }
@@ -77,10 +94,38 @@ const EditProfileScreen = () => {
     if (selectedSport) {
       setChosenSport(selectedSport);
       setChosenSportId(selectedSport.id);
+
+      // **Don't reset chosenPosition and chosenPositionId here**
+
       setShowModal(false);
+
+      // Fetch positions for the newly chosen sport only if needed
+      if (!positions.length || positions[0].sport_id !== sportId) {
+        const fetchData = async () => {
+          try {
+            const positionResponse = await axiosInstance.get(
+              `/sport/positions/${selectedSport.id}`
+            );
+            console.log(
+              "Fetched positions data for chosen sport:",
+              positionResponse.data
+            );
+            setPositions(positionResponse.data);
+          } catch (error) {
+            console.error("Error fetching positions:", error);
+          }
+        };
+        fetchData();
+      }
     } else {
       console.log("Sport not found");
     }
+  };
+
+  const handleOpenPositionPicker = () => {
+    console.log("Opening sport picker modal"); // Add this line
+    setShowModal(false); // Close position picker modal (if open)
+    setShowSportPicker(true); // Open sport picker modal
   };
 
   const handleSubmit = async () => {
@@ -91,9 +136,9 @@ const EditProfileScreen = () => {
         name: name,
         location: selectedCountry,
         sportId: chosenSportId,
-        position: chosenPosition,
+        positionId: chosenPositionId, // Update to send position_id instead of position
       };
-
+      console.log("Request data:", requestData); // Log the requestData object
       const endpoint = playerId
         ? `/player/update/${playerId}`
         : "/player/create";
@@ -106,6 +151,7 @@ const EditProfileScreen = () => {
       });
 
       setLoading(false);
+      console.log("Position data sent to backend:", requestData); // Add this line
       Alert.alert(
         "Profile Updated",
         "Your profile has been updated successfully."
@@ -119,7 +165,6 @@ const EditProfileScreen = () => {
       );
     }
   };
-
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text>Edit Profile</Text>
@@ -137,38 +182,32 @@ const EditProfileScreen = () => {
       />
       <TouchableOpacity
         onPress={() => setShowCountryPicker(true)}
-        style={styles.countryPickerButton}
+        style={[styles.countryPickerButton, { textDecorationLine: "none" }]} // Add style
       >
         <Text style={styles.countryPickerText}>
           {selectedCountry || "Select Country"}
         </Text>
       </TouchableOpacity>
+
       {showCountryPicker && (
-        <Modal
-          visible={true}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setShowCountryPicker(false)}
-        >
-          <View style={styles.modalContainer}>
-            <CountryModalProvider>
-              <CountryPicker
-                withFlag
-                withCountryNameButton
-                withFilter
-                withAlphaFilter
-                withEmoji
-                onSelect={(value) => handleCountrySelect(value.name)}
-              />
-            </CountryModalProvider>
-          </View>
-        </Modal>
+        <View style={styles.countryPickerContainer}>
+          {/* Add a container style */}
+          <CountryModalProvider>
+            <CountryPicker
+              withFlag
+              withCountryNameButton
+              withFilter
+              withAlphaFilter
+              withEmoji
+              onSelect={(value) => handleCountrySelect(value.name)}
+            />
+          </CountryModalProvider>
+        </View>
       )}
+
       <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <TextInput
-          placeholder="Sport"
-          value={chosenSport ? chosenSport.name : "Choose a sport"}
-          editable={false}
+        <TouchableOpacity
+          onPress={() => setShowSportPicker(true)}
           style={{
             borderWidth: 1,
             borderColor: "gray",
@@ -176,15 +215,17 @@ const EditProfileScreen = () => {
             margin: 10,
             width: 150,
           }}
-          onTouchStart={() => setShowModal(true)}
-        />
+        >
+          <Text>{chosenSport ? chosenSport.name : "Choose a sport"}</Text>
+        </TouchableOpacity>
         <Button title="Save" onPress={handleSubmit} disabled={loading} />
       </View>
+
       <Modal
-        visible={showModal}
+        visible={showSportPicker}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowModal(false)}
+        onRequestClose={() => setShowSportPicker(false)}
       >
         <View
           style={{
@@ -215,23 +256,62 @@ const EditProfileScreen = () => {
                 />
               ))}
             </Picker>
-            <Button title="Close" onPress={() => setShowModal(false)} />
+            <Button title="Close" onPress={() => setShowSportPicker(false)} />
           </View>
         </View>
       </Modal>
-      {/* Position TextInput */}
-      <TextInput
-        placeholder="Position"
-        value={chosenPosition}
-        onChangeText={setChosenPosition}
-        style={{
-          borderWidth: 1,
-          borderColor: "gray",
-          padding: 10,
-          margin: 10,
-          width: 200,
-        }}
-      />
+
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <TextInput
+          placeholder="Position"
+          value={chosenPosition ? chosenPosition.name : "Choose a position"}
+          editable={false}
+          style={{
+            borderWidth: 1,
+            borderColor: "gray",
+            padding: 10,
+            margin: 10,
+            width: 200,
+          }}
+          onTouchStart={() => setShowPositionModal(true)} // Open position picker modal
+        />
+
+        {chosenPosition &&
+          console.log("Position in TextInput:", chosenPosition.name)}
+      </View>
+
+      <Modal visible={showPositionModal}>
+        {positions.length > 0 && (
+          <View>
+            <Text style={{ marginBottom: 10 }}>Choose a Position</Text>
+            <Picker
+              selectedValue={chosenPositionId}
+              onValueChange={(itemValue) => {
+                const selectedPosition = positions.find(
+                  (position) => position.sport_position.positionId === itemValue
+                );
+                setChosenPosition(selectedPosition); // Pass the entire position object
+                setChosenPositionId(itemValue); // Update ID separately (optional)
+                console.log("Selected position:", selectedPosition); // For verification
+
+                console.log("Selected position ID:", itemValue);
+                console.log("Selected position:", selectedPosition);
+                console.log("Positions array:", positions);
+              }}
+            >
+              <Picker.Item label="Select Position" value="" />
+              {positions.map((position) => (
+                <Picker.Item
+                  label={position.name}
+                  value={position.sport_position.positionId}
+                  key={position.id}
+                />
+              ))}
+            </Picker>
+          </View>
+        )}
+        <Button title="Close" onPress={() => setShowPositionModal(false)} />
+      </Modal>
     </View>
   );
 };
