@@ -15,6 +15,9 @@ import CountryPicker, {
   CountryModalProvider,
 } from "react-native-country-picker-modal";
 import { Picker } from "@react-native-picker/picker";
+import FileUploadComponent from "../../components/FileUploadComponent";
+import * as ImagePicker from "expo-image-picker"; // Import ImagePicker for selecting images
+import supabase from "../../utils/supabaseConfig";
 
 const { width, height } = Dimensions.get("window");
 
@@ -34,6 +37,7 @@ const EditProfileScreen = () => {
   const [chosenPositionId, setChosenPositionId] = useState(null);
   const [showPositionModal, setShowPositionModal] = useState(false);
   const [showSportPicker, setShowSportPicker] = useState(false); // Use separate state for sport picker
+  const [profilePic, setProfilePic] = useState(null);
 
   const handleCountrySelect = (countryName) => {
     console.log("Selected country:", countryName);
@@ -64,7 +68,7 @@ const EditProfileScreen = () => {
           setChosenSportId(playerData.sport_id);
           setChosenPosition(playerData.position); // If position data is available
           setChosenPositionId(playerData.position_id); // Set chosen position ID if available
-
+          setProfilePic(playerData.pic); // Assuming profilePic is the key of the profile picture
           // If player has a sport selected, fetch positions for that sport
           if (playerData.sport_id) {
             const positionResponse = await axiosInstance.get(
@@ -86,6 +90,11 @@ const EditProfileScreen = () => {
 
     fetchData();
   }, []);
+
+  const handleProfilePicUpload = (uploadedKey) => {
+    // Handle the uploaded profile picture key
+    setProfilePic(uploadedKey);
+  };
 
   const handleSelectSport = (sportId) => {
     const selectedSport = sports.find(
@@ -122,10 +131,31 @@ const EditProfileScreen = () => {
     }
   };
 
-  const handleOpenPositionPicker = () => {
-    console.log("Opening sport picker modal"); // Add this line
-    setShowModal(false); // Close position picker modal (if open)
-    setShowSportPicker(true); // Open sport picker modal
+  const handleSelectPosition = (positionId) => {
+    console.log("Received positionId:", positionId);
+    console.log("Positions array:", positions);
+
+    // Convert the received positionId to a number
+    const selectedPositionId = parseInt(positionId, 10);
+
+    // Use find method to locate the position object by matching positionId
+    const selectedPosition = positions.find(
+      (position) => position.sport_position.positionId === selectedPositionId
+    );
+
+    if (selectedPosition) {
+      console.log("Selected position:", selectedPosition);
+      setChosenPosition(selectedPosition);
+      setChosenPositionId(selectedPositionId); // Use the parsed number
+      setShowPositionModal(false);
+    } else {
+      console.log("Position not found");
+      console.log("Received positionId type:", typeof positionId); // Log the type of positionId
+      console.log(
+        "PositionId expected type:",
+        typeof positions[0].sport_position.positionId
+      ); // Log the type of positionId in the array
+    }
   };
 
   const handleSubmit = async () => {
@@ -136,7 +166,7 @@ const EditProfileScreen = () => {
         name: name,
         location: selectedCountry,
         sportId: chosenSportId,
-        positionId: chosenPositionId, // Update to send position_id instead of position
+        positionId: chosenPositionId,
       };
       console.log("Request data:", requestData); // Log the requestData object
       const endpoint = playerId
@@ -168,6 +198,22 @@ const EditProfileScreen = () => {
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text>Edit Profile</Text>
+
+      {/* Render the profile picture */}
+      {profilePic ? (
+        <Image
+          source={{
+            uri: `https://wznpzguqtwktpfeoccwk.supabase.co/storage/v1/object/public/${profilePic}`,
+          }}
+          style={{ width: 200, height: 200, marginVertical: 10 }}
+        />
+      ) : (
+        <Text>No profile picture selected</Text>
+      )}
+
+      {/* Use FileUploadComponent for profile picture upload */}
+      <FileUploadComponent />
+
       <TextInput
         placeholder="Name"
         value={name}
@@ -286,18 +332,7 @@ const EditProfileScreen = () => {
             <Text style={{ marginBottom: 10 }}>Choose a Position</Text>
             <Picker
               selectedValue={chosenPositionId}
-              onValueChange={(itemValue) => {
-                const selectedPosition = positions.find(
-                  (position) => position.sport_position.positionId === itemValue
-                );
-                setChosenPosition(selectedPosition); // Pass the entire position object
-                setChosenPositionId(itemValue); // Update ID separately (optional)
-                console.log("Selected position:", selectedPosition); // For verification
-
-                console.log("Selected position ID:", itemValue);
-                console.log("Selected position:", selectedPosition);
-                console.log("Positions array:", positions);
-              }}
+              onValueChange={(itemValue) => handleSelectPosition(itemValue)}
             >
               <Picker.Item label="Select Position" value="" />
               {positions.map((position) => (
