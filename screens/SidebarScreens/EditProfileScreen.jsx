@@ -199,18 +199,6 @@ const EditProfileScreen = () => {
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text>Edit Profile</Text>
 
-      {/* Render the profile picture */}
-      {profilePic ? (
-        <Image
-          source={{
-            uri: `https://wznpzguqtwktpfeoccwk.supabase.co/storage/v1/object/public/${profilePic}`,
-          }}
-          style={{ width: 200, height: 200, marginVertical: 10 }}
-        />
-      ) : (
-        <Text>No profile picture selected</Text>
-      )}
-
       {/* Use FileUploadComponent for profile picture upload */}
       <FileUploadComponent />
 
