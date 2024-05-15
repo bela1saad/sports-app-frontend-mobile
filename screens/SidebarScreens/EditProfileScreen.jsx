@@ -40,7 +40,6 @@ const EditProfileScreen = () => {
   const [profilePic, setProfilePic] = useState(null);
 
   const handleCountrySelect = (countryName) => {
-    console.log("Selected country:", countryName);
     setSelectedCountry(countryName);
     setShowCountryPickerState(false); // Forced update
     console.log("showCountryPicker state after update:", showCountryPicker); // Might still show true
@@ -51,7 +50,7 @@ const EditProfileScreen = () => {
       try {
         // Fetch sports data from the backend
         const sportResponse = await axiosInstance.get("/sport/all");
-        console.log("Fetched sports data:", sportResponse.data);
+
         setSports(sportResponse.data);
 
         // Fetch positions data (initially empty)
@@ -74,10 +73,7 @@ const EditProfileScreen = () => {
             const positionResponse = await axiosInstance.get(
               `/sport/positions/${playerData.sport_id}`
             );
-            console.log(
-              "Fetched positions data for player's sport:",
-              positionResponse.data
-            );
+
             setPositions(positionResponse.data);
           }
         } else {
@@ -91,9 +87,9 @@ const EditProfileScreen = () => {
     fetchData();
   }, []);
 
-  const handleProfilePicUpload = (uploadedKey) => {
-    // Handle the uploaded profile picture key
-    setProfilePic(uploadedKey);
+  const handleProfilePicUpload = (imageUrl) => {
+    console.log("Received image URL:", imageUrl);
+    setProfilePic(imageUrl);
   };
 
   const handleSelectSport = (sportId) => {
@@ -132,9 +128,6 @@ const EditProfileScreen = () => {
   };
 
   const handleSelectPosition = (positionId) => {
-    console.log("Received positionId:", positionId);
-    console.log("Positions array:", positions);
-
     // Convert the received positionId to a number
     const selectedPositionId = parseInt(positionId, 10);
 
@@ -144,7 +137,6 @@ const EditProfileScreen = () => {
     );
 
     if (selectedPosition) {
-      console.log("Selected position:", selectedPosition);
       setChosenPosition(selectedPosition);
       setChosenPositionId(selectedPositionId); // Use the parsed number
       setShowPositionModal(false);
@@ -161,9 +153,14 @@ const EditProfileScreen = () => {
   const handleSubmit = async () => {
     try {
       setLoading(true);
+      console.log("Profile pic URL in handleSubmit:", profilePic);
 
+      const picUrl = profilePic ? profilePic.toString() : null;
+
+      console.log("Profile pic URL:", picUrl); // Log the profile pic URL
       const requestData = {
         name: name,
+        pic: picUrl,
         location: selectedCountry,
         sportId: chosenSportId,
         positionId: chosenPositionId,
@@ -199,8 +196,8 @@ const EditProfileScreen = () => {
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <Text>Edit Profile</Text>
 
-      {/* Use FileUploadComponent for profile picture upload */}
-      <FileUploadComponent />
+      {/* Pass the callback function to FileUploadComponent */}
+      <FileUploadComponent onImageUpload={handleProfilePicUpload} />
 
       <TextInput
         placeholder="Name"
@@ -309,9 +306,6 @@ const EditProfileScreen = () => {
           }}
           onTouchStart={() => setShowPositionModal(true)} // Open position picker modal
         />
-
-        {chosenPosition &&
-          console.log("Position in TextInput:", chosenPosition.name)}
       </View>
 
       <Modal visible={showPositionModal}>

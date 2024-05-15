@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Button, Image, View, Text, Platform } from "react-native";
+import { Button, Image, View, Text } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { supabase } from "../config/initSupabase"; // Import your Supabase client
+import { supabase } from "../config/initSupabase";
 
 const FileUploadComponent = () => {
   const [imageUri, setImageUri] = useState(null);
@@ -14,7 +14,7 @@ const FileUploadComponent = () => {
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        alert("Permission to access camera roll is required.");
+        alert("Permission to access media library is required.");
       }
     })();
   }, []);
@@ -64,32 +64,27 @@ const FileUploadComponent = () => {
     setUploading(true);
     setError(null);
 
-    const filename = imageUri.split("/").pop();
-
     try {
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+
+      const arrayBuffer = await new Response(blob).arrayBuffer();
+
+      // Get the filename from the imageUri
+      const filename = imageUri.split("/").pop(); // Extract the filename from the URI
+
       const { data, error } = await supabase.storage
-        .from("files")
-        .upload(filename, imageUri, { public: true });
+        .from("files") // Specify your bucket name here
+        .upload(filename, arrayBuffer); // Use the extracted filename for upload
 
       if (error) {
-        console.error("Image upload error:", error.message);
         alert("Image upload failed.");
         setError(error);
       } else {
-        // Check if the uploaded file has a valid publicURL
-        const imageUrl = data?.publicURL; // Use the 'publicURL' from the upload response
+        // Construct the image URL using the Supabase storage URL and filename
+        const imageUrl = `${supabase.storageUrl}/object/public/files/${filename}`;
+        setImageUrl(imageUrl);
         console.log("Uploaded image URL:", imageUrl);
-
-        if (imageUrl) {
-          setImageUrl(imageUrl); // Set the imageUrl state to display the uploaded image
-
-          // Save the imageUrl to your database (replace with your database saving logic)
-          saveImageUrlToDatabase(imageUrl);
-        } else {
-          console.error("Public URL not found in upload response.");
-          alert("Image upload failed. Public URL not found.");
-          setError({ message: "Public URL not found." });
-        }
       }
     } catch (error) {
       console.error("Supabase storage upload error:", error.message);
@@ -100,13 +95,6 @@ const FileUploadComponent = () => {
     } finally {
       setUploading(false);
     }
-  };
-
-  const saveImageUrlToDatabase = (imageUrl) => {
-    // Implement your database saving logic here
-    // Example: Make an API call to save imageUrl to your database
-    console.log("Saving image URL to database:", imageUrl);
-    // Your database saving logic goes here
   };
 
   return (
@@ -126,10 +114,6 @@ const FileUploadComponent = () => {
       )}
       {imageUrl && <Text>Uploaded image URL: {imageUrl}</Text>}
       {error && <Text style={{ color: "red" }}>Error: {error.message}</Text>}
-      {/* Updated logic to display uploaded image */}
-      {imageUrl && (
-        <Image source={{ uri: imageUrl }} style={{ width: 200, height: 200 }} />
-      )}
     </View>
   );
 };
