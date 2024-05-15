@@ -42,6 +42,7 @@
     "react-native-country-picker-modal": "^2.0.0",
     "react-native-dotenv": "^3.4.11",
     "react-native-gesture-handler": "~2.14.0",
+    "react-native-google-places-autocomplete": "^2.5.6",
     "react-native-image-picker": "^7.1.2",
     "react-native-loading-spinner-overlay": "^3.0.1",
     "react-native-maps": "^1.14.0",

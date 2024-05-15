@@ -9,6 +9,8 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  FlatList,
+  Image,
 } from "react-native";
 import axiosInstance from "../../utils/axios";
 import CountryPicker, {
@@ -16,8 +18,9 @@ import CountryPicker, {
 } from "react-native-country-picker-modal";
 import { Picker } from "@react-native-picker/picker";
 import FileUploadComponent from "../../components/FileUploadComponent";
-import * as ImagePicker from "expo-image-picker"; // Import ImagePicker for selecting images
 import supabase from "../../utils/supabaseConfig";
+import axios from "axios";
+import { useNavigation } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
@@ -28,7 +31,7 @@ const EditProfileScreen = () => {
   const [sports, setSports] = useState([]);
   const [chosenSport, setChosenSport] = useState("");
   const [chosenSportId, setChosenSportId] = useState(null);
-  const [, setShowCountryPickerState] = useState(false); // Use this syntax
+  const [showCountryPickerState, setShowCountryPickerState] = useState(false);
   const [loading, setLoading] = useState(false);
   const [playerId, setPlayerId] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -36,44 +39,37 @@ const EditProfileScreen = () => {
   const [chosenPosition, setChosenPosition] = useState("");
   const [chosenPositionId, setChosenPositionId] = useState(null);
   const [showPositionModal, setShowPositionModal] = useState(false);
-  const [showSportPicker, setShowSportPicker] = useState(false); // Use separate state for sport picker
-  const [profilePic, setProfilePic] = useState(null);
-
-  const handleCountrySelect = (countryName) => {
-    setSelectedCountry(countryName);
-    setShowCountryPickerState(false); // Forced update
-    console.log("showCountryPicker state after update:", showCountryPicker); // Might still show true
-  };
+  const [showSportPicker, setShowSportPicker] = useState(false);
+  const [profilePicUri, setProfilePicUri] = useState(null);
+  const [city, setCity] = useState("");
+  const [citySuggestions, setCitySuggestions] = useState([]);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch sports data from the backend
         const sportResponse = await axiosInstance.get("/sport/all");
-
         setSports(sportResponse.data);
 
-        // Fetch positions data (initially empty)
-        setPositions([]); // Reset positions initially
+        setPositions([]);
 
-        // Fetch player data from the backend
         const playerResponse = await axiosInstance.get("/player");
         const playerData = playerResponse.data;
         if (playerData && playerData.id) {
           setPlayerId(playerData.id);
           setName(playerData.name);
           setSelectedCountry(playerData.location);
+          setCity(playerData.city);
           setChosenSport(playerData.sport);
           setChosenSportId(playerData.sport_id);
-          setChosenPosition(playerData.position); // If position data is available
-          setChosenPositionId(playerData.position_id); // Set chosen position ID if available
-          setProfilePic(playerData.pic); // Assuming profilePic is the key of the profile picture
-          // If player has a sport selected, fetch positions for that sport
+          setChosenPosition(playerData.position);
+          setChosenPositionId(playerData.position_id);
+          setProfilePicUri(playerData.pic);
           if (playerData.sport_id) {
             const positionResponse = await axiosInstance.get(
               `/sport/positions/${playerData.sport_id}`
             );
-
             setPositions(positionResponse.data);
           }
         } else {
@@ -87,9 +83,47 @@ const EditProfileScreen = () => {
     fetchData();
   }, []);
 
-  const handleProfilePicUpload = (imageUrl) => {
-    console.log("Received image URL:", imageUrl);
-    setProfilePic(imageUrl);
+  useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
+
+  const handleImageSelected = (uri) => {
+    setProfilePicUri(uri);
+  };
+
+  const handleCountrySelect = (countryName) => {
+    setSelectedCountry(countryName);
+    setShowCountryPickerState(false);
+  };
+
+  const fetchCitySuggestions = async (query) => {
+    try {
+      const response = await axios.get(
+        `https://api.geoapify.com/v1/geocode/autocomplete?text=${query}&type=city&limit=5&apiKey=d42674f055a346eab608a3347a4e5450`
+      );
+      setCitySuggestions(response.data.features);
+      setShowCitySuggestions(true);
+    } catch (error) {
+      console.error("Error fetching city suggestions:", error);
+    }
+  };
+
+  const handleCityChange = (query) => {
+    setCity(query);
+    if (query.length > 2) {
+      fetchCitySuggestions(query);
+    } else {
+      setCitySuggestions([]);
+      setShowCitySuggestions(false);
+    }
+  };
+
+  const handleCitySelect = (city) => {
+    setCity(city.properties.city);
+    setCitySuggestions([]);
+    setShowCitySuggestions(false);
   };
 
   const handleSelectSport = (sportId) => {
@@ -99,21 +133,12 @@ const EditProfileScreen = () => {
     if (selectedSport) {
       setChosenSport(selectedSport);
       setChosenSportId(selectedSport.id);
-
-      // **Don't reset chosenPosition and chosenPositionId here**
-
       setShowModal(false);
-
-      // Fetch positions for the newly chosen sport only if needed
       if (!positions.length || positions[0].sport_id !== sportId) {
         const fetchData = async () => {
           try {
             const positionResponse = await axiosInstance.get(
               `/sport/positions/${selectedSport.id}`
-            );
-            console.log(
-              "Fetched positions data for chosen sport:",
-              positionResponse.data
             );
             setPositions(positionResponse.data);
           } catch (error) {
@@ -128,44 +153,52 @@ const EditProfileScreen = () => {
   };
 
   const handleSelectPosition = (positionId) => {
-    // Convert the received positionId to a number
     const selectedPositionId = parseInt(positionId, 10);
-
-    // Use find method to locate the position object by matching positionId
     const selectedPosition = positions.find(
       (position) => position.sport_position.positionId === selectedPositionId
     );
-
     if (selectedPosition) {
       setChosenPosition(selectedPosition);
-      setChosenPositionId(selectedPositionId); // Use the parsed number
+      setChosenPositionId(selectedPositionId);
       setShowPositionModal(false);
     } else {
       console.log("Position not found");
-      console.log("Received positionId type:", typeof positionId); // Log the type of positionId
-      console.log(
-        "PositionId expected type:",
-        typeof positions[0].sport_position.positionId
-      ); // Log the type of positionId in the array
     }
+  };
+
+  const uploadImageToSupabase = async (uri) => {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    const arrayBuffer = await new Response(blob).arrayBuffer();
+    const filename = uri.split("/").pop();
+
+    const { data, error } = await supabase.storage
+      .from("files")
+      .upload(filename, arrayBuffer);
+    if (error) {
+      throw new Error(error.message);
+    }
+    return `${supabase.storageUrl}/object/public/files/${filename}`;
   };
 
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      console.log("Profile pic URL in handleSubmit:", profilePic);
 
-      const picUrl = profilePic ? profilePic.toString() : null;
+      let profilePicUrl = profilePicUri;
+      if (profilePicUri && !profilePicUri.startsWith("http")) {
+        profilePicUrl = await uploadImageToSupabase(profilePicUri);
+      }
 
-      console.log("Profile pic URL:", picUrl); // Log the profile pic URL
       const requestData = {
         name: name,
-        pic: picUrl,
+        pic: profilePicUrl,
         location: selectedCountry,
+        city: city,
         sportId: chosenSportId,
         positionId: chosenPositionId,
       };
-      console.log("Request data:", requestData); // Log the requestData object
+
       const endpoint = playerId
         ? `/player/update/${playerId}`
         : "/player/create";
@@ -178,7 +211,6 @@ const EditProfileScreen = () => {
       });
 
       setLoading(false);
-      console.log("Position data sent to backend:", requestData); // Add this line
       Alert.alert(
         "Profile Updated",
         "Your profile has been updated successfully."
@@ -192,64 +224,74 @@ const EditProfileScreen = () => {
       );
     }
   };
+
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Edit Profile</Text>
-
-      {/* Pass the callback function to FileUploadComponent */}
-      <FileUploadComponent onImageUpload={handleProfilePicUpload} />
-
-      <TextInput
-        placeholder="Name"
-        value={name}
-        onChangeText={setName}
-        style={{
-          borderWidth: 1,
-          borderColor: "gray",
-          padding: 10,
-          margin: 10,
-          width: 200,
-        }}
-      />
-      <TouchableOpacity
-        onPress={() => setShowCountryPicker(true)}
-        style={[styles.countryPickerButton, { textDecorationLine: "none" }]} // Add style
-      >
-        <Text style={styles.countryPickerText}>
-          {selectedCountry || "Select Country"}
-        </Text>
-      </TouchableOpacity>
-
-      {showCountryPicker && (
-        <View style={styles.countryPickerContainer}>
-          {/* Add a container style */}
-          <CountryModalProvider>
-            <CountryPicker
-              withFlag
-              withCountryNameButton
-              withFilter
-              withAlphaFilter
-              withEmoji
-              onSelect={(value) => handleCountrySelect(value.name)}
-            />
-          </CountryModalProvider>
-        </View>
-      )}
-
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Edit Profile</Text>
+        {profilePicUri && (
+          <Image source={{ uri: profilePicUri }} style={styles.profileImage} />
+        )}
+      </View>
+      <View style={styles.formContainer}>
+        <FileUploadComponent onImageSelected={handleImageSelected} />
+        <TextInput
+          placeholder="Name"
+          value={name}
+          onChangeText={setName}
+          style={styles.input}
+        />
+        <TextInput
+          placeholder="City"
+          value={city}
+          onChangeText={handleCityChange}
+          style={styles.input}
+        />
+        <TouchableOpacity
+          onPress={() => setShowCountryPicker(true)}
+          style={styles.pickerButton}
+        >
+          <Text style={styles.pickerButtonText}>
+            {selectedCountry || "Select Country"}
+          </Text>
+        </TouchableOpacity>
+        {showCountryPicker && (
+          <View style={styles.countryPickerContainer}>
+            <CountryModalProvider>
+              <CountryPicker
+                withFlag
+                withCountryNameButton
+                withFilter
+                withAlphaFilter
+                withEmoji
+                onSelect={(value) => handleCountrySelect(value.name)}
+              />
+            </CountryModalProvider>
+          </View>
+        )}
+        <FlatList
+          data={citySuggestions}
+          keyExtractor={(item) => item.properties.geocoding_id}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => handleCitySelect(item)}
+              style={styles.citySuggestionItem}
+            >
+              <Text style={styles.pickerButtonText}>
+                {item.properties.city}
+              </Text>
+            </TouchableOpacity>
+          )}
+          style={styles.citySuggestionsList}
+        />
         <TouchableOpacity
           onPress={() => setShowSportPicker(true)}
-          style={{
-            borderWidth: 1,
-            borderColor: "gray",
-            padding: 10,
-            margin: 10,
-            width: 150,
-          }}
+          style={styles.pickerButton}
         >
-          <Text>{chosenSport ? chosenSport.name : "Choose a sport"}</Text>
+          <Text style={styles.pickerButtonText}>
+            {chosenSport ? chosenSport.name : "Choose a sport"}
+          </Text>
         </TouchableOpacity>
-        <Button title="Save" onPress={handleSubmit} disabled={loading} />
       </View>
 
       <Modal
@@ -258,22 +300,9 @@ const EditProfileScreen = () => {
         transparent={true}
         onRequestClose={() => setShowSportPicker(false)}
       >
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "rgba(0,0,0,0.5)",
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: "white",
-              padding: 20,
-              width: 300,
-              borderRadius: 20,
-            }}
-          >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Sport</Text>
             <Picker
               selectedValue={chosenSportId}
               onValueChange={(itemValue) => handleSelectSport(itemValue)}
@@ -287,34 +316,34 @@ const EditProfileScreen = () => {
                 />
               ))}
             </Picker>
-            <Button title="Close" onPress={() => setShowSportPicker(false)} />
+            <Button
+              title="Close"
+              onPress={() => setShowSportPicker(false)}
+              style={styles.modalButton}
+            />
           </View>
         </View>
       </Modal>
 
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <TextInput
-          placeholder="Position"
-          value={chosenPosition ? chosenPosition.name : "Choose a position"}
-          editable={false}
-          style={{
-            borderWidth: 1,
-            borderColor: "gray",
-            padding: 10,
-            margin: 10,
-            width: 200,
-          }}
-          onTouchStart={() => setShowPositionModal(true)} // Open position picker modal
-        />
+      <View style={styles.inputContainer}>
+        <TouchableOpacity
+          onPress={() => setShowPositionModal(true)}
+          style={styles.pickerButton}
+        >
+          <Text style={styles.pickerButtonText}>
+            {chosenPosition ? chosenPosition.name : "Choose a position"}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <Modal visible={showPositionModal}>
-        {positions.length > 0 && (
-          <View>
-            <Text style={{ marginBottom: 10 }}>Choose a Position</Text>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Choose a Position</Text>
             <Picker
               selectedValue={chosenPositionId}
               onValueChange={(itemValue) => handleSelectPosition(itemValue)}
+              style={styles.picker}
             >
               <Picker.Item label="Select Position" value="" />
               {positions.map((position) => (
@@ -325,34 +354,105 @@ const EditProfileScreen = () => {
                 />
               ))}
             </Picker>
+            <Button
+              title="Close"
+              onPress={() => setShowPositionModal(false)}
+              style={styles.modalButton}
+            />
           </View>
-        )}
-        <Button title="Close" onPress={() => setShowPositionModal(false)} />
+        </View>
       </Modal>
+      <View style={styles.rowContainer}>
+        <Button
+          title="Save"
+          onPress={handleSubmit}
+          disabled={loading}
+          style={styles.saveButton}
+        />
+      </View>
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "#101010",
+    paddingHorizontal: 20,
+    paddingTop: 40, // Additional padding for better spacing
   },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
+  inputContainer: {
     marginBottom: 20,
   },
-  countryPickerButton: {
-    borderWidth: 1,
-    borderColor: "gray",
-    padding: 10,
-    margin: 10,
-    width: 200,
+  header: {
     alignItems: "center",
+    marginBottom: 20,
   },
-  countryPickerText: {
-    textAlign: "center",
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#05a759",
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginTop: 20,
+  },
+  formContainer: {
+    marginBottom: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#05a759",
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    color: "#FFFFFF",
+    backgroundColor: "#303030",
+  },
+  pickerButton: {
+    borderWidth: 1,
+    borderColor: "#05a759",
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    alignItems: "center",
+    backgroundColor: "#303030",
+  },
+  pickerButtonText: {
+    color: "#05a759",
+    fontSize: 16,
+  },
+  countryPickerContainer: {
+    borderWidth: 1,
+    borderColor: "#05a759",
+    borderRadius: 10,
+    marginBottom: 20,
+    backgroundColor: "#303030",
+  },
+  citySuggestionsList: {
+    borderWidth: 1,
+    borderColor: "#05a759",
+    borderRadius: 10,
+    marginBottom: 20,
+    backgroundColor: "#303030",
+  },
+  citySuggestionItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#05a759",
+  },
+  rowContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  saveButton: {
+    width: "50%", // Adjusted width for better positioning
+    backgroundColor: "#05a759",
+    borderRadius: 10,
   },
   modalContainer: {
     flex: 1,
@@ -360,5 +460,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
   },
+  modalContent: {
+    backgroundColor: "#101010",
+    padding: 20,
+    width: 300,
+    borderRadius: 20,
+  },
+  modalTitle: {
+    marginBottom: 10,
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#05a759",
+  },
+  modalButton: {
+    marginTop: 10,
+    backgroundColor: "#05a759",
+    borderRadius: 10,
+  },
 });
+
 export default EditProfileScreen;
