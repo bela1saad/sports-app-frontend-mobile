@@ -1,23 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button, Image, View, Text } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { supabase } from "../config/initSupabase";
+import supabase from "../utils/supabaseConfig";
 
-const FileUploadComponent = () => {
+const FileUploadComponent = ({ onImageUpload }) => {
   const [imageUri, setImageUri] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState(null);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    (async () => {
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        alert("Permission to access media library is required.");
-      }
-    })();
-  }, []);
 
   const pickImage = async () => {
     setError(null);
@@ -34,9 +24,8 @@ const FileUploadComponent = () => {
       console.log("ImagePicker result:", result);
 
       if (!result.cancelled) {
-        // Check if image selection was not cancelled
         if (result.assets && result.assets.length > 0 && result.assets[0].uri) {
-          setImageUri(result.assets[0].uri); // Use the URI from the first asset
+          setImageUri(result.assets[0].uri);
           console.log("Image selected:", result.assets[0].uri);
         } else {
           console.log("No URI returned for selected image.");
@@ -70,21 +59,21 @@ const FileUploadComponent = () => {
 
       const arrayBuffer = await new Response(blob).arrayBuffer();
 
-      // Get the filename from the imageUri
-      const filename = imageUri.split("/").pop(); // Extract the filename from the URI
+      const filename = imageUri.split("/").pop();
 
       const { data, error } = await supabase.storage
-        .from("files") // Specify your bucket name here
-        .upload(filename, arrayBuffer); // Use the extracted filename for upload
+        .from("files")
+        .upload(filename, arrayBuffer);
 
       if (error) {
         alert("Image upload failed.");
         setError(error);
       } else {
-        // Construct the image URL using the Supabase storage URL and filename
         const imageUrl = `${supabase.storageUrl}/object/public/files/${filename}`;
         setImageUrl(imageUrl);
         console.log("Uploaded image URL:", imageUrl);
+        // Pass the uploaded image URL to the parent component
+        onImageUpload(imageUrl);
       }
     } catch (error) {
       console.error("Supabase storage upload error:", error.message);
