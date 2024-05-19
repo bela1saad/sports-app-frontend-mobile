@@ -75,13 +75,6 @@ const PlayerCard = ({ player, onPress }) => {
         <Text style={styles.details}>
           {city}, {country}
         </Text>
-        {isFriend ? (
-          <Text style={styles.friend}>Friend</Text>
-        ) : (
-          <TouchableOpacity style={styles.addFriend}>
-            <Text style={styles.addFriendText}>Add Friend</Text>
-          </TouchableOpacity>
-        )}
       </View>
     </TouchableOpacity>
   );

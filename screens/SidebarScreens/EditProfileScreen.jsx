@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
+  ScrollView,
+  Platform,
 } from "react-native";
 import axiosInstance from "../../utils/axios";
 import CountryPicker, {
@@ -21,8 +23,6 @@ import FileUploadComponent from "../../components/FileUploadComponent";
 import supabase from "../../utils/supabaseConfig";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
-
-const { width, height } = Dimensions.get("window");
 
 const EditProfileScreen = () => {
   const [name, setName] = useState("");
@@ -226,7 +226,7 @@ const EditProfileScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Edit Profile</Text>
         {profilePicUri && (
@@ -241,12 +241,33 @@ const EditProfileScreen = () => {
           onChangeText={setName}
           style={styles.input}
         />
-        <TextInput
-          placeholder="City"
-          value={city}
-          onChangeText={handleCityChange}
-          style={styles.input}
-        />
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            placeholder="City"
+            value={city}
+            onChangeText={handleCityChange}
+            style={styles.input}
+          />
+          {citySuggestions.length > 0 && (
+            <FlatList
+              data={citySuggestions}
+              keyExtractor={(item) => item.properties.geocoding_id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => handleCitySelect(item)}
+                  style={styles.citySuggestionItem}
+                >
+                  <Text style={styles.citySuggestionText}>
+                    {item.properties.city}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              style={styles.citySuggestionsList}
+            />
+          )}
+        </View>
+
         <TouchableOpacity
           onPress={() => setShowCountryPicker(true)}
           style={styles.pickerButton}
@@ -255,6 +276,7 @@ const EditProfileScreen = () => {
             {selectedCountry || "Select Country"}
           </Text>
         </TouchableOpacity>
+
         {showCountryPicker && (
           <View style={styles.countryPickerContainer}>
             <CountryModalProvider>
@@ -269,21 +291,7 @@ const EditProfileScreen = () => {
             </CountryModalProvider>
           </View>
         )}
-        <FlatList
-          data={citySuggestions}
-          keyExtractor={(item) => item.properties.geocoding_id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => handleCitySelect(item)}
-              style={styles.citySuggestionItem}
-            >
-              <Text style={styles.pickerButtonText}>
-                {item.properties.city}
-              </Text>
-            </TouchableOpacity>
-          )}
-          style={styles.citySuggestionsList}
-        />
+
         <TouchableOpacity
           onPress={() => setShowSportPicker(true)}
           style={styles.pickerButton}
@@ -320,7 +328,9 @@ const EditProfileScreen = () => {
               title="Close"
               onPress={() => setShowSportPicker(false)}
               style={styles.modalButton}
-            />
+            >
+              <Text style={styles.modalButtonText}>Close</Text>
+            </Button>
           </View>
         </View>
       </Modal>
@@ -363,44 +373,61 @@ const EditProfileScreen = () => {
         </View>
       </Modal>
       <View style={styles.rowContainer}>
-        <Button
-          title="Save"
+        <TouchableOpacity
           onPress={handleSubmit}
           disabled={loading}
-          style={styles.saveButton}
-        />
+          style={[styles.saveButton, loading && styles.disabledButton]}
+        >
+          <Text style={styles.saveButtonText}>
+            {loading ? "Saving..." : "Save"}
+          </Text>
+        </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 };
-
+const { width, height } = Dimensions.get("window");
+const SPACING = 20;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#101010",
     paddingHorizontal: 20,
-    paddingTop: 40, // Additional padding for better spacing
+    paddingTop: 40,
+  },
+  returnArrow: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? height * 0.05 : SPACING,
+    left: SPACING,
+    zIndex: 1,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    padding: width * 0.05,
   },
   inputContainer: {
     marginBottom: 20,
   },
   header: {
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 30,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "bold",
     color: "#05a759",
+    marginBottom: 10,
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     marginTop: 20,
+    borderWidth: 2,
+    borderColor: "#05a759",
   },
   formContainer: {
-    marginBottom: 20,
+    marginBottom: 30,
   },
   input: {
     borderWidth: 1,
@@ -416,7 +443,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#05a759",
     borderRadius: 10,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 20,
     marginBottom: 20,
     alignItems: "center",
@@ -424,7 +451,8 @@ const styles = StyleSheet.create({
   },
   pickerButtonText: {
     color: "#05a759",
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: "600",
   },
   countryPickerContainer: {
     borderWidth: 1,
@@ -441,24 +469,47 @@ const styles = StyleSheet.create({
     backgroundColor: "#303030",
   },
   citySuggestionItem: {
-    paddingVertical: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: "#05a759",
+  },
+  citySuggestionText: {
+    color: "#FFFFFF",
+    fontSize: 16,
   },
   rowContainer: {
     flexDirection: "row",
     justifyContent: "center",
+    marginTop: 30,
   },
   saveButton: {
-    width: "50%", // Adjusted width for better positioning
+    width: "60%",
+    marginTop: -40,
     backgroundColor: "#05a759",
     borderRadius: 10,
+    paddingVertical: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5, // Android shadow
+  },
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  disabledButton: {
+    backgroundColor: "#8E8E8E",
   },
   modalContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.7)",
   },
   modalContent: {
     backgroundColor: "#101010",
@@ -466,16 +517,19 @@ const styles = StyleSheet.create({
     width: 300,
     borderRadius: 20,
   },
-  modalTitle: {
-    marginBottom: 10,
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#05a759",
-  },
   modalButton: {
-    marginTop: 10,
+    marginTop: 20,
     backgroundColor: "#05a759",
     borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 
