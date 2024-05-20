@@ -27,6 +27,7 @@ import FollowersFollowingScreen from "../screens/FollowersFollowingScreen";
 import AuthContext from "../auth/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LoadingIndicator from "../components/LoadingIndicator";
+import CreateTeamScreen from "../screens/CreateTeamScreen";
 
 const Stack = createStackNavigator();
 
@@ -67,6 +68,7 @@ const StackNavigator = () => {
           <Stack.Screen name="Friends" component={FriendsScreen} />
           <Stack.Screen name="Wallet" component={WalletScreen} />
           <Stack.Screen name="About" component={AboutScreen} />
+          <Stack.Screen name="CreateTeamScreen" component={CreateTeamScreen} />
 
           <Stack.Screen
             name="BookingsHistory"

@@ -23,6 +23,7 @@ import FileUploadComponent from "../../components/FileUploadComponent";
 import supabase from "../../utils/supabaseConfig";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
+import { KeyboardAvoidingView } from "react-native";
 
 const EditProfileScreen = () => {
   const [name, setName] = useState("");
@@ -226,164 +227,172 @@ const EditProfileScreen = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Edit Profile</Text>
-        {profilePicUri && (
-          <Image source={{ uri: profilePicUri }} style={styles.profileImage} />
-        )}
-      </View>
-      <View style={styles.formContainer}>
-        <FileUploadComponent onImageSelected={handleImageSelected} />
-        <TextInput
-          placeholder="Name"
-          value={name}
-          onChangeText={setName}
-          style={styles.input}
-        />
-
-        <View style={styles.inputContainer}>
-          <TextInput
-            placeholder="City"
-            value={city}
-            onChangeText={handleCityChange}
-            style={styles.input}
-          />
-          {citySuggestions.length > 0 && (
-            <FlatList
-              data={citySuggestions}
-              keyExtractor={(item) => item.properties.geocoding_id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  onPress={() => handleCitySelect(item)}
-                  style={styles.citySuggestionItem}
-                >
-                  <Text style={styles.citySuggestionText}>
-                    {item.properties.city}
-                  </Text>
-                </TouchableOpacity>
-              )}
-              style={styles.citySuggestionsList}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Edit Profile</Text>
+          {profilePicUri && (
+            <Image
+              source={{ uri: profilePicUri }}
+              style={styles.profileImage}
             />
           )}
         </View>
+        <View style={styles.formContainer}>
+          <FileUploadComponent onImageSelected={handleImageSelected} />
+          <TextInput
+            placeholder="Name"
+            value={name}
+            onChangeText={setName}
+            style={styles.input}
+          />
 
-        <TouchableOpacity
-          onPress={() => setShowCountryPicker(true)}
-          style={styles.pickerButton}
-        >
-          <Text style={styles.pickerButtonText}>
-            {selectedCountry || "Select Country"}
-          </Text>
-        </TouchableOpacity>
-
-        {showCountryPicker && (
-          <View style={styles.countryPickerContainer}>
-            <CountryModalProvider>
-              <CountryPicker
-                withFlag
-                withCountryNameButton
-                withFilter
-                withAlphaFilter
-                withEmoji
-                onSelect={(value) => handleCountrySelect(value.name)}
-              />
-            </CountryModalProvider>
-          </View>
-        )}
-
-        <TouchableOpacity
-          onPress={() => setShowSportPicker(true)}
-          style={styles.pickerButton}
-        >
-          <Text style={styles.pickerButtonText}>
-            {chosenSport ? chosenSport.name : "Choose a sport"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <Modal
-        visible={showSportPicker}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowSportPicker(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Select Sport</Text>
-            <Picker
-              selectedValue={chosenSportId}
-              onValueChange={(itemValue) => handleSelectSport(itemValue)}
-            >
-              <Picker.Item label="Select Sport" value="" />
-              {sports.map((sport) => (
-                <Picker.Item
-                  label={sport.name}
-                  value={sport.id}
-                  key={sport.id}
-                />
-              ))}
-            </Picker>
-            <Button
-              title="Close"
-              onPress={() => setShowSportPicker(false)}
-              style={styles.modalButton}
-            >
-              <Text style={styles.modalButtonText}>Close</Text>
-            </Button>
-          </View>
-        </View>
-      </Modal>
-
-      <View style={styles.inputContainer}>
-        <TouchableOpacity
-          onPress={() => setShowPositionModal(true)}
-          style={styles.pickerButton}
-        >
-          <Text style={styles.pickerButtonText}>
-            {chosenPosition ? chosenPosition.name : "Choose a position"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <Modal visible={showPositionModal}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Choose a Position</Text>
-            <Picker
-              selectedValue={chosenPositionId}
-              onValueChange={(itemValue) => handleSelectPosition(itemValue)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Select Position" value="" />
-              {positions.map((position) => (
-                <Picker.Item
-                  label={position.name}
-                  value={position.sport_position.positionId}
-                  key={position.id}
-                />
-              ))}
-            </Picker>
-            <Button
-              title="Close"
-              onPress={() => setShowPositionModal(false)}
-              style={styles.modalButton}
+          <View style={styles.inputContainer}>
+            <TextInput
+              placeholder="City"
+              value={city}
+              onChangeText={handleCityChange}
+              style={styles.input}
             />
+            {citySuggestions.length > 0 && (
+              <FlatList
+                data={citySuggestions}
+                keyExtractor={(item) => item.properties.geocoding_id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => handleCitySelect(item)}
+                    style={styles.citySuggestionItem}
+                  >
+                    <Text style={styles.citySuggestionText}>
+                      {item.properties.city}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                style={styles.citySuggestionsList}
+              />
+            )}
           </View>
+
+          <TouchableOpacity
+            onPress={() => setShowCountryPicker(true)}
+            style={styles.pickerButton}
+          >
+            <Text style={styles.pickerButtonText}>
+              {selectedCountry || "Select Country"}
+            </Text>
+          </TouchableOpacity>
+
+          {showCountryPicker && (
+            <View style={styles.countryPickerContainer}>
+              <CountryModalProvider>
+                <CountryPicker
+                  withFlag
+                  withCountryNameButton
+                  withFilter
+                  withAlphaFilter
+                  withEmoji
+                  onSelect={(value) => handleCountrySelect(value.name)}
+                />
+              </CountryModalProvider>
+            </View>
+          )}
+
+          <TouchableOpacity
+            onPress={() => setShowSportPicker(true)}
+            style={styles.pickerButton}
+          >
+            <Text style={styles.pickerButtonText}>
+              {chosenSport ? chosenSport.name : "Choose a sport"}
+            </Text>
+          </TouchableOpacity>
         </View>
-      </Modal>
-      <View style={styles.rowContainer}>
-        <TouchableOpacity
-          onPress={handleSubmit}
-          disabled={loading}
-          style={[styles.saveButton, loading && styles.disabledButton]}
+
+        <Modal
+          visible={showSportPicker}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setShowSportPicker(false)}
         >
-          <Text style={styles.saveButtonText}>
-            {loading ? "Saving..." : "Save"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Select Sport</Text>
+              <Picker
+                selectedValue={chosenSportId}
+                onValueChange={(itemValue) => handleSelectSport(itemValue)}
+              >
+                <Picker.Item label="Select Sport" value="" />
+                {sports.map((sport) => (
+                  <Picker.Item
+                    label={sport.name}
+                    value={sport.id}
+                    key={sport.id}
+                  />
+                ))}
+              </Picker>
+              <Button
+                title="Close"
+                onPress={() => setShowSportPicker(false)}
+                style={styles.modalButton}
+              >
+                <Text style={styles.modalButtonText}>Close</Text>
+              </Button>
+            </View>
+          </View>
+        </Modal>
+
+        <View style={styles.inputContainer}>
+          <TouchableOpacity
+            onPress={() => setShowPositionModal(true)}
+            style={styles.pickerButton}
+          >
+            <Text style={styles.pickerButtonText}>
+              {chosenPosition ? chosenPosition.name : "Choose a position"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <Modal visible={showPositionModal}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Choose a Position</Text>
+              <Picker
+                selectedValue={chosenPositionId}
+                onValueChange={(itemValue) => handleSelectPosition(itemValue)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Select Position" value="" />
+                {positions.map((position) => (
+                  <Picker.Item
+                    label={position.name}
+                    value={position.sport_position.positionId}
+                    key={position.id}
+                  />
+                ))}
+              </Picker>
+              <Button
+                title="Close"
+                onPress={() => setShowPositionModal(false)}
+                style={styles.modalButton}
+              />
+            </View>
+          </View>
+        </Modal>
+        <View style={styles.rowContainer}>
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={loading}
+            style={[styles.saveButton, loading && styles.disabledButton]}
+          >
+            <Text style={styles.saveButtonText}>
+              {loading ? "Saving..." : "Save"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 const { width, height } = Dimensions.get("window");
