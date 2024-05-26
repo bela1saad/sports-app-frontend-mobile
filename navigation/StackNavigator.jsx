@@ -28,6 +28,7 @@ import AuthContext from "../auth/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LoadingIndicator from "../components/LoadingIndicator";
 import CreateTeamScreen from "../screens/CreateTeamScreen";
+import JoinTeamScreen from "../screens/JoinTeamScreen";
 
 const Stack = createStackNavigator();
 
@@ -69,6 +70,7 @@ const StackNavigator = () => {
           <Stack.Screen name="Wallet" component={WalletScreen} />
           <Stack.Screen name="About" component={AboutScreen} />
           <Stack.Screen name="CreateTeamScreen" component={CreateTeamScreen} />
+          <Stack.Screen name="JoinTeamScreen" component={JoinTeamScreen} />
 
           <Stack.Screen
             name="BookingsHistory"

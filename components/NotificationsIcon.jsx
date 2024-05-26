@@ -1,21 +1,15 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { faBell } from "@fortawesome/free-solid-svg-icons";
+import React from "react";
+import { TouchableOpacity, View, Text } from "react-native";
+import Icon from "react-native-vector-icons/FontAwesome";
 import { useNavigation } from "@react-navigation/native";
 
-const NotificationsIcon = ({ count, size }) => {
+const NotificationsIcon = ({ count = 0, size = 24 }) => {
   const navigation = useNavigation();
-  const [hasNotifications, setHasNotifications] = useState(false);
+  const [hasNotifications, setHasNotifications] = React.useState(false);
 
   const handlePress = () => {
-    // Navigate to the notification screen
     navigation.navigate("Notification");
-
-    // Simulate a new notification
     setHasNotifications(true);
-
-    // Simulate resetting notification after 3 seconds
     setTimeout(() => setHasNotifications(false), 3000);
   };
 
@@ -32,10 +26,10 @@ const NotificationsIcon = ({ count, size }) => {
   return (
     <TouchableOpacity onPress={handlePress}>
       <View style={{ position: "relative" }}>
-        <FontAwesomeIcon
-          icon={faBell}
+        <Icon
+          name="bell"
           size={size}
-          style={{ color: hasNotifications ? "green" : "white" }}
+          color={hasNotifications ? "green" : "white"}
         />
         {hasNotifications && (
           <View

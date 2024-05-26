@@ -10,8 +10,7 @@ import {
   Platform,
   Dimensions,
 } from "react-native";
-import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { faSearch, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import Icon from "react-native-vector-icons/FontAwesome"; // Import Icon from react-native-vector-icons
 import SearchCards from "../components/SearchCards";
 import {
   dummyPlayers,
@@ -96,14 +95,10 @@ const SearchScreen = ({ navigation }) => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <FontAwesomeIcon
-            icon={faArrowLeft}
-            style={styles.backIcon}
-            size={24}
-          />
+          <Icon name="arrow-left" style={styles.backIcon} size={24} />
         </TouchableOpacity>
         <View style={styles.inputContainer}>
-          <FontAwesomeIcon icon={faSearch} style={styles.searchIcon} />
+          <Icon name="search" style={styles.searchIcon} size={20} />
           <TextInput
             placeholder="Search"
             value={searchQuery}
