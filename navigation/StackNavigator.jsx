@@ -29,6 +29,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import LoadingIndicator from "../components/LoadingIndicator";
 import CreateTeamScreen from "../screens/CreateTeamScreen";
 import JoinTeamScreen from "../screens/JoinTeamScreen";
+import EditTeamScreen from "../screens/EditTeamScreen";
 
 const Stack = createStackNavigator();
 
@@ -71,6 +72,7 @@ const StackNavigator = () => {
           <Stack.Screen name="About" component={AboutScreen} />
           <Stack.Screen name="CreateTeamScreen" component={CreateTeamScreen} />
           <Stack.Screen name="JoinTeamScreen" component={JoinTeamScreen} />
+          <Stack.Screen name="EditTeamScreen" component={EditTeamScreen} />
 
           <Stack.Screen
             name="BookingsHistory"

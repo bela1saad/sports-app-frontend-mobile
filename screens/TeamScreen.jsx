@@ -1,31 +1,35 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useLayoutEffect } from "react";
 import {
   View,
   Text,
   ActivityIndicator,
   TouchableOpacity,
   StyleSheet,
+  Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axiosInstance from "../utils/axios";
 import COLORS from "../constants/colors"; // Ensure you have this file for color constants
-import { useLayoutEffect } from "react";
 
 const TeamScreen = ({ route }) => {
   const navigation = useNavigation();
   const [team, setTeam] = useState(null);
+  const [sport, setSport] = useState(null);
   const [error, setError] = useState(null);
+  const [isCaptain, setIsCaptain] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
-  }, []);
+  }, [navigation]);
 
   useEffect(() => {
-    const checkTeamStatus = async () => {
+    const fetchData = async () => {
       try {
         const response = await axiosInstance.get("/team/");
         if (response.status === 200 && response.data.team) {
           setTeam(response.data.team);
+          fetchSport(response.data.team.sport_id); // Fetch sport data by ID
+          checkIsCaptain();
         } else if (response.status === 404) {
           setTeam(false);
         }
@@ -42,8 +46,39 @@ const TeamScreen = ({ route }) => {
       }
     };
 
-    checkTeamStatus();
+    const fetchSport = async (sportId) => {
+      try {
+        const response = await axiosInstance.get(`/sport/by-id/${sportId}`);
+        if (response.status === 200 && response.data) {
+          setSport(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching sport data:", error);
+      }
+    };
+
+    const checkIsCaptain = async () => {
+      try {
+        const response = await axiosInstance.get("/player/isTeamCaptain");
+        if (response.status === 200 && response.data.isCaptain) {
+          setIsCaptain(true);
+          console.log("User is a captain of the team");
+        } else {
+          setIsCaptain(false);
+          console.log("User is not a captain of the team");
+        }
+      } catch (error) {
+        console.error("Error checking captain status:", error);
+      }
+    };
+
+    fetchData();
   }, [route.params]);
+
+  const handleEditTeam = () => {
+    // Navigate to the edit team screen
+    navigation.navigate("EditTeamScreen");
+  };
 
   if (error) {
     return (
@@ -86,9 +121,47 @@ const TeamScreen = ({ route }) => {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
+        <Image
+          source={{ uri: team.pic }}
+          style={styles.teamImage}
+          resizeMode="cover"
+        />
         <Text style={styles.teamName}>{team.name}</Text>
         <Text style={styles.teamDescription}>{team.description}</Text>
-        {/* Additional logic for team info */}
+        <View style={styles.infoContainer}>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Max Players:</Text>
+            <Text style={styles.infoText}>{team.max_number}</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Level:</Text>
+            <Text style={styles.infoText}>{team.level}</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Up for a Game:</Text>
+            <Text style={styles.infoText}>
+              {team.up_for_game ? "Yes" : "No"}
+            </Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Captain ID:</Text>
+            <Text style={styles.infoText}>{team.captain_id}</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Sport:</Text>
+            <Text style={styles.infoText}>
+              {sport ? sport.name : "Loading..."}
+            </Text>
+          </View>
+        </View>
+        {isCaptain && (
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: COLORS.secondary }]}
+            onPress={handleEditTeam}
+          >
+            <Text style={styles.buttonText}>Edit Team</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -113,6 +186,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     marginVertical: 20,
+  },
+  teamImage: {
+    width: "100%",
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 20,
   },
   teamName: {
     fontSize: 24,
@@ -161,6 +240,23 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     marginVertical: 10,
     textAlign: "center",
+  },
+  infoContainer: {
+    marginTop: 20,
+  },
+  infoItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 5,
+  },
+  infoLabel: {
+    fontSize: 16,
+    color: COLORS.text,
+    fontWeight: "bold",
+  },
+  infoText: {
+    fontSize: 16,
+    color: COLORS.text,
   },
 });
 
