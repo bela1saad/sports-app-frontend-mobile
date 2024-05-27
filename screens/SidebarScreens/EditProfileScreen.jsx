@@ -248,15 +248,18 @@ const EditProfileScreen = () => {
             value={name}
             onChangeText={setName}
             style={styles.input}
+            placeholderTextColor="#757575"
           />
 
           <View style={styles.inputContainer}>
             <TextInput
               placeholder="City"
               value={city}
-              onChangeText={handleCityChange}
+              onChangeText={setCity}
               style={styles.input}
+              placeholderTextColor="#757575" // Set the placeholder text color to white
             />
+
             {citySuggestions.length > 0 && (
               <FlatList
                 data={citySuggestions}
@@ -395,6 +398,7 @@ const EditProfileScreen = () => {
     </KeyboardAvoidingView>
   );
 };
+
 const { width, height } = Dimensions.get("window");
 const SPACING = 20;
 const styles = StyleSheet.create({
@@ -521,7 +525,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.7)",
   },
   modalContent: {
-    backgroundColor: "#101010",
+    backgroundColor: "#ffffff",
     padding: 20,
     width: 300,
     borderRadius: 20,
