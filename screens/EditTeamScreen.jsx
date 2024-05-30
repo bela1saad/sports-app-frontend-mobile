@@ -12,10 +12,12 @@ import {
   Image,
   Modal,
   Button,
+  Dimensions,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import axiosInstance from "../utils/axios";
-import FileUploadComponent from "../components/FileUploadComponent"; // Assuming you have this component
+import FileUploadComponent from "../components/FileUploadComponent";
+import supabase from "../utils/supabaseConfig"; // Import Supabase
 
 const EditTeamScreen = ({ navigation }) => {
   const [teamInfo, setTeamInfo] = useState({
@@ -27,23 +29,34 @@ const EditTeamScreen = ({ navigation }) => {
     level: "",
     sport_id: "",
   });
-  const [imageUri, setImageUri] = useState(null); // New state for image URI
-  const [showLevelPicker, setShowLevelPicker] = useState(false); // State to manage Picker visibility
-  const levels = ["Excellent", "Intermediate", "Good", "Beginner"]; // Available levels
+  const [imageUri, setImageUri] = useState(null);
+  const [showLevelPicker, setShowLevelPicker] = useState(false);
+  const levels = ["Excellent", "Intermediate", "Good", "Beginner"];
+  const maxNumbers = Array.from({ length: 14 }, (_, i) => i + 1);
+  const [chosenMaxNumber, setChosenMaxNumber] = useState("");
+  const [showMaxNumberPicker, setShowMaxNumberPicker] = useState(false);
 
   useEffect(() => {
-    navigation.setOptions({
-      headerShown: false,
-    });
-  }, [navigation]);
+    navigation.setOptions({ headerShown: false });
 
-  useEffect(() => {
     const fetchTeamInfo = async () => {
       try {
         const response = await axiosInstance.get("/team/");
         if (response.status === 200 && response.data) {
-          setTeamInfo(response.data.team);
-          setImageUri(response.data.team.pic); // Set the image URI
+          console.log("Team data fetched successfully:", response.data.team);
+          setTeamInfo({
+            name: response.data.team.name || "",
+            pic: response.data.team.pic || "",
+            description: response.data.team.description || "",
+            up_for_game: response.data.team.up_for_game || false,
+            maxNumber: response.data.team.max_number || "", // Updated key
+            level: response.data.team.level || "",
+            sport_id: response.data.team.sport_id || "",
+          });
+
+          setImageUri(response.data.team.pic);
+        } else {
+          console.log("Unexpected response:", response);
         }
       } catch (error) {
         console.error("Error fetching team info:", error);
@@ -51,7 +64,7 @@ const EditTeamScreen = ({ navigation }) => {
     };
 
     fetchTeamInfo();
-  }, []);
+  }, [navigation]);
 
   const handleSaveChanges = async () => {
     try {
@@ -61,10 +74,7 @@ const EditTeamScreen = ({ navigation }) => {
         updatedTeamInfo = { ...updatedTeamInfo, pic: imageURL };
       }
 
-      const response = await axiosInstance.put(
-        "/api/team/edit",
-        updatedTeamInfo
-      );
+      const response = await axiosInstance.put("/team/edit", updatedTeamInfo);
       if (response.status === 200 && response.data) {
         Alert.alert("Success", "Team information updated successfully!", [
           { text: "OK", onPress: () => navigation.goBack() },
@@ -72,10 +82,7 @@ const EditTeamScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error("Error updating team info:", error);
-      Alert.alert(
-        "Error",
-        "Error updating team information. Please try again."
-      );
+      Alert.alert("Error", response.data.message);
     }
   };
 
@@ -84,211 +91,246 @@ const EditTeamScreen = ({ navigation }) => {
   };
 
   const handleSelectLevel = (selectedLevel) => {
-    console.log("Selected level:", selectedLevel);
     setTeamInfo({ ...teamInfo, level: selectedLevel });
     setShowLevelPicker(false);
   };
 
-  console.log("Levels array:", levels);
-  console.log("Team info level:", teamInfo.level);
+  const handleSelectMaxNumber = (selectedNumber) => {
+    setTeamInfo({ ...teamInfo, maxNumber: selectedNumber });
+    setShowMaxNumberPicker(false);
+  };
+
+  const uploadImageToSupabase = async (uri) => {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    const arrayBuffer = await new Response(blob).arrayBuffer();
+    const filename = uri.split("/").pop();
+
+    const { data, error } = await supabase.storage
+      .from("files")
+      .upload(filename, arrayBuffer);
+    if (error) throw new Error(error.message);
+
+    return `${supabase.storageUrl}/object/public/files/${filename}`;
+  };
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Edit Team Information</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Team Name"
-          placeholderTextColor="#FFFFFF" // Set placeholder text color to white
-          value={teamInfo.name}
-          onChangeText={(text) => setTeamInfo({ ...teamInfo, name: text })}
-        />
+      <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+        <View style={styles.container}>
+          <Text style={styles.title}>Edit Team Information</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Team Name"
+            placeholderTextColor="#FFFFFF"
+            value={teamInfo.name}
+            onChangeText={(text) => setTeamInfo({ ...teamInfo, name: text })}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Description"
+            placeholderTextColor="#FFFFFF"
+            value={teamInfo.description}
+            onChangeText={(text) =>
+              setTeamInfo({ ...teamInfo, description: text })
+            }
+          />
 
-        {imageUri ? (
-          <Image source={{ uri: imageUri }} style={styles.image} />
-        ) : null}
-        <FileUploadComponent onImageSelected={handleImageSelected} />
-        <TextInput
-          style={[styles.input, styles.descriptionInput]}
-          placeholder="Description"
-          placeholderTextColor="#FFFFFF" // Set placeholder text color to white
-          value={teamInfo.description}
-          onChangeText={(text) =>
-            setTeamInfo({ ...teamInfo, description: text })
-          }
-          multiline={true}
-          numberOfLines={4}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Up For Game (true/false)"
-          placeholderTextColor="#FFFFFF" // Set placeholder text color to white
-          value={teamInfo.up_for_game ? teamInfo.up_for_game.toString() : ""}
-          onChangeText={(text) =>
-            setTeamInfo({ ...teamInfo, up_for_game: text === "true" })
-          }
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Max Number"
-          placeholderTextColor="#FFFFFF" // Set placeholder text color to white
-          value={teamInfo.maxNumber ? teamInfo.maxNumber.toString() : ""}
-          onChangeText={(text) =>
-            setTeamInfo({ ...teamInfo, maxNumber: parseInt(text) })
-          }
-          keyboardType="numeric"
-        />
-        <TouchableOpacity
-          onPress={() => {
-            console.log("Opening level picker");
-            setShowLevelPicker(true);
-          }}
-          style={styles.pickerButton}
-        >
-          <Text style={styles.pickerButtonText}>
-            {teamInfo.level ? teamInfo.level : "Choose a level"}
-          </Text>
-        </TouchableOpacity>
-        <Modal
-          transparent={true}
-          visible={showLevelPicker}
-          animationType="slide"
-          onRequestClose={() => {
-            console.log("Closing level picker");
-            setShowLevelPicker(false);
-          }}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Select Level</Text>
-              <Picker
-                selectedValue={teamInfo.level}
-                onValueChange={(itemValue) => {
-                  console.log("Selected level:", itemValue);
-                  handleSelectLevel(itemValue);
-                }}
-                style={{ color: "#FFFFFF", backgroundColor: "#303030" }} // Adjusted styles
-                dropdownIconColor="#05a759" // Adjusted styles
-              >
-                {levels.map((level) => (
-                  <Picker.Item label={level} value={level} key={level} />
-                ))}
-              </Picker>
-
-              <Button
-                title="Close"
-                onPress={() => {
-                  console.log("Closing level picker");
-                  setShowLevelPicker(false);
-                }}
-                style={styles.modalButton}
-              />
+          <TouchableOpacity
+            onPress={() => setShowMaxNumberPicker(true)}
+            style={styles.pickerButton}
+          >
+            <Text style={styles.pickerButtonText}>
+              {teamInfo.maxNumber || "Select Max Number"}
+            </Text>
+          </TouchableOpacity>
+          <Modal
+            visible={showMaxNumberPicker}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setShowMaxNumberPicker(false)}
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Select Max Number</Text>
+                <Picker
+                  selectedValue={teamInfo.maxNumber}
+                  onValueChange={(itemValue) =>
+                    handleSelectMaxNumber(itemValue)
+                  }
+                >
+                  {maxNumbers.map((number) => (
+                    <Picker.Item
+                      key={number}
+                      label={number.toString()}
+                      value={number}
+                    />
+                  ))}
+                </Picker>
+                <Button
+                  title="Close"
+                  onPress={() => setShowMaxNumberPicker(false)}
+                />
+              </View>
             </View>
-          </View>
-        </Modal>
+          </Modal>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Sport ID"
-          placeholderTextColor="#FFFFFF" // Set placeholder text color to white
-          value={teamInfo.sport_id ? teamInfo.sport_id.toString() : ""}
-          onChangeText={(text) =>
-            setTeamInfo({ ...teamInfo, sport_id: parseInt(text) })
-          }
-          keyboardType="numeric"
-        />
-        <TouchableOpacity
-          onPress={handleSaveChanges}
-          style={styles.customButton}
-        >
-          <Text style={styles.customButtonText}>Save Changes</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setShowLevelPicker(true)}
+            style={styles.pickerButton}
+          >
+            <Text style={styles.pickerButtonText}>
+              {teamInfo.level || "Select Level"}
+            </Text>
+          </TouchableOpacity>
+          <Modal
+            visible={showLevelPicker}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setShowLevelPicker(false)}
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Select Level</Text>
+                <Picker
+                  selectedValue={teamInfo.level}
+                  onValueChange={handleSelectLevel}
+                >
+                  {levels.map((level) => (
+                    <Picker.Item key={level} label={level} value={level} />
+                  ))}
+                </Picker>
+                <Button
+                  title="Close"
+                  onPress={() => setShowLevelPicker(false)}
+                />
+              </View>
+            </View>
+          </Modal>
+          <FileUploadComponent onImageSelected={handleImageSelected} />
+          {imageUri && (
+            <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+          )}
+          <TouchableOpacity
+            onPress={handleSaveChanges}
+            style={styles.customButton}
+          >
+            <Text style={styles.customButtonText}>Save Changes</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
+const { width, height } = Dimensions.get("window");
+const SPACING = 20;
+
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: "#101010",
+    paddingHorizontal: SPACING,
+    paddingTop: height * 0.05,
+  },
+  scrollViewContainer: {
     flexGrow: 1,
     backgroundColor: "#101010",
-    paddingHorizontal: 20,
-    paddingVertical: 40,
+    paddingHorizontal: SPACING,
+    paddingTop: height * 0.05,
   },
   title: {
-    fontSize: 24,
+    fontSize: width * 0.06,
     fontWeight: "bold",
-    marginBottom: 20,
     color: "#05a759",
+    marginBottom: SPACING,
     textAlign: "center",
   },
   input: {
     borderWidth: 1,
     borderColor: "#05a759",
     borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingVertical: height * 0.02,
+    paddingHorizontal: width * 0.04,
+    marginBottom: SPACING,
     color: "#FFFFFF",
     backgroundColor: "#303030",
-  },
-  descriptionInput: {
-    height: 100,
-  },
-  customButton: {
-    backgroundColor: "#05a759",
-    borderRadius: 10,
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    alignItems: "center",
-  },
-  customButtonText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  image: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
-    marginBottom: 20,
-    alignSelf: "center",
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalContent: {
-    width: 300,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 20,
-    alignItems: "center",
-  },
-  modalTitle: {
-    fontSize: 18,
-    marginBottom: 10,
-  },
-  modalButton: {
-    marginTop: 10,
   },
   pickerButton: {
     borderWidth: 1,
     borderColor: "#05a759",
     borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    marginBottom: 20,
-    backgroundColor: "#303030",
+    paddingVertical: height * 0.025,
+    paddingHorizontal: width * 0.04,
+    marginBottom: SPACING,
     alignItems: "center",
+    backgroundColor: "#303030",
   },
   pickerButtonText: {
+    color: "#05a759",
+    fontSize: width * 0.04,
+    fontWeight: "600",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.7)",
+  },
+  modalContent: {
+    backgroundColor: "#ffffff",
+    padding: SPACING,
+    width: width * 0.8,
+    borderRadius: 20,
+  },
+  modalTitle: {
+    fontSize: width * 0.05,
+    fontWeight: "bold",
+    color: "#05a759",
+    marginBottom: SPACING,
+    textAlign: "center",
+  },
+  modalButton: {
+    marginTop: SPACING,
+    backgroundColor: "#05a759",
+    borderRadius: 10,
+    paddingVertical: height * 0.025,
+    paddingHorizontal: width * 0.04,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalButtonText: {
     color: "#FFFFFF",
+    fontSize: width * 0.04,
+    fontWeight: "bold",
+  },
+  imagePreview: {
+    width: "100%",
+    height: 200,
+    marginBottom: SPACING,
+    borderRadius: 10,
+  },
+  customButton: {
+    backgroundColor: "#05a759",
+    borderRadius: 10,
+    paddingVertical: height * 0.025,
+    paddingHorizontal: width * 0.04,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    marginBottom: SPACING,
+  },
+  customButtonText: {
+    color: "#FFFFFF",
+    fontSize: width * 0.04,
+    fontWeight: "bold",
   },
 });
 
