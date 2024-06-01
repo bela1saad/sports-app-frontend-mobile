@@ -6,10 +6,17 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  FlatList,
+  SafeAreaView, // Import SafeAreaView
+  Dimensions,
+  ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axiosInstance from "../utils/axios";
-import COLORS from "../constants/colors"; // Ensure you have this file for color constants
+import COLORS from "../constants/colors";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import LineupGrid from "../components/LineupGrid";
+import NotificationsIcon from "../components/NotificationsIcon";
 
 const TeamScreen = ({ route }) => {
   const navigation = useNavigation();
@@ -17,6 +24,9 @@ const TeamScreen = ({ route }) => {
   const [sport, setSport] = useState(null);
   const [error, setError] = useState(null);
   const [isCaptain, setIsCaptain] = useState(false);
+  const [followers, setFollowers] = useState(0);
+  const [lineup, setLineup] = useState([]);
+  const notificationCount = 100;
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
@@ -27,9 +37,12 @@ const TeamScreen = ({ route }) => {
       try {
         const response = await axiosInstance.get("/team/");
         if (response.status === 200 && response.data.team) {
-          setTeam(response.data.team);
-          fetchSport(response.data.team.sport_id); // Fetch sport data by ID
+          const teamData = response.data.team;
+          setTeam(teamData);
+          fetchSport(teamData.sport_id);
           checkIsCaptain();
+          fetchFollowers(teamData.id);
+          fetchLineup(teamData.id);
         } else if (response.status === 404) {
           setTeam(false);
         }
@@ -57,6 +70,30 @@ const TeamScreen = ({ route }) => {
       }
     };
 
+    const fetchFollowers = async (teamId) => {
+      try {
+        const response = await axiosInstance.get(
+          `/follow/followers-count/${teamId}`
+        );
+        if (response.status === 200 && response.data) {
+          setFollowers(response.data.followersCount);
+        }
+      } catch (error) {
+        console.error("Error fetching followers:", error);
+      }
+    };
+
+    const fetchLineup = async (teamId) => {
+      try {
+        const response = await axiosInstance.get(`/lineup/${teamId}`);
+        if (response.status === 200 && response.data) {
+          setLineup(response.data.lineup); // Make sure to set lineup state correctly
+        }
+      } catch (error) {
+        console.error("Error fetching lineup:", error);
+      }
+    };
+
     const checkIsCaptain = async () => {
       try {
         const response = await axiosInstance.get("/player/isTeamCaptain");
@@ -76,8 +113,63 @@ const TeamScreen = ({ route }) => {
   }, [route.params]);
 
   const handleEditTeam = () => {
-    // Navigate to the edit team screen
     navigation.navigate("EditTeamScreen");
+  };
+
+  const renderLineupItem = ({ item }) => (
+    <View style={styles.lineupItem}>
+      <Image source={{ uri: item.player.pic }} style={styles.playerImage} />
+      <View style={styles.lineupTextContainer}>
+        <Text style={styles.lineupItemText}>{item.player.name}</Text>
+        <Text style={styles.positionText}>{item.position.name}</Text>
+      </View>
+    </View>
+  );
+
+  const getSportIcon = (sportName) => {
+    switch (sportName) {
+      case "Football":
+        return "soccer";
+      case "Basketball":
+        return "basketball";
+      case "Tennis":
+        return "tennis";
+      default:
+        return "help-circle";
+    }
+  };
+  const getLevelIcon = (level) => {
+    switch (level) {
+      case "Excellent":
+        return "star"; // Icon for excellent
+      case "Intermediate":
+        return "star"; // Icon for intermediate
+      case "Good":
+        return "star"; // Icon for good
+      case "Beginner":
+        return "star"; // Icon for beginner
+      default:
+        return "help-circle";
+    }
+  };
+
+  const getLevelIconColor = (level) => {
+    switch (level) {
+      case "Excellent":
+        return "#FF0000"; // Red color for excellent
+      case "Intermediate":
+        return "#C0C0C0"; // Silver color for intermediate
+      case "Good":
+        return "#FFD700"; // Gold color for good
+      case "Beginner":
+        return "#0077CC"; // Blue color for beginner
+      default:
+        return COLORS.primary; // Default color
+    }
+  };
+
+  const getUpForGameIcon = (upForGame) => {
+    return upForGame ? "check-circle" : "close-circle";
   };
 
   if (error) {
@@ -119,74 +211,150 @@ const TeamScreen = ({ route }) => {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <Image
           source={{ uri: team.pic }}
           style={styles.teamImage}
           resizeMode="cover"
         />
-        <Text style={styles.teamName}>{team.name}</Text>
-        <Text style={styles.teamDescription}>{team.description}</Text>
-        <View style={styles.infoContainer}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Notifications")}
+          style={[styles.notificationIconContainer, styles.notificationIcon]}
+        >
+          <NotificationsIcon count={notificationCount} size={30} />
+        </TouchableOpacity>
+        <View style={styles.header}>
+          <Text style={styles.teamName}>{team.name}</Text>
+          {isCaptain && (
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={handleEditTeam}
+            >
+              <Icon name="pencil" size={15} color={COLORS.white} />
+            </TouchableOpacity>
+          )}
+        </View>
+        <View style={styles.infoRow}>
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Max Players:</Text>
-            <Text style={styles.infoText}>{team.max_number}</Text>
+            <Text style={styles.infoLabel}>Followers</Text>
+            <Text style={styles.infoText}>{followers}</Text>
           </View>
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Level:</Text>
-            <Text style={styles.infoText}>{team.level}</Text>
+            <Text style={styles.infoLabel}>Level</Text>
+            <Icon
+              name={getLevelIcon(team.level)}
+              size={24}
+              color={getLevelIconColor(team.level)}
+            />
           </View>
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Up for a Game:</Text>
-            <Text style={styles.infoText}>
-              {team.up_for_game ? "Yes" : "No"}
-            </Text>
+            <Text style={styles.infoLabel}>Up for a Game</Text>
+            <Icon
+              name={getUpForGameIcon(team.up_for_game)}
+              size={24}
+              color={COLORS.primary}
+            />
           </View>
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Captain ID:</Text>
-            <Text style={styles.infoText}>{team.captain_id}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Sport:</Text>
-            <Text style={styles.infoText}>
-              {sport ? sport.name : "Loading..."}
-            </Text>
+            <Text style={styles.infoLabel}>Sport</Text>
+            {sport ? (
+              <Icon
+                name={getSportIcon(sport.name)}
+                size={24}
+                color={COLORS.primary}
+              />
+            ) : (
+              <Text style={styles.infoText}>Loading...</Text>
+            )}
           </View>
         </View>
-        {isCaptain && (
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: COLORS.secondary }]}
-            onPress={handleEditTeam}
-          >
-            <Text style={styles.buttonText}>Edit Team</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
+        <Text style={styles.teamDescription}>{team.description}</Text>
+
+        <View style={styles.lineupContainer}>
+          <Text style={styles.lineupTitle}>Lineup</Text>
+          {lineup.map((player, index) => (
+            <View key={index} style={styles.playerContainer}>
+              <Image
+                source={{ uri: player.player.pic }}
+                style={styles.playerPhoto}
+              />
+              <View style={styles.playerInfo}>
+                <View>
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigateToProfile("player", player.player_id)
+                    }
+                  >
+                    <Text style={styles.playerName}>
+                      {player.player.name}
+                      {player.isCaptain && (
+                        <Icon
+                          name="star"
+                          size={24}
+                          color="#FFD700"
+                          style={styles.captainIcon}
+                        />
+                      )}
+                    </Text>
+                  </TouchableOpacity>
+                  <Text style={styles.playerPosition}>
+                    {player.position.name}
+                  </Text>
+                </View>
+                <View style={styles.jerseyNumberContainer}>
+                  <Text style={styles.jerseyNumberText}>
+                    {player.jerseyNumber}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+        <View style={styles.lineupGrid}>
+          <LineupGrid lineup={lineup} />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
+const windowWidth = Dimensions.get("window").width;
+const windowHeight = Dimensions.get("window").height;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
     backgroundColor: "#101010",
     paddingHorizontal: 20,
+    paddingTop: 20,
   },
-  card: {
-    backgroundColor: COLORS.white,
-    padding: 20,
+  scrollViewContent: {
+    flexGrow: 1,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  notificationIcon: {
+    paddingHorizontal: 6,
+    paddingVertical: -10,
     borderRadius: 10,
-    width: "100%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    marginVertical: 20,
+    marginLeft: 5,
+
+    zIndex: 1,
   },
+  notificationIconContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    position: "absolute",
+    top: 20,
+    right: 20,
+  },
+
   teamImage: {
     width: "100%",
     height: 200,
@@ -194,33 +362,40 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   teamName: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "bold",
     color: COLORS.primary,
     marginBottom: 10,
     textAlign: "center",
   },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+    marginVertical: 10,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 10,
+    paddingVertical: 10,
+  },
+  infoItem: {
+    alignItems: "center",
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: COLORS.white,
+    marginBottom: 5,
+  },
+  infoText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: COLORS.white,
+  },
   teamDescription: {
     fontSize: 16,
-    color: COLORS.text,
+    color: "white",
     lineHeight: 22,
     textAlign: "center",
-  },
-  noTeamText: {
-    fontSize: 18,
-    color: COLORS.white,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: COLORS.text,
-  },
-  errorText: {
-    fontSize: 16,
-    color: COLORS.error,
-    textAlign: "center",
+    marginVertical: 20,
   },
   button: {
     backgroundColor: COLORS.Green,
@@ -235,28 +410,90 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
   },
+  editButton: {
+    backgroundColor: COLORS.secondary,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 15,
+    position: "absolute",
+    top: -1,
+    right: 20,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  editButtonText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: "bold",
+    marginLeft: 5,
+  },
+
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: COLORS.text,
+  },
+  errorText: {
+    fontSize: 16,
+    color: COLORS.error,
+    textAlign: "center",
+  },
+  noTeamText: {
+    fontSize: 18,
+    color: COLORS.white,
+    marginBottom: 20,
+    textAlign: "center",
+  },
   orText: {
     fontSize: 16,
     color: COLORS.white,
     marginVertical: 10,
     textAlign: "center",
   },
-  infoContainer: {
+  lineupTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: COLORS.primary,
     marginTop: 20,
+    marginBottom: 10,
   },
-  infoItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  lineupContainer: {
+    width: "100%",
+  },
+  lineupItem: {
+    backgroundColor: "#333",
+    padding: 15,
+    borderRadius: 10,
     marginVertical: 5,
+    flexDirection: "row",
+    alignItems: "center",
   },
-  infoLabel: {
+  lineupTextContainer: {
+    flex: 1,
+  },
+  playerImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 15,
+  },
+  lineupItemText: {
     fontSize: 16,
-    color: COLORS.text,
+    color: COLORS.white,
     fontWeight: "bold",
   },
-  infoText: {
-    fontSize: 16,
+  positionText: {
+    fontSize: 14,
     color: COLORS.text,
+  },
+  lineupGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    marginBottom: windowHeight * 0.01, // Add margin bottom to provide space for other elements below
+    paddingHorizontal: 10, // Add horizontal padding to adjust spacing
+    alignItems: "center", // Center items vertically
   },
 });
 

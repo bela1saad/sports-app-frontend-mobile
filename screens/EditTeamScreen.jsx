@@ -13,6 +13,7 @@ import {
   Modal,
   Button,
   Dimensions,
+  Switch, // Import Switch component
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import axiosInstance from "../utils/axios";
@@ -35,6 +36,8 @@ const EditTeamScreen = ({ navigation }) => {
   const maxNumbers = Array.from({ length: 14 }, (_, i) => i + 1);
   const [chosenMaxNumber, setChosenMaxNumber] = useState("");
   const [showMaxNumberPicker, setShowMaxNumberPicker] = useState(false);
+  const [showSportPicker, setShowSportPicker] = useState(false);
+  const [sports, setSports] = useState([]);
 
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
@@ -42,19 +45,20 @@ const EditTeamScreen = ({ navigation }) => {
     const fetchTeamInfo = async () => {
       try {
         const response = await axiosInstance.get("/team/");
-        if (response.status === 200 && response.data) {
+        if (response.status === 200 && response.data && response.data.team) {
           console.log("Team data fetched successfully:", response.data.team);
+          const teamData = response.data.team;
           setTeamInfo({
-            name: response.data.team.name || "",
-            pic: response.data.team.pic || "",
-            description: response.data.team.description || "",
-            up_for_game: response.data.team.up_for_game || false,
-            maxNumber: response.data.team.max_number || "", // Updated key
-            level: response.data.team.level || "",
-            sport_id: response.data.team.sport_id || "",
+            name: teamData.name || "",
+            pic: teamData.pic || "",
+            description: teamData.description || "",
+            up_for_game: teamData.up_for_game || false,
+            maxNumber: teamData.max_number || "",
+            level: teamData.level || "",
+            sport_id: teamData.sport_id || "",
           });
 
-          setImageUri(response.data.team.pic);
+          setImageUri(teamData.pic);
         } else {
           console.log("Unexpected response:", response);
         }
@@ -63,7 +67,22 @@ const EditTeamScreen = ({ navigation }) => {
       }
     };
 
+    const fetchSports = async () => {
+      try {
+        const response = await axiosInstance.get("/sport/all");
+        if (response.status === 200 && response.data) {
+          console.log("Sports data fetched successfully:", response.data);
+          setSports(response.data);
+        } else {
+          console.log("Unexpected response:", response);
+        }
+      } catch (error) {
+        console.error("Error fetching sports:", error);
+      }
+    };
+
     fetchTeamInfo();
+    fetchSports();
   }, [navigation]);
 
   const handleSaveChanges = async () => {
@@ -98,6 +117,12 @@ const EditTeamScreen = ({ navigation }) => {
   const handleSelectMaxNumber = (selectedNumber) => {
     setTeamInfo({ ...teamInfo, maxNumber: selectedNumber });
     setShowMaxNumberPicker(false);
+  };
+
+  const handleSelectSport = (selectedSportId) => {
+    const selectedSport = sports.find((sport) => sport.id === selectedSportId);
+    setTeamInfo({ ...teamInfo, sport_id: selectedSportId });
+    setShowSportPicker(false);
   };
 
   const uploadImageToSupabase = async (uri) => {
@@ -140,6 +165,49 @@ const EditTeamScreen = ({ navigation }) => {
           />
 
           <TouchableOpacity
+            onPress={() => setShowSportPicker(true)}
+            style={styles.pickerButton}
+          >
+            <Text style={styles.pickerButtonText}>
+              {teamInfo.sport_id
+                ? sports.find((sport) => sport.id === teamInfo.sport_id).name
+                : "Select Sport"}
+            </Text>
+          </TouchableOpacity>
+          <Modal
+            visible={showSportPicker}
+            transparent={true}
+            animationType="slide"
+            onRequestClose={() => setShowSportPicker(false)}
+          >
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Select Sport</Text>
+                <Picker
+                  selectedValue={teamInfo.sport_id}
+                  onValueChange={handleSelectSport}
+                >
+                  <Picker.Item label="Select Sport" value="" />
+                  {sports.map((sport) => (
+                    <Picker.Item
+                      label={sport.name}
+                      value={sport.id}
+                      key={sport.id}
+                    />
+                  ))}
+                </Picker>
+                <Button
+                  title="Close"
+                  onPress={() => setShowSportPicker(false)}
+                  style={styles.modalButton}
+                >
+                  <Text style={styles.modalButtonText}>Close</Text>
+                </Button>
+              </View>
+            </View>
+          </Modal>
+
+          <TouchableOpacity
             onPress={() => setShowMaxNumberPicker(true)}
             style={styles.pickerButton}
           >
@@ -147,6 +215,7 @@ const EditTeamScreen = ({ navigation }) => {
               {teamInfo.maxNumber || "Select Max Number"}
             </Text>
           </TouchableOpacity>
+
           <Modal
             visible={showMaxNumberPicker}
             transparent={true}
@@ -210,6 +279,16 @@ const EditTeamScreen = ({ navigation }) => {
               </View>
             </View>
           </Modal>
+          {/* Checkbox for Up for a Game */}
+          <View style={styles.switchContainer}>
+            <Text style={styles.switchLabel}>Up for a Game</Text>
+            <Switch
+              value={teamInfo.up_for_game}
+              onValueChange={(value) =>
+                setTeamInfo({ ...teamInfo, up_for_game: value })
+              }
+            />
+          </View>
           <FileUploadComponent onImageSelected={handleImageSelected} />
           {imageUri && (
             <Image source={{ uri: imageUri }} style={styles.imagePreview} />
@@ -268,6 +347,17 @@ const styles = StyleSheet.create({
     marginBottom: SPACING,
     alignItems: "center",
     backgroundColor: "#303030",
+  },
+  switchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: SPACING,
+  },
+  switchLabel: {
+    color: "#FFFFFF",
+    fontSize: width * 0.04,
+    fontWeight: "600",
   },
   pickerButtonText: {
     color: "#05a759",
