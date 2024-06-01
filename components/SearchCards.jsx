@@ -1,22 +1,10 @@
 import React from "react";
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
-} from "react-native";
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import { useNavigation } from "@react-navigation/native"; // Import the useNavigation hook
+import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 
-const SearchCards = ({ data }) => {
-  const navigation = useNavigation(); // Initialize the navigation object
-
-  const navigateToProfile = (profileType, id) => {
-    // Navigate to the ProfileScreen with profileType and id parameters
-    navigation.navigate("Profile", { profileType, profileId: id });
-  };
+const SearchCards = ({ data, onPress }) => {
+  if (!data || data.length === 0) {
+    return <Text style={styles.noResultsText}>No results found</Text>;
+  }
 
   return (
     <View>
@@ -27,15 +15,7 @@ const SearchCards = ({ data }) => {
               <PlayerCard
                 key={index}
                 player={item}
-                onPress={() => navigateToProfile("player", item.id)}
-              />
-            );
-          case "club":
-            return (
-              <ClubCard
-                key={index}
-                club={item}
-                onPress={() => navigateToProfile("club", item.id)}
+                onPress={() => onPress("player", item.id)}
               />
             );
           case "team":
@@ -43,15 +23,15 @@ const SearchCards = ({ data }) => {
               <TeamCard
                 key={index}
                 team={item}
-                onPress={() => navigateToProfile("team", item.id)}
+                onPress={() => onPress("team", item.id)}
               />
             );
-          case "tournament":
+          case "club":
             return (
-              <TournamentCard
+              <ClubCard
                 key={index}
-                tournament={item}
-                onPress={() => navigateToProfile("tournament", item.id)}
+                club={item}
+                onPress={() => onPress("club", item.id)}
               />
             );
           default:
@@ -63,11 +43,17 @@ const SearchCards = ({ data }) => {
 };
 
 const PlayerCard = ({ player, onPress }) => {
-  const { photo, username, sport, position, city, country, isFriend } = player;
+  const {
+    pic,
+    name: username,
+    location: { city, country },
+    sport,
+    position,
+  } = player;
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      <Image source={photo} style={styles.photo} />
+      <Image source={{ uri: pic }} style={styles.photo} />
       <View style={styles.detailsContainer}>
         <Text style={styles.name}>{username}</Text>
         <Text style={styles.details}>Sport: {sport || ""}</Text>
@@ -81,67 +67,32 @@ const PlayerCard = ({ player, onPress }) => {
 };
 
 const ClubCard = ({ club, onPress }) => {
-  const { photo, name, city, country, sports, rating } = club;
+  const { pic, name, location } = club;
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      <Image source={photo} style={styles.photo} />
+      <Image source={{ uri: pic }} style={styles.photo} />
       <View style={styles.detailsContainer}>
         <Text style={styles.name}>{name}</Text>
-        <Text style={styles.details}>
-          {city}, {country}
-        </Text>
-        <View style={styles.sportsContainer}>
-          {/* Map through the sports array and render icons for each sport */}
-          {sports.map((sport, index) => (
-            <Icon
-              key={index}
-              name={getSportIcon(sport)}
-              style={styles.sportIcon}
-            />
-          ))}
-        </View>
-        <Text style={styles.rating}>Rating: {rating}</Text>
+        <Text style={styles.details}>Location: {location}</Text>
       </View>
     </TouchableOpacity>
   );
 };
 
 const TeamCard = ({ team, onPress }) => {
-  const { photo, name, sport, city, country } = team;
+  const { pic, name, location } = team;
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
-      <Image source={photo} style={styles.photo} />
+      <Image source={{ uri: pic }} style={styles.photo} />
       <View style={styles.detailsContainer}>
         <Text style={styles.name}>{name}</Text>
-        <Text style={styles.details}>Sport: {sport}</Text>
-        <Text style={styles.details}>
-          {city}, {country}
-        </Text>
+        <Text style={styles.details}>Location: {location}</Text>
       </View>
     </TouchableOpacity>
   );
 };
-
-const TournamentCard = ({ tournament, onPress }) => {
-  const { photo, name, sport, city, country, state } = tournament;
-
-  return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
-      <Image source={photo} style={styles.photo} />
-      <View style={styles.detailsContainer}>
-        <Text style={styles.name}>{name}</Text>
-        <Text style={styles.details}>Sport: {sport}</Text>
-        <Text style={styles.details}>
-          {city}, {country}
-        </Text>
-        <Text style={styles.state}>{state}</Text>
-      </View>
-    </TouchableOpacity>
-  );
-};
-
 const getSportIcon = (sport) => {
   switch (sport) {
     case "Football":

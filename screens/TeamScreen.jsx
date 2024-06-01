@@ -191,22 +191,24 @@ const TeamScreen = ({ route }) => {
 
   if (!team) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.noTeamText}>You don't have a team yet.</Text>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate("CreateTeamScreen")}
-        >
-          <Text style={styles.buttonText}>Create a Team</Text>
-        </TouchableOpacity>
-        <Text style={styles.orText}>or</Text>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate("JoinTeamScreen")}
-        >
-          <Text style={styles.buttonText}>Join a Team</Text>
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
+          <Text style={styles.noTeamText}>You don't have a team yet.</Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate("CreateTeamScreen")}
+          >
+            <Text style={styles.buttonText}>Create a Team</Text>
+          </TouchableOpacity>
+          <Text style={styles.orText}>or</Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate("JoinTeamScreen")}
+          >
+            <Text style={styles.buttonText}>Join a Team</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 

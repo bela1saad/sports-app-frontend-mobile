@@ -10,14 +10,9 @@ import {
   Platform,
   Dimensions,
 } from "react-native";
-import Icon from "react-native-vector-icons/FontAwesome"; // Import Icon from react-native-vector-icons
+import Icon from "react-native-vector-icons/FontAwesome";
 import SearchCards from "../components/SearchCards";
-import {
-  dummyPlayers,
-  dummyClubs,
-  dummyTeams,
-  dummyTournaments,
-} from "../Data/dummyData";
+import axiosInstance from "../utils/axios";
 
 const window = Dimensions.get("window");
 
@@ -35,57 +30,22 @@ const SearchScreen = ({ navigation }) => {
     setSearchQuery(query);
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (searchQuery) {
-      const results = filterData();
-      setSearchResults(results);
+      try {
+        const response = await axiosInstance.get(`/search?term=${searchQuery}`);
+        setSearchResults(response.data);
+        console.log("Search Results:", response.data);
+      } catch (error) {
+        console.error("Error searching:", error);
+      }
     } else {
-      setSearchResults([]); // Reset search results if search query is empty
+      setSearchResults([]);
     }
   };
 
   const navigateToProfile = (profileType, id) => {
-    // Assuming you have a separate screen for displaying profiles
-    // You can replace 'ProfileScreen' with the actual screen name
     navigation.navigate("Profile", { profileType, id });
-  };
-
-  const filterData = () => {
-    const filteredResults = [];
-
-    // Filter players
-    const filteredPlayers = dummyPlayers.filter((player) =>
-      player.username.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    if (filteredPlayers.length > 0) {
-      filteredResults.push({ title: "Players", data: filteredPlayers });
-    }
-
-    // Filter clubs
-    const filteredClubs = dummyClubs.filter((club) =>
-      club.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    if (filteredClubs.length > 0) {
-      filteredResults.push({ title: "Clubs", data: filteredClubs });
-    }
-
-    // Filter teams
-    const filteredTeams = dummyTeams.filter((team) =>
-      team.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    if (filteredTeams.length > 0) {
-      filteredResults.push({ title: "Teams", data: filteredTeams });
-    }
-
-    // Filter tournaments
-    const filteredTournaments = dummyTournaments.filter((tournament) =>
-      tournament.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    if (filteredTournaments.length > 0) {
-      filteredResults.push({ title: "Tournaments", data: filteredTournaments });
-    }
-
-    return filteredResults;
   };
 
   return (
@@ -112,15 +72,14 @@ const SearchScreen = ({ navigation }) => {
         </View>
       </View>
       <ScrollView style={styles.resultsContainer}>
-        {searchResults.map((section) => (
-          <View key={section.title}>
-            <Text style={styles.sectionHeader}>{section.title}</Text>
-            <SearchCards
-              data={section.data}
-              onPress={(profileType, id) => navigateToProfile(profileType, id)}
-            />
-          </View>
-        ))}
+        {searchResults && searchResults.length > 0 ? (
+          <SearchCards
+            data={searchResults}
+            onPress={(profileType, id) => navigateToProfile(profileType, id)}
+          />
+        ) : (
+          <Text style={styles.noResultsText}>No results found</Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -158,22 +117,21 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: "#333",
-    fontSize: window.width < 400 ? 16 : 20, // Adjust font size based on window width
+    fontSize: window.width < 400 ? 16 : 20,
     marginLeft: 8,
     paddingVertical: 12,
   },
   resultsContainer: {
     flex: 1,
     marginHorizontal: 12,
-    marginTop: 15, // Add margin to create space
+    marginTop: 15,
   },
-  sectionHeader: {
-    backgroundColor: "#444",
-    color: "#fff",
-    paddingVertical: 5,
-    paddingHorizontal: 12,
+  noResultsText: {
     fontSize: 18,
     fontWeight: "bold",
+    textAlign: "center",
+    marginTop: 20,
+    color: "#fff",
   },
 });
 

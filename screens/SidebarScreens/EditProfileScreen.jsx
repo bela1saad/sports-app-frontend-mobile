@@ -75,9 +75,33 @@ const EditProfileScreen = () => {
           }
         } else {
           console.log("Player account does not exist");
+          // Handle the case where player account does not exist
+          // For example, set default values for the state variables
+          setName("");
+          setSelectedCountry("");
+          setCity("");
+          setChosenSport("");
+          setChosenSportId(null);
+          setChosenPosition("");
+          setChosenPositionId(null);
+          setProfilePicUri(null);
         }
       } catch (error) {
-        console.error("Error loading data:", error);
+        if (error.response && error.response.status === 404) {
+          console.log("Player account does not exist");
+          // Handle the case where player account does not exist
+          // For example, set default values for the state variables
+          setName("");
+          setSelectedCountry("");
+          setCity("");
+          setChosenSport("");
+          setChosenSportId(null);
+          setChosenPosition("");
+          setChosenPositionId(null);
+          setProfilePicUri(null);
+        } else {
+          console.error("Error loading data:", error);
+        }
       }
     };
 
