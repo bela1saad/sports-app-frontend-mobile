@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useLayoutEffect } from "react";
+import React, { useEffect, useState, useLayoutEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -26,6 +26,8 @@ const TeamScreen = ({ route }) => {
   const [isCaptain, setIsCaptain] = useState(false);
   const [followers, setFollowers] = useState(0);
   const [lineup, setLineup] = useState([]);
+  const [members, setMembers] = useState([]); // State for team members
+  const [positionKeys, setPositionKeys] = useState({});
   const notificationCount = 100;
 
   useLayoutEffect(() => {
@@ -35,15 +37,61 @@ const TeamScreen = ({ route }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axiosInstance.get("/team/");
-        if (response.status === 200 && response.data.team) {
-          const teamData = response.data.team;
+        const teamResponse = await axiosInstance.get("/team/");
+        if (teamResponse.status === 200 && teamResponse.data.team) {
+          const teamData = teamResponse.data.team;
           setTeam(teamData);
-          fetchSport(teamData.sport_id);
-          checkIsCaptain();
-          fetchFollowers(teamData.id);
-          fetchLineup(teamData.id);
-        } else if (response.status === 404) {
+          const sportResponse = await axiosInstance.get(
+            `/sport/by-id/${teamData.sport_id}`
+          );
+          if (sportResponse.status === 200 && sportResponse.data) {
+            setSport(sportResponse.data);
+          }
+          const followersResponse = await axiosInstance.get(
+            `/follow/followers-count/${teamData.id}`
+          );
+          if (followersResponse.status === 200 && followersResponse.data) {
+            setFollowers(followersResponse.data.followersCount);
+          }
+          const lineupResponse = await axiosInstance.get(
+            `/lineup/${teamData.id}`
+          );
+          if (lineupResponse.status === 200 && lineupResponse.data) {
+            setLineup(lineupResponse.data.lineup);
+          }
+          const isCaptainResponse = await axiosInstance.get(
+            "/player/isTeamCaptain"
+          );
+          if (
+            isCaptainResponse.status === 200 &&
+            isCaptainResponse.data.isCaptain
+          ) {
+            setIsCaptain(true);
+            console.log("User is a captain of the team");
+          } else {
+            setIsCaptain(false);
+            console.log("User is not a captain of the team");
+          }
+          const membersResponse = await axiosInstance.get(
+            `/team/current-members`
+          );
+          if (membersResponse.status === 200 && membersResponse.data) {
+            setMembers(membersResponse.data);
+            const keys = {};
+            for (const member of membersResponse.data) {
+              const positionResponse = await axiosInstance.get(`/position/all`);
+              if (positionResponse.status === 200 && positionResponse.data) {
+                const position = positionResponse.data.find(
+                  (pos) => pos.id === member.position_id
+                );
+                if (position && position.key) {
+                  keys[member.id] = position.key;
+                }
+              }
+            }
+            setPositionKeys(keys);
+          }
+        } else if (teamResponse.status === 404) {
           setTeam(false);
         }
       } catch (error) {
@@ -59,56 +107,6 @@ const TeamScreen = ({ route }) => {
       }
     };
 
-    const fetchSport = async (sportId) => {
-      try {
-        const response = await axiosInstance.get(`/sport/by-id/${sportId}`);
-        if (response.status === 200 && response.data) {
-          setSport(response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching sport data:", error);
-      }
-    };
-
-    const fetchFollowers = async (teamId) => {
-      try {
-        const response = await axiosInstance.get(
-          `/follow/followers-count/${teamId}`
-        );
-        if (response.status === 200 && response.data) {
-          setFollowers(response.data.followersCount);
-        }
-      } catch (error) {
-        console.error("Error fetching followers:", error);
-      }
-    };
-
-    const fetchLineup = async (teamId) => {
-      try {
-        const response = await axiosInstance.get(`/lineup/${teamId}`);
-        if (response.status === 200 && response.data) {
-          setLineup(response.data.lineup); // Make sure to set lineup state correctly
-        }
-      } catch (error) {
-        console.error("Error fetching lineup:", error);
-      }
-    };
-
-    const checkIsCaptain = async () => {
-      try {
-        const response = await axiosInstance.get("/player/isTeamCaptain");
-        if (response.status === 200 && response.data.isCaptain) {
-          setIsCaptain(true);
-          console.log("User is a captain of the team");
-        } else {
-          setIsCaptain(false);
-          console.log("User is not a captain of the team");
-        }
-      } catch (error) {
-        console.error("Error checking captain status:", error);
-      }
-    };
-
     fetchData();
   }, [route.params]);
 
@@ -116,15 +114,18 @@ const TeamScreen = ({ route }) => {
     navigation.navigate("EditTeamScreen");
   };
 
-  const renderLineupItem = ({ item }) => (
-    <View style={styles.lineupItem}>
-      <Image source={{ uri: item.player.pic }} style={styles.playerImage} />
-      <View style={styles.lineupTextContainer}>
-        <Text style={styles.lineupItemText}>{item.player.name}</Text>
-        <Text style={styles.positionText}>{item.position.name}</Text>
-      </View>
-    </View>
-  );
+  const fetchPositionKeys = async (members) => {
+    try {
+      const keys = {};
+      for (const member of members) {
+        const key = await fetchPositionKey(member.position_id); // Assuming fetchPositionKey function is defined
+        keys[member.id] = key;
+      }
+      setPositionKeys(keys);
+    } catch (error) {
+      console.error("Error fetching position keys:", error);
+    }
+  };
 
   const getSportIcon = (sportName) => {
     switch (sportName) {
@@ -214,109 +215,115 @@ const TeamScreen = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <Image
-          source={{ uri: team.pic }}
-          style={styles.teamImage}
-          resizeMode="cover"
-        />
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Notifications")}
-          style={[styles.notificationIconContainer, styles.notificationIcon]}
-        >
-          <NotificationsIcon count={notificationCount} size={30} />
-        </TouchableOpacity>
-        <View style={styles.header}>
-          <Text style={styles.teamName}>{team.name}</Text>
-          {isCaptain && (
-            <TouchableOpacity
-              style={styles.editButton}
-              onPress={handleEditTeam}
-            >
-              <Icon name="pencil" size={15} color={COLORS.white} />
-            </TouchableOpacity>
-          )}
-        </View>
-        <View style={styles.infoRow}>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Followers</Text>
-            <Text style={styles.infoText}>{followers}</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Level</Text>
-            <Icon
-              name={getLevelIcon(team.level)}
-              size={24}
-              color={getLevelIconColor(team.level)}
-            />
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Up for a Game</Text>
-            <Icon
-              name={getUpForGameIcon(team.up_for_game)}
-              size={24}
-              color={COLORS.primary}
-            />
-          </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Sport</Text>
-            {sport ? (
-              <Icon
-                name={getSportIcon(sport.name)}
-                size={24}
-                color={COLORS.primary}
-              />
-            ) : (
-              <Text style={styles.infoText}>Loading...</Text>
-            )}
-          </View>
-        </View>
-        <Text style={styles.teamDescription}>{team.description}</Text>
-
-        <View style={styles.lineupContainer}>
-          <Text style={styles.lineupTitle}>Lineup</Text>
-          {lineup.map((player, index) => (
-            <View key={index} style={styles.playerContainer}>
+      <View style={styles.container}>
+        <FlatList
+          data={[{ key: "team" }]} // Add a dummy data to ensure FlatList works
+          renderItem={({ item }) => (
+            <>
               <Image
-                source={{ uri: player.player.pic }}
-                style={styles.playerPhoto}
+                source={{ uri: team.pic }}
+                style={styles.teamImage}
+                resizeMode="cover"
               />
-              <View style={styles.playerInfo}>
-                <View>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Notifications")}
+                style={[
+                  styles.notificationIconContainer,
+                  styles.notificationIcon,
+                ]}
+              >
+                <NotificationsIcon count={notificationCount} size={30} />
+              </TouchableOpacity>
+              <View style={styles.header}>
+                <Text style={styles.teamName}>{team.name}</Text>
+                {isCaptain && (
                   <TouchableOpacity
-                    onPress={() =>
-                      navigateToProfile("player", player.player_id)
-                    }
+                    style={styles.editButton}
+                    onPress={handleEditTeam}
                   >
-                    <Text style={styles.playerName}>
-                      {player.player.name}
-                      {player.isCaptain && (
-                        <Icon
-                          name="star"
-                          size={24}
-                          color="#FFD700"
-                          style={styles.captainIcon}
-                        />
-                      )}
-                    </Text>
+                    <Icon name="pencil" size={15} color={COLORS.white} />
                   </TouchableOpacity>
-                  <Text style={styles.playerPosition}>
-                    {player.position.name}
-                  </Text>
+                )}
+              </View>
+              <View style={styles.infoRow}>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoLabel}>Followers</Text>
+                  <Text style={styles.infoText}>{followers}</Text>
                 </View>
-                <View style={styles.jerseyNumberContainer}>
-                  <Text style={styles.jerseyNumberText}>
-                    {player.jerseyNumber}
-                  </Text>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoLabel}>Level</Text>
+                  <Icon
+                    name={getLevelIcon(team.level)}
+                    size={24}
+                    color={getLevelIconColor(team.level)}
+                  />
+                </View>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoLabel}>Up for a Game</Text>
+                  <Icon
+                    name={getUpForGameIcon(team.up_for_game)}
+                    size={24}
+                    color={COLORS.primary}
+                  />
+                </View>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoLabel}>Sport</Text>
+                  {sport ? (
+                    <Icon
+                      name={getSportIcon(sport.name)}
+                      size={24}
+                      color={COLORS.primary}
+                    />
+                  ) : (
+                    <Text style={styles.infoText}>Loading...</Text>
+                  )}
                 </View>
               </View>
-            </View>
-          ))}
-        </View>
-        <View style={styles.lineupGrid}>
-          <LineupGrid lineup={lineup} />
-        </View>
-      </ScrollView>
+              <Text style={styles.teamDescription}>{team.description}</Text>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Team Members</Text>
+                <View style={{ flex: 1 }}>
+                  <FlatList
+                    data={members}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item }) => {
+                      return (
+                        <View style={styles.lineupItem}>
+                          <Image
+                            source={{ uri: item.pic }}
+                            style={styles.playerImage}
+                          />
+                          <View style={styles.lineupTextContainer}>
+                            <TouchableOpacity
+                              onPress={() =>
+                                navigateToProfile("player", item.id)
+                              }
+                            >
+                              <Text style={styles.lineupItemText}>
+                                {item.name}
+                              </Text>
+                            </TouchableOpacity>
+                            <Text style={styles.positionText}>
+                              {positionKeys[item.id] || "Loading..."}
+                            </Text>
+                          </View>
+                        </View>
+                      );
+                    }}
+                  />
+                </View>
+              </View>
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Lineup</Text>
+              </View>
+              <View style={styles.lineupGrid}>
+                <LineupGrid lineup={lineup} />
+              </View>
+            </>
+          )}
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -346,7 +353,6 @@ const styles = StyleSheet.create({
     paddingVertical: -10,
     borderRadius: 10,
     marginLeft: 5,
-
     zIndex: 1,
   },
   notificationIconContainer: {
@@ -356,7 +362,6 @@ const styles = StyleSheet.create({
     top: 20,
     right: 20,
   },
-
   teamImage: {
     width: "100%",
     height: 200,
@@ -400,7 +405,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   button: {
-    backgroundColor: COLORS.Green,
+    backgroundColor: COLORS.green,
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 25,
@@ -423,14 +428,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-
   editButtonText: {
     color: COLORS.white,
     fontSize: 14,
     fontWeight: "bold",
     marginLeft: 5,
   },
-
   loadingText: {
     marginTop: 10,
     fontSize: 16,
@@ -441,38 +444,28 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     textAlign: "center",
   },
-  noTeamText: {
-    fontSize: 18,
-    color: COLORS.white,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  orText: {
-    fontSize: 16,
-    color: COLORS.white,
-    marginVertical: 10,
-    textAlign: "center",
-  },
-  lineupTitle: {
+  sectionTitle: {
     fontSize: 20,
     fontWeight: "bold",
     color: COLORS.primary,
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  lineupContainer: {
-    width: "100%",
+    marginVertical: 10,
   },
   lineupItem: {
-    backgroundColor: "#333",
-    padding: 15,
-    borderRadius: 10,
-    marginVertical: 5,
     flexDirection: "row",
     alignItems: "center",
-  },
-  lineupTextContainer: {
-    flex: 1,
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    backgroundColor: "#222",
+    borderRadius: 10,
+    marginVertical: 5,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   playerImage: {
     width: 50,
@@ -480,22 +473,33 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginRight: 15,
   },
+  lineupTextContainer: {
+    flex: 1,
+    flexDirection: "column",
+  },
   lineupItemText: {
-    fontSize: 16,
-    color: COLORS.white,
+    fontSize: 18,
+    color: "#05a759",
     fontWeight: "bold",
+  },
+  lineupItemName: {
+    color: COLORS.green,
   },
   positionText: {
     fontSize: 14,
-    color: COLORS.text,
+    color: COLORS.white,
   },
-  lineupGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    marginBottom: windowHeight * 0.01, // Add margin bottom to provide space for other elements below
-    paddingHorizontal: 10, // Add horizontal padding to adjust spacing
-    alignItems: "center", // Center items vertically
+  noTeamText: {
+    fontSize: 18,
+    color: COLORS.primary,
+    textAlign: "center",
+    marginTop: 20,
+  },
+  orText: {
+    fontSize: 16,
+    color: COLORS.gray,
+    textAlign: "center",
+    marginVertical: 10,
   },
 });
 

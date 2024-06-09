@@ -174,6 +174,7 @@ const EditTeamScreen = ({ navigation }) => {
                 : "Select Sport"}
             </Text>
           </TouchableOpacity>
+
           <Modal
             visible={showSportPicker}
             transparent={true}
