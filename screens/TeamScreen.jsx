@@ -11,7 +11,7 @@ import {
   Dimensions,
   Alert, // Import Alert
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native"; // Import useFocusEffect
 import axiosInstance from "../utils/axios";
 import COLORS from "../constants/colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -34,81 +34,85 @@ const TeamScreen = ({ route }) => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const teamResponse = await axiosInstance.get("/team/");
-        if (teamResponse.status === 200 && teamResponse.data.team) {
-          const teamData = teamResponse.data.team;
-          setTeam(teamData);
-          const sportResponse = await axiosInstance.get(
-            `/sport/by-id/${teamData.sport_id}`
-          );
-          if (sportResponse.status === 200 && sportResponse.data) {
-            setSport(sportResponse.data);
-          }
-          const followersResponse = await axiosInstance.get(
-            `/follow/followers-count/${teamData.id}`
-          );
-          if (followersResponse.status === 200 && followersResponse.data) {
-            setFollowers(followersResponse.data.followersCount);
-          }
-          const lineupResponse = await axiosInstance.get(
-            `/lineup/${teamData.id}`
-          );
-          if (lineupResponse.status === 200 && lineupResponse.data) {
-            setLineup(lineupResponse.data.lineup);
-          }
-          const isCaptainResponse = await axiosInstance.get(
-            "/player/isTeamCaptain"
-          );
-          if (
-            isCaptainResponse.status === 200 &&
-            isCaptainResponse.data.isCaptain
-          ) {
-            setIsCaptain(true);
-            console.log("User is a captain of the team");
-          } else {
-            setIsCaptain(false);
-            console.log("User is not a captain of the team");
-          }
-          const membersResponse = await axiosInstance.get(
-            `/team/current-members`
-          );
-          if (membersResponse.status === 200 && membersResponse.data) {
-            setMembers(membersResponse.data);
-            const keys = {};
-            for (const member of membersResponse.data) {
-              const positionResponse = await axiosInstance.get(`/position/all`);
-              if (positionResponse.status === 200 && positionResponse.data) {
-                const position = positionResponse.data.find(
-                  (pos) => pos.id === member.position_id
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchData = async () => {
+        try {
+          const teamResponse = await axiosInstance.get("/team/");
+          if (teamResponse.status === 200 && teamResponse.data.team) {
+            const teamData = teamResponse.data.team;
+            setTeam(teamData);
+            const sportResponse = await axiosInstance.get(
+              `/sport/by-id/${teamData.sport_id}`
+            );
+            if (sportResponse.status === 200 && sportResponse.data) {
+              setSport(sportResponse.data);
+            }
+            const followersResponse = await axiosInstance.get(
+              `/follow/followers-count/${teamData.id}`
+            );
+            if (followersResponse.status === 200 && followersResponse.data) {
+              setFollowers(followersResponse.data.followersCount);
+            }
+            const lineupResponse = await axiosInstance.get(
+              `/lineup/${teamData.id}`
+            );
+            if (lineupResponse.status === 200 && lineupResponse.data) {
+              setLineup(lineupResponse.data.lineup);
+            }
+            const isCaptainResponse = await axiosInstance.get(
+              "/player/isTeamCaptain"
+            );
+            if (
+              isCaptainResponse.status === 200 &&
+              isCaptainResponse.data.isCaptain
+            ) {
+              setIsCaptain(true);
+              console.log("User is a captain of the team");
+            } else {
+              setIsCaptain(false);
+              console.log("User is not a captain of the team");
+            }
+            const membersResponse = await axiosInstance.get(
+              `/team/current-members`
+            );
+            if (membersResponse.status === 200 && membersResponse.data) {
+              setMembers(membersResponse.data);
+              const keys = {};
+              for (const member of membersResponse.data) {
+                const positionResponse = await axiosInstance.get(
+                  `/position/all`
                 );
-                if (position && position.key) {
-                  keys[member.id] = position.key;
+                if (positionResponse.status === 200 && positionResponse.data) {
+                  const position = positionResponse.data.find(
+                    (pos) => pos.id === member.position_id
+                  );
+                  if (position && position.key) {
+                    keys[member.id] = position.key;
+                  }
                 }
               }
+              setPositionKeys(keys);
             }
-            setPositionKeys(keys);
+          } else if (teamResponse.status === 404) {
+            setTeam(false);
           }
-        } else if (teamResponse.status === 404) {
-          setTeam(false);
+        } catch (error) {
+          if (
+            error.response &&
+            error.response.status === 400 &&
+            error.response.data.message === "Player is not in a team"
+          ) {
+            setTeam(false);
+          } else {
+            setError("An error occurred. Please try again.");
+          }
         }
-      } catch (error) {
-        if (
-          error.response &&
-          error.response.status === 400 &&
-          error.response.data.message === "Player is not in a team"
-        ) {
-          setTeam(false);
-        } else {
-          setError("An error occurred. Please try again.");
-        }
-      }
-    };
+      };
 
-    fetchData();
-  }, [route.params]);
+      fetchData();
+    }, [route.params]) // Refresh data when route params change
+  );
 
   const handleEditTeam = () => {
     navigation.navigate("EditTeamScreen");
@@ -174,7 +178,7 @@ const TeamScreen = ({ route }) => {
   };
 
   // Function to handle leaving the team
-  const handleLeaveTeam = () => {
+  const handleLeaveTeam = async () => {
     Alert.alert(
       "Leave Team",
       "Are you sure you want to leave the team?",
@@ -189,8 +193,15 @@ const TeamScreen = ({ route }) => {
             try {
               const response = await axiosInstance.post(`/team/leave`);
               if (response.status === 200) {
-                Alert.alert("Success", "Player left the team successfully");
-                navigation.navigate("HomeScreen"); // Navigate to home screen or any other screen
+                Alert.alert("Success", "Player left the team successfully", [
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      // Navigate to home screen after leaving the team
+                      navigation.navigate("MainTabs", { screen: "Home" });
+                    },
+                  },
+                ]);
               }
             } catch (error) {
               console.error("Error leaving the team:", error);
@@ -434,7 +445,7 @@ const styles = StyleSheet.create({
     marginVertical: 20,
   },
   button: {
-    backgroundColor: COLORS.green,
+    backgroundColor: "#05a759",
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 25,
@@ -524,7 +535,7 @@ const styles = StyleSheet.create({
   },
   orText: {
     fontSize: 16,
-    color: COLORS.gray,
+    color: "#ffffff",
     textAlign: "center",
     marginVertical: 10,
   },
