@@ -9,7 +9,7 @@ import {
   FlatList,
   SafeAreaView, // Import SafeAreaView
   Dimensions,
-  ScrollView,
+  Alert, // Import Alert
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axiosInstance from "../utils/axios";
@@ -173,6 +173,39 @@ const TeamScreen = ({ route }) => {
     return upForGame ? "check-circle" : "close-circle";
   };
 
+  // Function to handle leaving the team
+  const handleLeaveTeam = () => {
+    Alert.alert(
+      "Leave Team",
+      "Are you sure you want to leave the team?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: async () => {
+            try {
+              const response = await axiosInstance.post(`/team/leave`);
+              if (response.status === 200) {
+                Alert.alert("Success", "Player left the team successfully");
+                navigation.navigate("HomeScreen"); // Navigate to home screen or any other screen
+              }
+            } catch (error) {
+              console.error("Error leaving the team:", error);
+              Alert.alert(
+                "Error",
+                "An error occurred while trying to leave the team. Please try again."
+              );
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   if (error) {
     return (
       <View style={styles.container}>
@@ -215,121 +248,115 @@ const TeamScreen = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.container}>
-        <FlatList
-          data={[{ key: "team" }]} // Add a dummy data to ensure FlatList works
-          renderItem={({ item }) => (
-            <>
-              <Image
-                source={{ uri: team.pic }}
-                style={styles.teamImage}
-                resizeMode="cover"
-              />
-              <TouchableOpacity
-                onPress={() => navigation.navigate("Notifications")}
-                style={[
-                  styles.notificationIconContainer,
-                  styles.notificationIcon,
-                ]}
-              >
-                <NotificationsIcon count={notificationCount} size={30} />
-              </TouchableOpacity>
-              <View style={styles.header}>
-                <Text style={styles.teamName}>{team.name}</Text>
-                {isCaptain && (
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={handleEditTeam}
-                  >
-                    <Icon name="pencil" size={15} color={COLORS.white} />
-                  </TouchableOpacity>
-                )}
+      <FlatList
+        style={{ flex: 1 }} // Ensure FlatList takes full height
+        contentContainerStyle={styles.content}
+        data={[{ key: "team" }]} // Dummy data to ensure FlatList works
+        renderItem={({ item }) => (
+          <>
+            <Image
+              source={{ uri: team.pic }}
+              style={styles.teamImage}
+              resizeMode="cover"
+            />
+            <View style={styles.header}>
+              <Text style={styles.teamName}>{team.name}</Text>
+              {isCaptain && (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Notifications")}
+                  style={styles.notificationIconContainer}
+                >
+                  <NotificationsIcon count={notificationCount} size={30} />
+                </TouchableOpacity>
+              )}
+              {isCaptain && (
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={handleEditTeam}
+                >
+                  <Icon name="pencil" size={15} color={COLORS.white} />
+                </TouchableOpacity>
+              )}
+            </View>
+            <View style={styles.infoRow}>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Followers</Text>
+                <Text style={styles.infoText}>{followers}</Text>
               </View>
-              <View style={styles.infoRow}>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Followers</Text>
-                  <Text style={styles.infoText}>{followers}</Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Level</Text>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Level</Text>
+                <Icon
+                  name={getLevelIcon(team.level)}
+                  size={24}
+                  color={getLevelIconColor(team.level)}
+                />
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Up for a Game</Text>
+                <Icon
+                  name={getUpForGameIcon(team.up_for_game)}
+                  size={24}
+                  color={COLORS.primary}
+                />
+              </View>
+              <View style={styles.infoItem}>
+                <Text style={styles.infoLabel}>Sport</Text>
+                {sport ? (
                   <Icon
-                    name={getLevelIcon(team.level)}
-                    size={24}
-                    color={getLevelIconColor(team.level)}
-                  />
-                </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Up for a Game</Text>
-                  <Icon
-                    name={getUpForGameIcon(team.up_for_game)}
+                    name={getSportIcon(sport.name)}
                     size={24}
                     color={COLORS.primary}
                   />
-                </View>
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Sport</Text>
-                  {sport ? (
-                    <Icon
-                      name={getSportIcon(sport.name)}
-                      size={24}
-                      color={COLORS.primary}
-                    />
-                  ) : (
-                    <Text style={styles.infoText}>Loading...</Text>
-                  )}
-                </View>
+                ) : (
+                  <Text style={styles.infoText}>Loading...</Text>
+                )}
               </View>
-              <Text style={styles.teamDescription}>{team.description}</Text>
+            </View>
+            <Text style={styles.teamDescription}>{team.description}</Text>
 
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Team Members</Text>
-                <View style={{ flex: 1 }}>
-                  <FlatList
-                    data={members}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item }) => {
-                      return (
-                        <View style={styles.lineupItem}>
-                          <Image
-                            source={{ uri: item.pic }}
-                            style={styles.playerImage}
-                          />
-                          <View style={styles.lineupTextContainer}>
-                            <TouchableOpacity
-                              onPress={() =>
-                                navigateToProfile("player", item.id)
-                              }
-                            >
-                              <Text style={styles.lineupItemText}>
-                                {item.name}
-                              </Text>
-                            </TouchableOpacity>
-                            <Text style={styles.positionText}>
-                              {positionKeys[item.id] || "Loading..."}
-                            </Text>
-                          </View>
-                        </View>
-                      );
-                    }}
-                  />
-                </View>
-              </View>
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Lineup</Text>
-              </View>
-              <View style={styles.lineupGrid}>
-                <LineupGrid lineup={lineup} />
-              </View>
-            </>
-          )}
-        />
-      </View>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Team Members</Text>
+              <FlatList
+                data={members}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={({ item }) => (
+                  <View style={styles.lineupItem}>
+                    <Image
+                      source={{ uri: item.pic }}
+                      style={styles.playerImage}
+                    />
+                    <View style={styles.lineupTextContainer}>
+                      <TouchableOpacity
+                        onPress={() => navigateToProfile("player", item.id)}
+                      >
+                        <Text style={styles.lineupItemText}>{item.name}</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.positionText}>
+                        {positionKeys[item.id] || "Loading..."}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              />
+            </View>
+            {/* Divider */}
+            <View style={styles.divider} />
+            {/* "Leave Team" button */}
+            <TouchableOpacity
+              style={styles.leaveButton}
+              onPress={handleLeaveTeam}
+            >
+              <Text style={styles.leaveButtonText}>Leave Team</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      />
     </SafeAreaView>
   );
 };
-
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -339,6 +366,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
   },
+  contentContainer: {
+    flex: 1,
+  },
   scrollViewContent: {
     flexGrow: 1,
   },
@@ -347,20 +377,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 10,
+    width: "100%", // Ensure the header takes full width
+  },
+  notificationIconContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 10, // Add margin to separate from the edit button
   },
   notificationIcon: {
     paddingHorizontal: 6,
     paddingVertical: -10,
     borderRadius: 10,
-    marginLeft: 5,
     zIndex: 1,
-  },
-  notificationIconContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    position: "absolute",
-    top: 20,
-    right: 20,
   },
   teamImage: {
     width: "100%",
@@ -421,12 +450,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.secondary,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 15,
-    position: "absolute",
-    top: -1,
-    right: 20,
+    borderRadius: 20,
     flexDirection: "row",
     alignItems: "center",
+    marginLeft: -100, // Add margin to separate from the team name
   },
   editButtonText: {
     color: COLORS.white,
@@ -500,6 +527,23 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     textAlign: "center",
     marginVertical: 10,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#888", // Color of the divider
+    marginVertical: 20, // Adjust as needed
+  },
+  leaveButton: {
+    backgroundColor: "#FF0000", // Red color for leave button
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    alignItems: "center",
+  },
+  leaveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 
