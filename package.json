@@ -44,6 +44,7 @@
     "react-native-country-flag": "^2.0.2",
     "react-native-country-picker-modal": "^2.0.0",
     "react-native-dotenv": "^3.4.11",
+    "react-native-draggable-flatlist": "^4.0.1",
     "react-native-elements": "^3.4.3",
     "react-native-flags": "^1.0.0",
     "react-native-gesture-handler": "~2.16.1",

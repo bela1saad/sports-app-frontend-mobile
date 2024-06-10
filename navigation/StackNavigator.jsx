@@ -31,6 +31,7 @@ import CreateTeamScreen from "../screens/CreateTeamScreen";
 import JoinTeamScreen from "../screens/JoinTeamScreen";
 import EditTeamScreen from "../screens/EditTeamScreen";
 import InvitePlayersScreen from "../screens/InvitePlayers";
+import LineupEditScreen from "../screens/LineupEditScreen";
 
 const Stack = createStackNavigator();
 
@@ -75,6 +76,7 @@ const StackNavigator = () => {
           <Stack.Screen name="JoinTeamScreen" component={JoinTeamScreen} />
           <Stack.Screen name="EditTeamScreen" component={EditTeamScreen} />
           <Stack.Screen name="InvitePlayers" component={InvitePlayersScreen} />
+          <Stack.Screen name="LineupEditScreen" component={LineupEditScreen} />
 
           <Stack.Screen
             name="BookingsHistory"

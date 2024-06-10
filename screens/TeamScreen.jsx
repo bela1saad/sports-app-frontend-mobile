@@ -270,6 +270,10 @@ const TeamScreen = ({ route }) => {
     navigation.navigate("InvitePlayers");
   };
 
+  const handleEditLineupTeam = () => {
+    navigation.navigate("LineupEditScreen", { teamId: team.id });
+  };
+
   // Function to handle leaving the team
   const handleLeaveTeam = async () => {
     Alert.alert(
@@ -479,6 +483,15 @@ const TeamScreen = ({ route }) => {
                 )}
               />
             </View>
+            {/* Divider */}
+            <View style={styles.divider} />
+            <TouchableOpacity
+              style={styles.leaveButton}
+              onPress={handleEditLineupTeam}
+            >
+              <Text style={styles.leaveButtonText}>Edit Team Lineup</Text>
+            </TouchableOpacity>
+
             {/* Divider */}
             <View style={styles.divider} />
             {/* "Leave Team" button */}

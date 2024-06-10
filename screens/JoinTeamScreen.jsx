@@ -9,6 +9,7 @@ import {
   Modal,
   SafeAreaView,
   Dimensions,
+  Alert,
 } from "react-native";
 import axiosInstance from "../utils/axios";
 import { Picker } from "@react-native-picker/picker";
@@ -97,8 +98,18 @@ const JoinTeamScreen = ({ navigation }) => {
     }
   };
 
-  const handleJoinPress = (teamId) => {
-    console.log("Join team with ID:", teamId);
+  const handleJoinPress = async (teamId) => {
+    try {
+      const response = await axiosInstance.post(`/request/team/${teamId}`);
+      if (response.status === 200 || response.status === 201) {
+        Alert.alert("Success", "Request to join the team sent successfully!");
+      } else {
+        Alert.alert("Error", "Failed to send request. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error sending join request:", error);
+      Alert.alert("Error", "Failed to send request. Please try again.");
+    }
   };
 
   const renderItem = ({ item }) => (
