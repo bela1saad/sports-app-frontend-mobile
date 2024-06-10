@@ -30,6 +30,7 @@ import LoadingIndicator from "../components/LoadingIndicator";
 import CreateTeamScreen from "../screens/CreateTeamScreen";
 import JoinTeamScreen from "../screens/JoinTeamScreen";
 import EditTeamScreen from "../screens/EditTeamScreen";
+import InvitePlayersScreen from "../screens/InvitePlayers";
 
 const Stack = createStackNavigator();
 
@@ -73,6 +74,7 @@ const StackNavigator = () => {
           <Stack.Screen name="CreateTeamScreen" component={CreateTeamScreen} />
           <Stack.Screen name="JoinTeamScreen" component={JoinTeamScreen} />
           <Stack.Screen name="EditTeamScreen" component={EditTeamScreen} />
+          <Stack.Screen name="InvitePlayers" component={InvitePlayersScreen} />
 
           <Stack.Screen
             name="BookingsHistory"

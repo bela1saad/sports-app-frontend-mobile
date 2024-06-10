@@ -41,6 +41,7 @@ const TeamScreen = ({ route }) => {
           const teamResponse = await axiosInstance.get("/team/");
           if (teamResponse.status === 200 && teamResponse.data.team) {
             const teamData = teamResponse.data.team;
+            console.log("Fetched team data:", teamData); // Console log for team data
             setTeam(teamData);
             const sportResponse = await axiosInstance.get(
               `/sport/by-id/${teamData.sport_id}`
@@ -118,6 +119,47 @@ const TeamScreen = ({ route }) => {
     navigation.navigate("EditTeamScreen");
   };
 
+  const handleKickPlayer = (playerId) => {
+    Alert.alert(
+      "Kick Player",
+      "Are you sure you want to kick this player from the team?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: async () => {
+            try {
+              console.log(`Kicking player with ID: ${playerId}`); // Log the player ID
+              const response = await axiosInstance.put(
+                `/team/kick/${playerId}`
+              );
+              if (response.status === 200) {
+                // Remove the kicked player from the members list
+                setMembers(members.filter((member) => member.id !== playerId));
+                Alert.alert("Success", "Player has been kicked from the team");
+              } else {
+                console.error(`Unexpected response: ${response.status}`);
+              }
+            } catch (error) {
+              console.error("Error kicking the player:", error); // Log the full error
+              if (error.response) {
+                console.error("Error data:", error.response.data); // Log error data
+              }
+              Alert.alert(
+                "Error",
+                "An error occurred while trying to kick the player. Please try again."
+              );
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
   const fetchPositionKeys = async (members) => {
     try {
       const keys = {};
@@ -175,6 +217,57 @@ const TeamScreen = ({ route }) => {
 
   const getUpForGameIcon = (upForGame) => {
     return upForGame ? "check-circle" : "close-circle";
+  };
+
+  const handleTransferCaptain = (newCaptainId) => {
+    Alert.alert(
+      "Transfer Captain Role",
+      "Are you sure you want to transfer the captain role to this player?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: async () => {
+            try {
+              console.log(
+                `Transferring captain role to player with ID: ${newCaptainId}`
+              ); // Log the player ID
+              const response = await axiosInstance.put(
+                `/team/transfer/${newCaptainId}`
+              );
+              if (response.status === 200) {
+                // Assuming the API returns the updated team data with the new captain
+                const updatedTeam = response.data.team;
+                setTeam(updatedTeam);
+                Alert.alert(
+                  "Success",
+                  "Captain role has been transferred successfully"
+                );
+              } else {
+                console.error(`Unexpected response: ${response.status}`);
+              }
+            } catch (error) {
+              console.error("Error transferring captain role:", error); // Log the full error
+              if (error.response) {
+                console.error("Error data:", error.response.data); // Log error data
+              }
+              Alert.alert(
+                "Error",
+                "An error occurred while trying to transfer the captain role. Please try again."
+              );
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const handleInvitePlayers = () => {
+    navigation.navigate("InvitePlayers");
   };
 
   // Function to handle leaving the team
@@ -326,7 +419,19 @@ const TeamScreen = ({ route }) => {
             <Text style={styles.teamDescription}>{team.description}</Text>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Team Members</Text>
+              <View style={styles.teamMembersHeader}>
+                <Text style={styles.sectionTitle}>Team Members</Text>
+                {isCaptain && (
+                  <TouchableOpacity
+                    style={styles.inviteButton}
+                    onPress={handleInvitePlayers}
+                  >
+                    {/* Icon for inviting players */}
+                    <Icon name="account-plus" size={24} color="#fff" />
+                  </TouchableOpacity>
+                )}
+              </View>
+
               <FlatList
                 data={members}
                 keyExtractor={(item) => item.id.toString()}
@@ -346,6 +451,30 @@ const TeamScreen = ({ route }) => {
                         {positionKeys[item.id] || "Loading..."}
                       </Text>
                     </View>
+                    {item.id === team.captain_id && (
+                      <Icon
+                        name="crown"
+                        size={20}
+                        color="gold"
+                        style={styles.captainIcon}
+                      />
+                    )}
+                    {isCaptain && item.id !== team.captain_id && (
+                      <View style={styles.buttonContainer}>
+                        <TouchableOpacity
+                          style={styles.kickButton}
+                          onPress={() => handleKickPlayer(item.id)}
+                        >
+                          <Icon name="account-remove" size={20} color="white" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.transferButton}
+                          onPress={() => handleTransferCaptain(item.id)}
+                        >
+                          <Icon name="account-switch" size={20} color="white" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
                 )}
               />
@@ -555,6 +684,45 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  kickButton: {
+    backgroundColor: "red",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    marginLeft: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  transferButton: {
+    backgroundColor: "blue",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    marginLeft: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  teamMembersHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center", // Center vertically
+  },
+  inviteButton: {
+    backgroundColor: COLORS.secondary, // Change to your desired color
+    paddingVertical: 7,
+    paddingHorizontal: 15,
+    borderRadius: 50,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  inviteButtonText: {
+    color: COLORS.white,
+    marginLeft: 5, // Add space between icon and text
   },
 });
 

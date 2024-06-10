@@ -13,6 +13,7 @@ import {
   Image,
   ScrollView,
   Platform,
+  Switch,
 } from "react-native";
 import axiosInstance from "../../utils/axios";
 import CountryPicker, {
@@ -45,6 +46,8 @@ const EditProfileScreen = () => {
   const [city, setCity] = useState("");
   const [citySuggestions, setCitySuggestions] = useState([]);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const [available, setAvailable] = useState(false);
+
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -67,6 +70,7 @@ const EditProfileScreen = () => {
           setChosenPosition(playerData.position);
           setChosenPositionId(playerData.position_id);
           setProfilePicUri(playerData.pic);
+          setAvailable(playerData.available); // Set the availability status
           if (playerData.sport_id) {
             const positionResponse = await axiosInstance.get(
               `/sport/positions/${playerData.sport_id}`
@@ -222,6 +226,7 @@ const EditProfileScreen = () => {
         city: city,
         sportId: chosenSportId,
         positionId: chosenPositionId,
+        available: available, // Include the availability status
       };
 
       const endpoint = playerId
@@ -370,16 +375,14 @@ const EditProfileScreen = () => {
           </View>
         </Modal>
 
-        <View style={styles.inputContainer}>
-          <TouchableOpacity
-            onPress={() => setShowPositionModal(true)}
-            style={styles.pickerButton}
-          >
-            <Text style={styles.pickerButtonText}>
-              {chosenPosition ? chosenPosition.name : "Choose a position"}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          onPress={() => setShowPositionModal(true)}
+          style={styles.pickerButton}
+        >
+          <Text style={styles.pickerButtonText}>
+            {chosenPosition ? chosenPosition.name : "Choose a position"}
+          </Text>
+        </TouchableOpacity>
 
         <Modal visible={showPositionModal}>
           <View style={styles.modalContainer}>
@@ -407,6 +410,14 @@ const EditProfileScreen = () => {
             </View>
           </View>
         </Modal>
+        <View style={styles.availabilityContainer}>
+          <Text style={styles.availabilityLabel}>Available to Play</Text>
+          <Switch
+            value={available} // Use the availability state variable
+            onValueChange={(newValue) => setAvailable(newValue)}
+          />
+        </View>
+
         <View style={styles.rowContainer}>
           <TouchableOpacity
             onPress={handleSubmit}
@@ -567,6 +578,17 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  availabilityContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  availabilityLabel: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    marginRight: 10,
   },
 });
 
