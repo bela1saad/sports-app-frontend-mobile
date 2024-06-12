@@ -24,6 +24,7 @@ import {
   dummyClubs,
   dummyTournaments,
 } from "../Data/dummyData";
+import axiosInstance from "../utils/axios";
 import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
 import MapView, { Marker } from "react-native-maps";
@@ -39,7 +40,7 @@ function convertTo12HourFormat(time24) {
 }
 
 const ProfileScreen = ({ route }) => {
-  const { profileType, profileId } = route.params;
+  const { profileType, id } = route.params;
   const [profileData, setProfileData] = useState(null);
   const [isFollower, setIsFollower] = useState(false); // Track if current user is a follower
   const navigation = useNavigation();
@@ -47,40 +48,46 @@ const ProfileScreen = ({ route }) => {
   const [showUnfollowConfirmation, setShowUnfollowConfirmation] =
     useState(false);
   const scrollViewRef = useRef(null); // Ref for ScrollView
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followedPlayersCount, setFollowedPlayersCount] = useState(0);
 
   useEffect(() => {
     console.log("Profile Type:", profileType);
-    console.log("Profile ID:", profileId);
+    console.log("Profile ID:", id);
 
     navigation.setOptions({
       headerShown: false,
     });
 
     // Fetch profile data based on profileType and profileId
-    switch (profileType) {
-      case "player":
-        console.log("Fetching player data...");
-        setProfileData(dummyPlayers.find((player) => player.id === profileId));
-        break;
-      case "team":
-        console.log("Fetching team data...");
-        setProfileData(dummyTeams.find((team) => team.id === profileId));
-        break;
-      case "club":
-        console.log("Fetching club data...");
-        setProfileData(dummyClubs.find((club) => club.id === profileId));
-        break;
-      case "tournament":
-        console.log("Fetching tournament data...");
-        setProfileData(
-          dummyTournaments.find((tournament) => tournament.id === profileId)
-        );
-        break;
-      default:
-        console.log("Profile type not recognized.");
-        setProfileData(null);
-    }
-  }, [navigation, profileId, profileType]);
+    const fetchData = async () => {
+      try {
+        let url;
+        switch (profileType) {
+          case "player":
+            url = `/player/by-id/${id}`;
+            break;
+          case "team":
+            url = `/team/by-team/${id}`;
+            break;
+          case "club":
+            url = `/club/by-id/${id}`;
+            break;
+          default:
+            // Handle invalid profileType
+            return;
+        }
+        const response = await axiosInstance.get(url);
+        const data = response.data;
+        console.log(data);
+        setProfileData(data);
+      } catch (error) {
+        console.error("Error fetching profile data:", error);
+      }
+    };
+
+    fetchData(); // Call fetchData function here
+  }, [navigation, id, profileType]);
 
   useEffect(() => {
     // Scroll to the top when profile screen is rendered
@@ -103,6 +110,32 @@ const ProfileScreen = ({ route }) => {
       photoUrl: photoUrl,
     });
   };
+  useEffect(() => {
+    const fetchFollowersCount = async () => {
+      try {
+        const response = await axiosInstance.get(
+          `/follow/followers-count/${id}`
+        );
+        console.log("Followers count response:", response.data);
+        setFollowersCount(response.data.followersCount);
+      } catch (error) {
+        console.error("Error fetching followers count:", error);
+      }
+    };
+
+    const fetchFollowedPlayersCount = async () => {
+      try {
+        const response = await axiosInstance.get(`/follow/followed-count`);
+        console.log("Followed players count response:", response.data);
+        setFollowedPlayersCount(response.data.followedPlayersCount);
+      } catch (error) {
+        console.error("Error fetching followed players count:", error);
+      }
+    };
+
+    fetchFollowersCount();
+    fetchFollowedPlayersCount();
+  }, [id]);
 
   // ProfileScreen.js
   const navigateToFollowersFollowing = (profileType, profileId) => {
@@ -198,33 +231,32 @@ const ProfileScreen = ({ route }) => {
             <TouchableOpacity
               onPress={() => navigateToProfilePhotos(profileData.photo)}
             >
-              <Image source={profileData.photo} style={styles.profilePhoto} />
+              <Image
+                source={{ uri: profileData.pic }}
+                style={styles.profilePhoto}
+              />
             </TouchableOpacity>
 
             <View style={styles.headerText}>
-              <Text style={styles.name}>{profileData.username}</Text>
+              <Text style={styles.name}>{profileData.name}</Text>
               {/* Followers, Following, Trophies */}
               <View style={styles.countContainer}>
                 <TouchableOpacity
-                  onPress={() =>
-                    navigateToFollowersFollowing(profileType, profileId)
-                  }
+                  onPress={() => navigateToFollowersFollowing(profileType, id)}
                   style={styles.countItem}
                 >
                   <Text style={styles.countNumber}>
-                    {formatCount(profileData.followers)}
+                    {formatCount(followersCount)}
                   </Text>
                   <Text style={styles.countLabel}>Followers</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={() =>
-                    navigateToFollowersFollowing(profileType, profileId)
-                  }
+                  onPress={() => navigateToFollowersFollowing(profileType, id)}
                   style={styles.countItem}
                 >
                   <Text style={styles.countNumber}>
-                    {formatCount(profileData.following)}
+                    {formatCount(followedPlayersCount)}
                   </Text>
                   <Text style={styles.countLabel}>Following</Text>
                 </TouchableOpacity>
@@ -233,9 +265,7 @@ const ProfileScreen = ({ route }) => {
                   onPress={navigateToTrophies}
                   style={styles.countItem}
                 >
-                  <Text style={styles.countNumber}>
-                    {profileData.trophies.length}
-                  </Text>
+                  <Text style={styles.countNumber}>{profileData.sport_id}</Text>
                   <Text style={styles.countLabel}>Trophies</Text>
                 </TouchableOpacity>
               </View>
@@ -300,10 +330,7 @@ const ProfileScreen = ({ route }) => {
           {/* Profile info */}
           <View style={styles.infoContainer}>
             <Text style={styles.infoTitle}>Profile Information</Text>
-            <View style={styles.infoItem}>
-              <Icon name="cake" size={20} color="#05a759" style={styles.icon} />
-              <Text style={styles.infoText}>Age: {profileData.age}</Text>
-            </View>
+
             <View style={styles.infoItem}>
               <Icon
                 name="soccer"
@@ -311,7 +338,7 @@ const ProfileScreen = ({ route }) => {
                 color="#05a759"
                 style={styles.icon}
               />
-              <Text style={styles.infoText}>Team: {profileData.team}</Text>
+              <Text style={styles.infoText}>Team: {profileData.team_id}</Text>
             </View>
             <View style={styles.infoItem}>
               <Icon
@@ -321,7 +348,7 @@ const ProfileScreen = ({ route }) => {
                 style={styles.icon}
               />
               <Text style={styles.infoText}>
-                Location: {profileData.city}, {profileData.country}
+                Location: {profileData.city}, {profileData.location}
               </Text>
             </View>
             <View style={styles.infoItem}>
@@ -332,7 +359,7 @@ const ProfileScreen = ({ route }) => {
                 style={styles.icon}
               />
               <Text style={styles.infoText}>
-                Position: {profileData.position}
+                Position: {profileData.position.key}
               </Text>
             </View>
             <View style={styles.infoItem}>
@@ -342,37 +369,15 @@ const ProfileScreen = ({ route }) => {
                 color="#05a759"
                 style={styles.icon}
               />
-              <Text style={styles.infoText}>Sport: {profileData.sport}</Text>
+              <Text style={styles.infoText}>Sport: {profileData.sport_id}</Text>
             </View>
             {/* Additional info like trophies */}
             <Text style={styles.infoTitle}>Achievements</Text>
-            {profileData.trophies.map((trophy, index) => (
-              <View key={index} style={styles.infoItem}>
-                <Icon
-                  name="trophy"
-                  size={20}
-                  color="#05a759"
-                  style={styles.icon}
-                />
-                <Text style={styles.achievement}>{trophy}</Text>
-              </View>
-            ))}
           </View>
 
           {/* Barrier */}
           <View style={styles.barrier} />
           {/* Profile photos */}
-          <View style={styles.photosContainer}>
-            {profileData.profilePhotos.map((photo, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => navigateToProfilePhotos(photo)}
-                style={styles.photoItem}
-              >
-                <Image source={photo} style={styles.photo} />
-              </TouchableOpacity>
-            ))}
-          </View>
         </ScrollView>
       </SafeAreaView>
     );
@@ -872,7 +877,7 @@ const ProfileScreen = ({ route }) => {
     } else if (count >= 1000) {
       return (count / 1000).toFixed(0) + "k";
     } else {
-      return count.toString();
+      return count;
     }
   }
 };

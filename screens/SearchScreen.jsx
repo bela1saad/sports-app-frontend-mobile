@@ -18,7 +18,12 @@ const window = Dimensions.get("window");
 
 const SearchScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState({
+    players: [],
+    teams: [],
+    clubs: [],
+    tournaments: [],
+  });
 
   useEffect(() => {
     navigation.setOptions({
@@ -34,13 +39,21 @@ const SearchScreen = ({ navigation }) => {
     if (searchQuery) {
       try {
         const response = await axiosInstance.get(`/search?term=${searchQuery}`);
-        setSearchResults(response.data);
-        console.log("Search Results:", response.data);
+        const results = response.data;
+        const players = results.filter((item) => item.type === "player");
+        const teams = results.filter((item) => item.type === "team");
+        const clubs = results.filter((item) => item.type === "club");
+        const tournaments = results.filter(
+          (item) => item.type === "tournament"
+        );
+
+        setSearchResults({ players, teams, clubs, tournaments });
+        console.log("Search Results:", results);
       } catch (error) {
         console.error("Error searching:", error);
       }
     } else {
-      setSearchResults([]);
+      setSearchResults({ players: [], teams: [], clubs: [], tournaments: [] });
     }
   };
 
@@ -72,14 +85,48 @@ const SearchScreen = ({ navigation }) => {
         </View>
       </View>
       <ScrollView style={styles.resultsContainer}>
-        {searchResults && searchResults.length > 0 ? (
-          <SearchCards
-            data={searchResults}
-            onPress={(profileType, id) => navigateToProfile(profileType, id)}
-          />
-        ) : (
-          <Text style={styles.noResultsText}>No results found</Text>
+        {searchResults.players.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Players</Text>
+            <SearchCards
+              data={searchResults.players}
+              onPress={(profileType, id) => navigateToProfile(profileType, id)}
+            />
+          </>
         )}
+        {searchResults.teams.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Teams</Text>
+            <SearchCards
+              data={searchResults.teams}
+              onPress={(profileType, id) => navigateToProfile(profileType, id)}
+            />
+          </>
+        )}
+        {searchResults.clubs.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Clubs</Text>
+            <SearchCards
+              data={searchResults.clubs}
+              onPress={(profileType, id) => navigateToProfile(profileType, id)}
+            />
+          </>
+        )}
+        {searchResults.tournaments.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Tournaments</Text>
+            <SearchCards
+              data={searchResults.tournaments}
+              onPress={(profileType, id) => navigateToProfile(profileType, id)}
+            />
+          </>
+        )}
+        {searchResults.players.length === 0 &&
+          searchResults.teams.length === 0 &&
+          searchResults.clubs.length === 0 &&
+          searchResults.tournaments.length === 0 && (
+            <Text style={styles.noResultsText}>No results found</Text>
+          )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -125,6 +172,12 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 12,
     marginTop: 15,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#fff",
+    marginVertical: 10,
   },
   noResultsText: {
     fontSize: 18,
