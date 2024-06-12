@@ -14,7 +14,7 @@ import {
   Modal,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
-
+import { useAuth } from "../auth/AuthContext"; // Import useAuth hook
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import LineupGrid from "../components/LineupGrid";
 // Import dummy data
@@ -50,6 +50,9 @@ const ProfileScreen = ({ route }) => {
   const scrollViewRef = useRef(null); // Ref for ScrollView
   const [followersCount, setFollowersCount] = useState(0);
   const [followedPlayersCount, setFollowedPlayersCount] = useState(0);
+  const { currentPlayer } = useAuth(); // Destructure currentPlayer from useAuth
+  const [sportName, setSportName] = useState("Unknown");
+  const [teamName, setTeamName] = useState(null);
 
   useEffect(() => {
     console.log("Profile Type:", profileType);
@@ -81,36 +84,27 @@ const ProfileScreen = ({ route }) => {
         const data = response.data;
         console.log(data);
         setProfileData(data);
+
+        // Fetch sport data if profileData and sport_id exist
+        if (data && data.sport_id) {
+          getSportById(data.sport_id);
+        }
+
+        // If the profile type is player and it has a team id, fetch the team details
+        // If the profile type is player and it has a team id, fetch the team details
+        if (profileType === "player" && data.team_id) {
+          const teamResponse = await axiosInstance.get(
+            `/team/by-team/${data.team_id}`
+          );
+          const teamData = teamResponse.data;
+          console.log("Team Data:", teamData);
+          setTeamName(teamData.team.name); // Update to access team name property
+        }
       } catch (error) {
         console.error("Error fetching profile data:", error);
       }
     };
 
-    fetchData(); // Call fetchData function here
-  }, [navigation, id, profileType]);
-
-  useEffect(() => {
-    // Scroll to the top when profile screen is rendered
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({ y: 0, animated: false });
-    }
-  }, [profileData]); // Trigger scroll to top whenever profileData changes
-
-  // Rest of your component code...
-  // Define the formatOpeningHours function outside the component
-  const formatOpeningHours = (open = "00:00:00", close = "00:00:00") => {
-    // Format opening and closing time using Moment.js
-    const openingTime = moment(open, "HH:mm:ss").format("h:mm A");
-    const closingTime = moment(close, "HH:mm:ss").format("h:mm A");
-    return `${openingTime} - ${closingTime}`;
-  };
-  const navigateToProfilePhotos = (photoUrl) => {
-    // Navigate to the PhotoFullScreen screen with the provided photoUrl
-    navigation.navigate("PhotoFullScreen", {
-      photoUrl: photoUrl,
-    });
-  };
-  useEffect(() => {
     const fetchFollowersCount = async () => {
       try {
         const response = await axiosInstance.get(
@@ -133,9 +127,42 @@ const ProfileScreen = ({ route }) => {
       }
     };
 
+    fetchData();
     fetchFollowersCount();
     fetchFollowedPlayersCount();
-  }, [id]);
+  }, [profileType, id]);
+
+  const getSportById = async (sport_id) => {
+    try {
+      const response = await axiosInstance.get(`/sport/by-id/${sport_id}`);
+      const sportData = response.data;
+      setSportName(sportData.name); // Assuming 'name' is the key for the sport name
+    } catch (error) {
+      console.error("Error fetching sport data:", error);
+    }
+  };
+
+  useEffect(() => {
+    // Scroll to the top when profile screen is rendered
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ y: 0, animated: false });
+    }
+  }, [profileData]); // Trigger scroll to top whenever profileData changes
+
+  // Rest of your component code...
+  // Define the formatOpeningHours function outside the component
+  const formatOpeningHours = (open = "00:00:00", close = "00:00:00") => {
+    // Format opening and closing time using Moment.js
+    const openingTime = moment(open, "HH:mm:ss").format("h:mm A");
+    const closingTime = moment(close, "HH:mm:ss").format("h:mm A");
+    return `${openingTime} - ${closingTime}`;
+  };
+  const navigateToProfilePhotos = (photoUrl) => {
+    // Navigate to the PhotoFullScreen screen with the provided photoUrl
+    navigation.navigate("PhotoFullScreen", {
+      photoUrl: photoUrl,
+    });
+  };
 
   // ProfileScreen.js
   const navigateToFollowersFollowing = (profileType, profileId) => {
@@ -143,6 +170,10 @@ const ProfileScreen = ({ route }) => {
       profileType,
       userId: profileId,
     });
+  };
+
+  const navigateToTeamProfile = (teamId) => {
+    navigation.navigate("Profile", { profileType: "team", id: teamId });
   };
 
   const navigateToRating = () => {
@@ -174,11 +205,35 @@ const ProfileScreen = ({ route }) => {
     setShowUnfollowConfirmation(false);
     // Perform actions to unfollow the team
   };
-  const handleInviteToTeam = () => {
-    // Implement the logic for inviting to team
-    // This could involve showing a modal, navigating to a screen, etc.
-    console.log("Invite to team button clicked");
+  const handleInviteToTeam = async () => {
+    try {
+      const playerId = profileData.id; // Assuming playerId is available in profileData
+      const response = await axiosInstance.post(
+        `/request/team/invite/${playerId}`
+      );
+
+      if (![200, 201].includes(response.status)) {
+        throw new Error(response.data.message || "An unknown error occurred.");
+      }
+
+      // Invitation successful, display success message
+      const successMessage = response.data.message;
+      alert(successMessage);
+    } catch (error) {
+      // Extract error message from the response if available
+      const errorMessage = error.response
+        ? error.response.data.message
+        : error.message ||
+          "An error occurred while sending the invitation. Please try again later.";
+
+      // Log the error message without triggering Expo or console error reporting
+      console.log("Error inviting to team:", errorMessage);
+
+      // Display error message in a pop-out
+      alert(errorMessage);
+    }
   };
+
   const handleBookField = () => {
     // Logic to handle booking a field
   };
@@ -190,6 +245,8 @@ const ProfileScreen = ({ route }) => {
       </View>
     );
   }
+
+  const isCurrentUser = currentPlayer && currentPlayer.id === profileData.id;
 
   // Render profile UI based on profileType
   switch (profileType) {
@@ -272,26 +329,28 @@ const ProfileScreen = ({ route }) => {
             </View>
           </View>
           {/* Follow and Invite buttons */}
-          <View style={styles.buttonRow}>
-            {/* Follow/Unfollow button */}
-            <TouchableOpacity
-              style={[
-                styles.button,
-                isFollowing ? styles.unfollowButton : null,
-              ]}
-              onPress={isFollowing ? handleUnfollow : handleFollow}
-            >
-              <Text style={styles.buttonText}>
-                {isFollowing ? "Unfollow" : "Follow"}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.inviteButton}
-              onPress={handleInviteToTeam}
-            >
-              <Text style={styles.buttonText}>Invite to Team</Text>
-            </TouchableOpacity>
-          </View>
+          {profileData.id !== currentPlayer?.id && (
+            <View style={styles.buttonRow}>
+              {/* Follow/Unfollow button */}
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  isFollowing ? styles.unfollowButton : null,
+                ]}
+                onPress={isFollowing ? handleUnfollow : handleFollow}
+              >
+                <Text style={styles.buttonText}>
+                  {isFollowing ? "Unfollow" : "Follow"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.inviteButton}
+                onPress={handleInviteToTeam}
+              >
+                <Text style={styles.buttonText}>Invite to Team</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Unfollow confirmation modal */}
           <Modal
@@ -333,22 +392,13 @@ const ProfileScreen = ({ route }) => {
 
             <View style={styles.infoItem}>
               <Icon
-                name="soccer"
-                size={20}
-                color="#05a759"
-                style={styles.icon}
-              />
-              <Text style={styles.infoText}>Team: {profileData.team_id}</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Icon
                 name="map-marker"
                 size={20}
                 color="#05a759"
                 style={styles.icon}
               />
               <Text style={styles.infoText}>
-                Location: {profileData.city}, {profileData.location}
+                {profileData.city}, {profileData.location}
               </Text>
             </View>
             <View style={styles.infoItem}>
@@ -369,10 +419,26 @@ const ProfileScreen = ({ route }) => {
                 color="#05a759"
                 style={styles.icon}
               />
-              <Text style={styles.infoText}>Sport: {profileData.sport_id}</Text>
+              <Text style={styles.infoText}>Sport: {sportName}</Text>
             </View>
-            {/* Additional info like trophies */}
-            <Text style={styles.infoTitle}>Achievements</Text>
+
+            {/* Conditionally render team information */}
+            {teamName && (
+              <TouchableOpacity
+                onPress={() => navigateToTeamProfile(profileData.team_id)}
+              >
+                <View style={styles.infoItemTouchable}>
+                  <Icon
+                    name="account-group"
+                    size={20}
+                    color="#05a759"
+                    style={styles.icon}
+                  />
+                  <Text style={styles.infoLabelText}>Team:</Text>
+                  <Text style={styles.infoTextTouchable}>{teamName}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Barrier */}
@@ -382,10 +448,11 @@ const ProfileScreen = ({ route }) => {
       </SafeAreaView>
     );
   }
+
   // Render team profile UI
   function renderTeamProfile() {
     console.log("Profile Data:", profileData);
-    if (!profileData || !profileData.lineup) {
+    if (!profileData) {
       // Handle case when profileData is undefined or lineup is missing
       return null;
     }
@@ -407,9 +474,12 @@ const ProfileScreen = ({ route }) => {
           {/* Profile header */}
           <View style={styles.header}>
             <TouchableOpacity
-              onPress={() => navigateToProfilePhotos(profileData.photo)}
+              onPress={() => navigateToProfilePhotos(profileData.id)}
             >
-              <Image source={profileData.photo} style={styles.profilePhoto} />
+              <Image
+                source={{ uri: profileData.pic }}
+                style={styles.profilePhoto}
+              />
             </TouchableOpacity>
 
             <View style={styles.headerText}>
@@ -418,13 +488,11 @@ const ProfileScreen = ({ route }) => {
               {/* Followers, Following, Trophies */}
               <View style={styles.countContainer}>
                 <TouchableOpacity
-                  onPress={() =>
-                    navigateToFollowersFollowing(profileType, profileId)
-                  }
+                  onPress={() => navigateToFollowersFollowing(profileType, id)}
                   style={styles.countItem}
                 >
                   <Text style={styles.countNumber}>
-                    {formatCount(profileData.followers)}
+                    {formatCount(followersCount)}
                   </Text>
                   <Text style={styles.countLabel}>Followers</Text>
                 </TouchableOpacity>
@@ -434,9 +502,7 @@ const ProfileScreen = ({ route }) => {
                   }
                   style={styles.countItem}
                 >
-                  <Text style={styles.countNumber}>
-                    {formatCount(profileData.following)}
-                  </Text>
+                  <Text style={styles.countNumber}>{formatCount(5)}</Text>
                   <Text style={styles.countLabel}>Following</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -444,7 +510,7 @@ const ProfileScreen = ({ route }) => {
                   style={styles.countItem}
                 >
                   <Text style={styles.countNumber}>
-                    {profileData.trophies.length}
+                    {profileData.max_number}
                   </Text>
                   <Text style={styles.countLabel}>Trophies</Text>
                 </TouchableOpacity>
@@ -535,7 +601,7 @@ const ProfileScreen = ({ route }) => {
                 color="#05a759"
                 style={styles.icon}
               />
-              <Text style={styles.infoText}>Sport: {profileData.sport}</Text>
+              <Text style={styles.infoText}>Sport: {profileData.sport_id}</Text>
             </View>
             <View style={styles.infoItem}>
               <Icon
@@ -545,7 +611,7 @@ const ProfileScreen = ({ route }) => {
                 style={styles.icon}
               />
               <Text style={styles.infoText}>
-                Location: {profileData.city}, {profileData.country}
+                Location: {profileData.city}, {profileData.level}
               </Text>
             </View>
           </View>
@@ -557,9 +623,7 @@ const ProfileScreen = ({ route }) => {
           {/* Barrier */}
           <View style={styles.barrier} />
           {/*formation*/}
-          <View style={styles.lineupGrid}>
-            <LineupGrid lineup={profileData.lineup} />
-          </View>
+          <View style={styles.lineupGrid}></View>
           {/* Barrier */}
           <View style={styles.barrier2} />
           {/* Lineup */}
@@ -600,18 +664,6 @@ const ProfileScreen = ({ route }) => {
 
           {/* Barrier */}
           <View style={styles.barrier} />
-          {/* Profile photos */}
-          <View style={styles.photosContainer}>
-            {profileData.profilePhotos.map((photo, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => navigateToProfilePhotos(photo)}
-                style={styles.photoItem}
-              >
-                <Image source={photo} style={styles.photo} />
-              </TouchableOpacity>
-            ))}
-          </View>
         </ScrollView>
       </SafeAreaView>
     );
@@ -875,9 +927,9 @@ const ProfileScreen = ({ route }) => {
     if (count >= 1000000) {
       return (count / 1000000).toFixed(1) + "M";
     } else if (count >= 1000) {
-      return (count / 1000).toFixed(0) + "k";
+      return (count / 1000).toFixed(1) + "k";
     } else {
-      return count;
+      return count.toString();
     }
   }
 };
@@ -1020,13 +1072,14 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     backgroundColor: "#333",
-    padding: windowWidth * 0.05,
+    padding: windowWidth * 0.07, // Increase padding for a bigger container
     borderRadius: 10,
-    marginBottom: windowWidth * 0.05,
+    marginBottom: windowWidth * 0.07, // Increase margin bottom
     marginTop: windowWidth * 0.0012,
   },
+
   infoTitle: {
-    fontSize: Math.min(windowWidth * 0.04 * scaleFactor, maxFontSize * 0.75), // Adjusted font size capped at 75% of maxFontSize
+    fontSize: Math.min(windowWidth * 0.05 * scaleFactor, maxFontSize * 0.75), // Increase font size
     fontWeight: "bold",
     color: "#fff",
     flex: 1,
@@ -1035,11 +1088,12 @@ const styles = StyleSheet.create({
     marginBottom: windowWidth * 0.02 * scaleFactor, // Adjusted margin based on font size
   },
   infoText: {
-    fontSize: Math.min(windowWidth * 0.035 * scaleFactor, maxFontSize * 0.75), // Adjusted font size capped at 75% of maxFontSize
+    fontSize: Math.min(windowWidth * 0.045 * scaleFactor, maxFontSize * 0.75), // Increase font size
     color: "#fff",
     flex: 1,
-    marginBottom: windowWidth * 0.01 * scaleFactor, // Adjusted margin based on font size
+    marginBottom: windowWidth * 0.015 * scaleFactor, // Adjusted margin based on font size
   },
+
   barrier: {
     height: 1,
     backgroundColor: "#666",
@@ -1300,6 +1354,26 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1, // Ensure the map takes up all available space
+  },
+  infoItemTouchable: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: windowWidth * 0.01,
+  },
+  icon: {
+    marginRight: windowWidth * 0.02,
+  },
+  infoTextTouchable: {
+    fontSize: Math.min(windowWidth * 0.035 * scaleFactor, maxFontSize * 0.75),
+    color: "#05a759", // Change the color to your link color
+    textDecorationLine: "underline", // Underline the text
+    flex: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  infoLabelText: {
+    color: "#fff",
+    marginRight: 5, // Adjust as needed for spacing between "Team:" and the team name
   },
 });
 

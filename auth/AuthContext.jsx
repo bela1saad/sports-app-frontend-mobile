@@ -10,17 +10,16 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [userId, setUserId] = useState(null);
   const [roleId, setRoleId] = useState(null);
+  const [currentPlayer, setCurrentPlayer] = useState(null);
   const [error, setError] = useState(null);
 
   // Function to load user data from AsyncStorage
   const loadUserData = async () => {
     try {
       const storedToken = await AsyncStorage.getItem("token");
-      console.log("Retrieved token from AsyncStorage2:", storedToken);
+      console.log("Retrieved token from AsyncStorage:", storedToken);
       if (storedToken) {
-        // If token is found, set it in state
         setToken(storedToken);
-        // Optionally, load other user data here if needed
       }
     } catch (error) {
       console.error("Error loading user data:", error);
@@ -28,9 +27,37 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Load user data when component mounts
     loadUserData();
   }, []);
+
+  useEffect(() => {
+    if (token) {
+      getCurrentPlayer();
+    }
+  }, [token]);
+
+  const getCurrentPlayer = async () => {
+    try {
+      const response = await axiosInstance.get("/player");
+      setCurrentPlayer(response.data);
+
+      // Log a message indicating that the current player has been fetched
+      console.log("Current player fetched successfully.");
+    } catch (error) {
+      // Extract error message from the response if available
+      const errorMessage = error.response
+        ? error.response.data.message
+        : "An error occurred while fetching the current player. Please try again later.";
+
+      // Log the error message without triggering Expo or console error reporting
+      console.log("Error fetching current player:", errorMessage);
+
+      // Display error message in a pop-out
+      alert(
+        `${errorMessage}. To edit your player, please go to the EditPlayer screen.`
+      );
+    }
+  };
 
   const login = async (email, password) => {
     try {
@@ -39,13 +66,11 @@ export const AuthProvider = ({ children }) => {
         password,
       });
       const { token, id, role_id } = response.data;
-      await AsyncStorage.setItem("token", token); // Set token in AsyncStorage
-      setToken(token); // Update token in the state
-      setUserId(id); // Update user ID in the state
-      setRoleId(role_id); // Update role ID in the state
-
-      console.log("Token set in AsyncStorage:", token);
-
+      await AsyncStorage.setItem("token", token);
+      setToken(token);
+      setUserId(id);
+      setRoleId(role_id);
+      getCurrentPlayer(); // Fetch current player after login
       return true;
     } catch (error) {
       if (
@@ -66,59 +91,52 @@ export const AuthProvider = ({ children }) => {
       const response = await axiosInstance.post("/auth/register", userData);
       const responseData = response.data;
       if (responseData.message && responseData.token) {
-        // If the response contains a message and token, move to VerificationScreen
-        return true; // Indicate successful registration
+        return true;
       } else {
-        // If the response does not contain the expected fields, handle it as an error
         throw new Error("Unexpected response from server");
       }
     } catch (error) {
-      // Handle errors from the backend response
       if (
         error.response &&
         error.response.data &&
         error.response.data.message
       ) {
-        // If the error response contains a message, throw it as an error
         throw new Error(error.response.data.message);
       } else if (error.message) {
-        // If the error is a general axios error, throw its message
         throw new Error(error.message);
       } else {
-        // If the error is not recognized, throw a generic error message
         throw new Error("An error occurred. Please try again later.");
       }
     }
   };
 
-  // Function to handle password reset
   const resetPassword = async (username, email, newPassword, phone_number) => {
     try {
-      const response = await axios.post("/auth/reset-password", {
+      const response = await axiosInstance.post("/auth/reset-password", {
         username,
         email,
         newPassword,
         phone_number,
       });
       console.log("Password reset successful:", response.data.message);
-      return true; // Password reset successful
+      return true;
     } catch (error) {
       console.error("Password reset failed:", error);
-      return false; // Password reset failed
+      return false;
     }
   };
 
-  // Function to handle user logout
   const logout = async () => {
     setToken(null);
     setUserId(null);
     setRoleId(null);
+    setCurrentPlayer(null);
     await AsyncStorage.removeItem("token");
   };
 
   return (
     <AuthContext.Provider
-      value={{ token, login, register, resetPassword, logout }}
+      value={{ token, currentPlayer, login, register, resetPassword, logout }}
     >
       {children}
     </AuthContext.Provider>
