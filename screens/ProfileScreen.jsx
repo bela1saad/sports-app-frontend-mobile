@@ -53,6 +53,8 @@ const ProfileScreen = ({ route }) => {
   const { currentPlayer } = useAuth(); // Destructure currentPlayer from useAuth
   const [sportName, setSportName] = useState("Unknown");
   const [teamName, setTeamName] = useState(null);
+  const [lineupData, setLineupData] = useState([]);
+  const [isCurrentTeam, setIsCurrentTeam] = useState(false);
 
   useEffect(() => {
     console.log("Profile Type:", profileType);
@@ -85,12 +87,24 @@ const ProfileScreen = ({ route }) => {
         console.log(data);
         setProfileData(data);
 
-        // Fetch sport data if profileData and sport_id exist
-        if (data && data.sport_id) {
-          getSportById(data.sport_id);
+        // Fetch sport name if sport_id exists
+        const sportId = data.sport_id || (data.team && data.team.sport_id);
+        if (sportId) {
+          console.log("Fetching sport data for sport_id:", sportId);
+          getSportById(sportId);
         }
 
-        // If the profile type is player and it has a team id, fetch the team details
+        // Fetch lineup data if profile type is team
+        if (profileType === "team" && data.team.id) {
+          console.log(data.team.id);
+          console.log("Fetching lineup data for team_id:", data.team.id);
+          const lineupResponse = await axiosInstance.get(
+            `/lineup/${data.team.id}`
+          );
+          const lineupData = lineupResponse.data.lineup;
+          console.log("Lineup Data:", lineupData);
+          setLineupData(lineupData);
+        }
         // If the profile type is player and it has a team id, fetch the team details
         if (profileType === "player" && data.team_id) {
           const teamResponse = await axiosInstance.get(
@@ -100,6 +114,8 @@ const ProfileScreen = ({ route }) => {
           console.log("Team Data:", teamData);
           setTeamName(teamData.team.name); // Update to access team name property
         }
+
+        console.log(currentPlayer.team_id);
       } catch (error) {
         console.error("Error fetching profile data:", error);
       }
@@ -110,7 +126,7 @@ const ProfileScreen = ({ route }) => {
         const response = await axiosInstance.get(
           `/follow/followers-count/${id}`
         );
-        console.log("Followers count response:", response.data);
+
         setFollowersCount(response.data.followersCount);
       } catch (error) {
         console.error("Error fetching followers count:", error);
@@ -120,7 +136,7 @@ const ProfileScreen = ({ route }) => {
     const fetchFollowedPlayersCount = async () => {
       try {
         const response = await axiosInstance.get(`/follow/followed-count`);
-        console.log("Followed players count response:", response.data);
+
         setFollowedPlayersCount(response.data.followedPlayersCount);
       } catch (error) {
         console.error("Error fetching followed players count:", error);
@@ -191,19 +207,50 @@ const ProfileScreen = ({ route }) => {
     // Navigate to the club fields screen
   };
 
-  const handleFollow = () => {
-    setIsFollowing(true);
-    // Perform actions to follow the team
+  const handleFollow = async () => {
+    try {
+      const response = await axiosInstance.post(`/team-follow/follow`);
+      if (![200, 201].includes(response.status)) {
+        throw new Error(response.data.message || "An unknown error occurred.");
+      }
+      // Follow successful, update state
+      setIsFollowing(true);
+      // Display success message or perform any other necessary actions
+    } catch (error) {
+      // Handle errors
+      console.error("Error following team:", error);
+      // Display error message
+      alert(
+        error.response?.data.message ||
+          "An error occurred while following the team. Please try again later."
+      );
+    }
   };
 
   const handleUnfollow = () => {
+    // Display confirmation modal to confirm unfollowing
     setShowUnfollowConfirmation(true);
   };
 
-  const confirmUnfollow = () => {
-    setIsFollowing(false);
-    setShowUnfollowConfirmation(false);
-    // Perform actions to unfollow the team
+  const confirmUnfollow = async () => {
+    try {
+      const response = await axiosInstance.del(`/team-follow/unfollow`);
+      if (![200, 201].includes(response.status)) {
+        throw new Error(response.data.message || "An unknown error occurred.");
+      }
+      // Unfollow successful, update state
+      setIsFollowing(false);
+      // Close modal or perform any other necessary actions
+      setShowUnfollowConfirmation(false);
+    } catch (error) {
+      // Handle errors
+      console.error("Error unfollowing team:", error);
+      // Display error message
+      alert(
+        error.response?.data.message ||
+          "An error occurred while unfollowing the team. Please try again later."
+      );
+    }
   };
   const handleInviteToTeam = async () => {
     try {
@@ -477,13 +524,13 @@ const ProfileScreen = ({ route }) => {
               onPress={() => navigateToProfilePhotos(profileData.id)}
             >
               <Image
-                source={{ uri: profileData.pic }}
+                source={{ uri: profileData.team.pic }}
                 style={styles.profilePhoto}
               />
             </TouchableOpacity>
 
             <View style={styles.headerText}>
-              <Text style={styles.name}>{profileData.name}</Text>
+              <Text style={styles.name}>{profileData.team.name}</Text>
 
               {/* Followers, Following, Trophies */}
               <View style={styles.countContainer}>
@@ -510,7 +557,7 @@ const ProfileScreen = ({ route }) => {
                   style={styles.countItem}
                 >
                   <Text style={styles.countNumber}>
-                    {profileData.max_number}
+                    {profileData.team.max_number}
                   </Text>
                   <Text style={styles.countLabel}>Trophies</Text>
                 </TouchableOpacity>
@@ -520,78 +567,83 @@ const ProfileScreen = ({ route }) => {
           {/* Follow and Invite buttons */}
           <View style={styles.buttonRow}>
             {/* Follow/Unfollow button */}
-            <TouchableOpacity
-              style={[
-                styles.button,
-                isFollowing ? styles.unfollowButton : null,
-              ]}
-              onPress={isFollowing ? handleUnfollow : handleFollow}
-            >
-              <Text style={styles.buttonText}>
-                {isFollowing ? "Unfollow" : "Follow"}
-              </Text>
-            </TouchableOpacity>
-            {/* Invite button */}
-            <TouchableOpacity
-              style={styles.inviteTeamButton}
-              onPress={handleInviteToTeam}
-            >
-              <Text style={styles.buttonText}>Invite to challenge </Text>
-            </TouchableOpacity>
+            {/* Conditionally render Follow/Unfollow button */}
+            {currentPlayer &&
+              profileData &&
+              currentPlayer.team_id !== profileData.team.id && (
+                <>
+                  <TouchableOpacity
+                    style={[
+                      styles.buttonteamfollow,
+                      isFollowing ? styles.unfollowButton : null,
+                    ]}
+                    onPress={isFollowing ? handleUnfollow : handleFollow}
+                  >
+                    <Text style={styles.buttonText}>
+                      {isFollowing ? "Unfollow" : "Follow"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Unfollow confirmation modal */}
+                  <Modal
+                    visible={showUnfollowConfirmation}
+                    transparent
+                    animationType="fade"
+                    onRequestClose={() => setShowUnfollowConfirmation(false)}
+                  >
+                    <View
+                      style={{
+                        flex: 1,
+                        justifyContent: "center",
+                        alignItems: "center",
+                        backgroundColor: "rgba(0, 0, 0, 0.5)",
+                      }}
+                    >
+                      <View style={styles.modal}>
+                        <Text style={styles.modalText}>
+                          Are you sure you want to unfollow?
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.modalButton}
+                          onPress={confirmUnfollow}
+                        >
+                          <Text style={styles.modalButtonText}>Yes</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.modalButton}
+                          onPress={() => setShowUnfollowConfirmation(false)}
+                        >
+                          <Text style={styles.modalButtonText}>Cancel</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </Modal>
+                </>
+              )}
           </View>
-          {/* Unfollow confirmation modal */}
-          <Modal
-            visible={showUnfollowConfirmation}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setShowUnfollowConfirmation(false)}
-          >
-            <View
-              style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-                backgroundColor: "rgba(0, 0, 0, 0.5)",
-              }}
-            >
-              <View style={styles.modal}>
-                <Text style={styles.modalText}>
-                  Are you sure you want to unfollow?
-                </Text>
-                <TouchableOpacity
-                  style={styles.modalButton}
-                  onPress={confirmUnfollow}
-                >
-                  <Text style={styles.modalButtonText}>Yes</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.modalButton}
-                  onPress={() => setShowUnfollowConfirmation(false)}
-                >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Modal>
           {/* Additional team info */}
           <View style={styles.infoContainer}>
             <View style={styles.infoItem}>
               <Icon
-                name={profileData.up_for_game ? "check-circle" : "close-circle"}
+                name={
+                  profileData.team.up_for_game ? "check-circle" : "close-circle"
+                }
                 size={20}
-                color={profileData.up_for_game ? "#05a759" : "#e53935"}
+                color={profileData.team.up_for_game ? "#05a759" : "#e53935"}
                 style={styles.icon}
               />
               <Text
                 style={[
                   styles.infoText,
                   {
-                    color: profileData.up_for_game ? "#05a759" : "#e53935",
+                    color: profileData.team.up_for_game ? "#05a759" : "#e53935",
                     fontWeight: "bold",
                   },
                 ]}
               >
-                {profileData.up_for_game ? "Open for a Game" : "Not Available "}
+                {profileData.team.up_for_game
+                  ? "Open for a Game"
+                  : "Not Available "}
               </Text>
             </View>
             <View style={styles.infoItem}>
@@ -601,7 +653,7 @@ const ProfileScreen = ({ route }) => {
                 color="#05a759"
                 style={styles.icon}
               />
-              <Text style={styles.infoText}>Sport: {profileData.sport_id}</Text>
+              <Text style={styles.infoText}>Sport: {sportName}</Text>
             </View>
             <View style={styles.infoItem}>
               <Icon
@@ -610,15 +662,13 @@ const ProfileScreen = ({ route }) => {
                 color="#05a759"
                 style={styles.icon}
               />
-              <Text style={styles.infoText}>
-                Location: {profileData.city}, {profileData.level}
-              </Text>
+              <Text style={styles.infoText}>{profileData.team.level}</Text>
             </View>
           </View>
           {/* Description */}
           <View style={styles.infoContainer}>
             <Text style={styles.infoTitle}>Description</Text>
-            <Text style={styles.infoText}>{profileData.description}</Text>
+            <Text style={styles.infoText}>{profileData.team.description}</Text>
           </View>
           {/* Barrier */}
           <View style={styles.barrier} />
@@ -629,16 +679,21 @@ const ProfileScreen = ({ route }) => {
           {/* Lineup */}
           <View style={styles.lineupContainer}>
             <Text style={styles.lineupTitle}>Lineup</Text>
-            {profileData.lineup.map((player, index) => (
+            {lineupData.map((player, index) => (
               <View key={index} style={styles.playerContainer}>
-                <Image source={player.photo} style={styles.playerPhoto} />
+                <Image
+                  source={{ uri: player.player.pic }}
+                  style={styles.playerPhoto}
+                />
                 <View style={styles.playerInfo}>
                   <View>
                     <TouchableOpacity
-                      onPress={() => navigateToProfile("player", player.id)}
+                      onPress={() =>
+                        navigateToProfile("player", player.player_id)
+                      }
                     >
                       <Text style={styles.playerName}>
-                        {player.name}{" "}
+                        {player.player.name}{" "}
                         {player.isCaptain && (
                           <Ionicons
                             name="star"
@@ -649,7 +704,6 @@ const ProfileScreen = ({ route }) => {
                         )}
                       </Text>
                     </TouchableOpacity>
-
                     <Text style={styles.playerPosition}>{player.position}</Text>
                   </View>
                   <View style={styles.jerseyNumberContainer}>
@@ -1006,7 +1060,8 @@ const styles = StyleSheet.create({
 
   buttonRow: {
     flexDirection: "row",
-    marginTop: windowWidth * 0.02, // Adjusted for responsiveness
+    justifyContent: "flex-end", // Align items to the end of the container (right)
+    marginTop: windowWidth * 0.02,
     marginBottom: windowHeight * 0.03,
     marginHorizontal: windowHeight * 0.01,
   },
@@ -1374,6 +1429,13 @@ const styles = StyleSheet.create({
   infoLabelText: {
     color: "#fff",
     marginRight: 5, // Adjust as needed for spacing between "Team:" and the team name
+  },
+  buttonteamfollow: {
+    paddingVertical: windowWidth * 0.03,
+    paddingHorizontal: windowWidth * 0.11,
+    borderRadius: 5,
+    backgroundColor: "#05a759",
+    alignItems: "center",
   },
 });
 
