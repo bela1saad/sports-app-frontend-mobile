@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { View, Image, StyleSheet, PanResponder, Animated } from "react-native";
+import {
+  View,
+  Image,
+  StyleSheet,
+  PanResponder,
+  Animated,
+  Text,
+  TouchableOpacity,
+} from "react-native";
 
 const DraggablePlayer = ({ player, width, pitchHeight, onDragEnd }) => {
   const [draggingPosition, setDraggingPosition] = useState({
@@ -24,13 +32,26 @@ const DraggablePlayer = ({ player, width, pitchHeight, onDragEnd }) => {
       let y = draggingPosition.y + gesture.dy;
 
       // Clamp position within field boundaries
-      x = Math.max(0, Math.min(x, width - 40)); // Subtract player width
-      y = Math.max(0, Math.min(y, pitchHeight - 40)); // Subtract player height
+      x = Math.max(0, Math.min(x, width - 60)); // Subtract player width
+      y = Math.max(0, Math.min(y, pitchHeight - 80)); // Subtract player height
 
       // Update local state with the final dragging position
       setDraggingPosition({ x, y });
 
-      // Calculate normalized coordinates relative to field size
+      // Determine if dropped on bench or field
+      const isOnBench = y > pitchHeight - 100; // Assuming bench starts at pitchHeight - 100
+
+      // Update player position and normalized coordinates
+      if (isOnBench) {
+        // Place player on the bench
+        x = 0;
+        y = 0;
+      } else {
+        // Ensure player stays within field boundaries
+        x = Math.max(0, Math.min(x, width - 60)); // Subtract player width
+        y = Math.max(0, Math.min(y, pitchHeight - 80)); // Subtract player height
+      }
+
       const normalizedX = x / width;
       const normalizedY = y / pitchHeight;
 
@@ -48,39 +69,66 @@ const DraggablePlayer = ({ player, width, pitchHeight, onDragEnd }) => {
   }, [draggingPosition]);
 
   return (
-    <View style={styles.playerContainer}>
-      <Animated.View
-        style={[
-          styles.player,
-          {
-            opacity: dragging ? 0 : 1, // Hide player icon when dragging
-            transform: [{ translateX: pan.x }, { translateY: pan.y }],
-          },
-        ]}
-        {...panResponder.panHandlers}
-      >
+    <Animated.View
+      style={[
+        styles.player,
+        {
+          opacity: dragging ? 0.5 : 1, // Reduce opacity when dragging
+          transform: [{ translateX: pan.x }, { translateY: pan.y }],
+        },
+      ]}
+      {...panResponder.panHandlers}
+    >
+      <View style={styles.imageContainer}>
         <Image source={{ uri: player.player.pic }} style={styles.playerImage} />
-      </Animated.View>
-    </View>
+        {player.isCaptain && (
+          <View style={styles.captainBadge}>
+            <Text style={styles.captainText}>C</Text>
+          </View>
+        )}
+      </View>
+      <Text style={styles.playerName}>{player.player.name}</Text>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
-  playerContainer: {
-    position: "absolute",
-  },
   player: {
+    alignItems: "center",
     position: "absolute",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: "#fff",
+    width: 60,
+    height: 80,
+  },
+  imageContainer: {
+    position: "relative",
   },
   playerImage: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: "#fff",
+    marginBottom: 5,
+  },
+  captainBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "#FFD700",
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  captainText: {
+    color: "#000",
+    fontWeight: "bold",
+  },
+  playerName: {
+    color: "#fff",
+    fontSize: 12,
+    textAlign: "center",
   },
 });
 

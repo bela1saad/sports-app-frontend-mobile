@@ -7,6 +7,8 @@ import {
   Dimensions,
   ActivityIndicator,
   SafeAreaView,
+  ScrollView,
+  FlatList,
   TouchableOpacity,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
@@ -16,6 +18,7 @@ import DraggablePlayer from "../components/DraggablePlayer";
 const { width } = Dimensions.get("window");
 const pitchHeight = width * 1.5;
 const fieldWidth = width - 40; // Adjust as necessary based on your design
+const benchHeight = 100; // Adjust as per your design
 
 const LineupEditScreen = ({ route, navigation }) => {
   const [lineup, setLineup] = useState([]);
@@ -70,9 +73,19 @@ const LineupEditScreen = ({ route, navigation }) => {
   );
 
   const handleDragEnd = async (player, x, y, normalizedX, normalizedY) => {
-    // Ensure player stays within field boundaries
-    x = Math.max(0, Math.min(x, fieldWidth));
-    y = Math.max(0, Math.min(y, pitchHeight));
+    const isOnBench = y > pitchHeight - benchHeight;
+
+    if (isOnBench) {
+      // Place player on the bench
+      x = 0;
+      y = 0;
+      normalizedX = 0;
+      normalizedY = 0;
+    } else {
+      // Ensure player stays within field boundaries
+      x = Math.max(0, Math.min(x, fieldWidth));
+      y = Math.max(0, Math.min(y, pitchHeight));
+    }
 
     const updatedPlayer = {
       ...player,
@@ -95,52 +108,65 @@ const LineupEditScreen = ({ route, navigation }) => {
     }
   };
 
-  // In renderField(), update DraggablePlayer usage:
-  {
-    lineup.map((player) => (
-      <DraggablePlayer
-        key={player.id}
-        player={player}
-        width={fieldWidth}
-        pitchHeight={pitchHeight}
-        onDragEnd={handleDragEnd}
-      />
-    ));
-  }
+  const handleBenchPress = (player) => {
+    // Logic to remove player from bench and place on field
+    const updatedPlayer = {
+      ...player,
+      x: 0, // Initial position on the field (adjust as needed)
+      y: 0, // Initial position on the field (adjust as needed)
+    };
 
-  const renderField = () => {
-    return (
-      <View style={styles.pitchContainer}>
-        <Image
-          source={require("../assets/football_field.jpg")}
-          style={styles.pitchBackground}
-        />
-        {lineup.map((player) => (
-          <DraggablePlayer
-            key={player.id} // Ensure each player has a unique key
-            player={player}
-            width={fieldWidth}
-            pitchHeight={pitchHeight}
-            onDragEnd={handleDragEnd}
-          />
-        ))}
-      </View>
-    );
+    const newLineup = [...lineup, updatedPlayer];
+    setLineup(newLineup);
   };
 
-  const renderFormationButtons = () => {
+  const renderField = () => {
+    const onFieldPlayers = lineup.filter(
+      (player) => player.x !== 0 || player.y !== 0
+    );
+    const benchPlayers = lineup.filter(
+      (player) => player.x === 0 && player.y === 0
+    );
+
     return (
-      <View style={styles.formationButtonContainer}>
-        <TouchableOpacity style={styles.formationButton}>
-          <Text style={styles.formationButtonText}>4-4-2</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.formationButton}>
-          <Text style={styles.formationButtonText}>4-3-3</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.formationButton}>
-          <Text style={styles.formationButtonText}>3-5-2</Text>
-        </TouchableOpacity>
-      </View>
+      <>
+        <View style={styles.pitchContainer}>
+          <Image
+            source={require("../assets/football_field.jpg")}
+            style={styles.pitchBackground}
+          />
+          {onFieldPlayers.map((player) => (
+            <DraggablePlayer
+              key={player.id}
+              player={player}
+              width={fieldWidth}
+              pitchHeight={pitchHeight}
+              onDragEnd={handleDragEnd}
+            />
+          ))}
+        </View>
+        <View style={styles.benchContainer}>
+          <Text style={styles.benchTitle}>Bench</Text>
+          <FlatList
+            horizontal
+            data={benchPlayers}
+            renderItem={({ item }) => (
+              <TouchableOpacity onPress={() => handleBenchPress(item)}>
+                <View style={styles.benchCard}>
+                  <Image
+                    source={{ uri: item.player.pic }}
+                    style={styles.benchImage}
+                  />
+                  <Text style={styles.benchName}>{item.player.name}</Text>
+                  <Text style={styles.benchPosition}>{item.position}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.benchScroll}
+          />
+        </View>
+      </>
     );
   };
 
@@ -148,12 +174,7 @@ const LineupEditScreen = ({ route, navigation }) => {
     return <ActivityIndicator size="large" color="#0000ff" />;
   }
 
-  return (
-    <SafeAreaView style={styles.container}>
-      {renderFormationButtons()}
-      {renderField()}
-    </SafeAreaView>
-  );
+  return <SafeAreaView style={styles.container}>{renderField()}</SafeAreaView>;
 };
 
 const styles = StyleSheet.create({
@@ -168,6 +189,7 @@ const styles = StyleSheet.create({
     position: "relative",
     width: "100%",
     aspectRatio: 3 / 4,
+    marginBottom: 20,
   },
   pitchBackground: {
     width: "100%",
@@ -175,21 +197,42 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
     position: "absolute",
   },
-  formationButtonContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 10,
-  },
-  formationButton: {
-    backgroundColor: "#333",
-    paddingHorizontal: 20,
+  benchContainer: {
+    width: "100%",
     paddingVertical: 10,
-    marginHorizontal: 5,
-    borderRadius: 5,
+    borderTopWidth: 1,
+    borderColor: "#444",
   },
-  formationButtonText: {
+  benchTitle: {
     color: "#fff",
     fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  benchScroll: {
+    flexDirection: "row",
+  },
+  benchCard: {
+    backgroundColor: "#333",
+    borderRadius: 10,
+    padding: 10,
+    alignItems: "center",
+    marginRight: 10,
+  },
+  benchImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginBottom: 5,
+  },
+  benchName: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  benchPosition: {
+    color: "#aaa",
+    fontSize: 12,
   },
 });
 

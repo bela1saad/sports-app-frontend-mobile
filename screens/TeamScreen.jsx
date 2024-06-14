@@ -494,6 +494,10 @@ const TeamScreen = ({ route }) => {
 
             {/* Divider */}
             <View style={styles.divider} />
+
+            {/* Divider */}
+            <View style={styles.divider} />
+
             {/* "Leave Team" button */}
             <TouchableOpacity
               style={styles.leaveButton}
