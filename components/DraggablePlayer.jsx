@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Image,
@@ -6,18 +6,16 @@ import {
   PanResponder,
   Animated,
   Text,
-  TouchableOpacity,
 } from "react-native";
 
 const DraggablePlayer = ({ player, width, pitchHeight, onDragEnd }) => {
+  const [dragging, setDragging] = useState(false);
   const [draggingPosition, setDraggingPosition] = useState({
-    x: player.x * width,
-    y: player.y * pitchHeight,
+    x: player.isBenched ? 0 : player.x * width,
+    y: player.isBenched ? 0 : player.y * pitchHeight,
   });
 
   const pan = new Animated.ValueXY();
-  const [dragging, setDragging] = useState(false);
-
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onMoveShouldSetPanResponderCapture: () => true,
@@ -43,11 +41,9 @@ const DraggablePlayer = ({ player, width, pitchHeight, onDragEnd }) => {
 
       // Update player position and normalized coordinates
       if (isOnBench) {
-        // Place player on the bench
         x = 0;
         y = 0;
       } else {
-        // Ensure player stays within field boundaries
         x = Math.max(0, Math.min(x, width - 60)); // Subtract player width
         y = Math.max(0, Math.min(y, pitchHeight - 80)); // Subtract player height
       }

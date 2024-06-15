@@ -73,51 +73,74 @@ const LineupEditScreen = ({ route, navigation }) => {
   );
 
   const handleDragEnd = async (player, x, y, normalizedX, normalizedY) => {
-    const isOnBench = y > pitchHeight - benchHeight;
-
-    if (isOnBench) {
-      // Place player on the bench
-      x = 0;
-      y = 0;
-      normalizedX = 0;
-      normalizedY = 0;
-    } else {
-      // Ensure player stays within field boundaries
-      x = Math.max(0, Math.min(x, fieldWidth));
-      y = Math.max(0, Math.min(y, pitchHeight));
-    }
+    const benchThreshold = 0.8;
+    const isOnBench = normalizedY > benchThreshold;
 
     const updatedPlayer = {
       ...player,
-      x: normalizedX,
-      y: normalizedY,
+      isBenched: isOnBench,
+      x: isOnBench ? null : normalizedX,
+      y: isOnBench ? null : normalizedY,
     };
 
-    const newLineup = lineup.map((p) =>
+    const updatedLineup = lineup.map((p) =>
       p.id === player.id ? updatedPlayer : p
     );
-    setLineup(newLineup);
+    setLineup(updatedLineup);
+
+    console.log(
+      `handleDragEnd: Player ${player.id} - isBenched: ${updatedPlayer.isBenched}, x: ${updatedPlayer.x}, y: ${updatedPlayer.y}`
+    );
 
     try {
-      await axiosInstance.put(`/lineup/update/${player.id}`, {
-        x: normalizedX,
-        y: normalizedY,
+      const response = await axiosInstance.put(`/lineup/update/${player.id}`, {
+        x: updatedPlayer.x,
+        y: updatedPlayer.y,
+        isBenched: updatedPlayer.isBenched,
       });
+
+      console.log(
+        `Player ${player.id} updated. isBenched: ${updatedPlayer.isBenched}. Response:`,
+        response.data
+      );
     } catch (error) {
-      console.error("Error updating lineup:", error);
+      console.error(
+        "Error updating lineup:",
+        error.response ? error.response.data : error.message
+      );
     }
   };
 
-  const handleBenchPress = (player) => {
-    // Logic to remove player from bench and place on field
+  const handleBenchPress = async (player) => {
     const updatedPlayer = {
       ...player,
-      x: 0, // Initial position on the field (adjust as needed)
-      y: 0, // Initial position on the field (adjust as needed)
+      isBenched: false,
+      x: 0.5, // Initial position on the field (adjust as needed)
+      y: 0.5, // Initial position on the field (adjust as needed)
     };
 
-    const newLineup = [...lineup, updatedPlayer];
-    setLineup(newLineup);
+    const updatedLineup = lineup.map((p) =>
+      p.id === player.id ? updatedPlayer : p
+    );
+    setLineup(updatedLineup);
+
+    console.log(
+      `handleBenchPress: Player ${player.id} - isBenched: ${updatedPlayer.isBenched}`
+    );
+
+    try {
+      await axiosInstance.put(`/lineup/update/${player.id}`, {
+        x: updatedPlayer.x,
+        y: updatedPlayer.y,
+        isBenched: updatedPlayer.isBenched,
+      });
+
+      console.log(
+        `Player ${player.id} updated. isBenched: ${updatedPlayer.isBenched}`
+      );
+    } catch (error) {
+      console.error("Error updating lineup:", error);
+    }
   };
 
   const renderField = () => {
