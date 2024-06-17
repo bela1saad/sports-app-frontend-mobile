@@ -29,32 +29,27 @@ const DraggablePlayer = ({ player, width, pitchHeight, onDragEnd }) => {
       let x = draggingPosition.x + gesture.dx;
       let y = draggingPosition.y + gesture.dy;
 
-      // Clamp position within field boundaries
-      x = Math.max(0, Math.min(x, width - 60)); // Subtract player width
-      y = Math.max(0, Math.min(y, pitchHeight - 80)); // Subtract player height
+      // Clamp position within field boundaries but allow dragging to the bench area
+      x = Math.max(0, Math.min(x, width - 60));
+      y = Math.max(0, Math.min(y, pitchHeight + 100)); // Allow extra space for bench
 
-      // Update local state with the final dragging position
       setDraggingPosition({ x, y });
 
-      // Determine if dropped on bench or field
-      const isOnBench = y > pitchHeight - 100; // Assuming bench starts at pitchHeight - 100
+      const isOnBench = y > pitchHeight - 20; // Adjust threshold for bench
 
-      // Update player position and normalized coordinates
       if (isOnBench) {
         x = 0;
-        y = 0;
+        y = pitchHeight + 20; // Position in bench area
       } else {
-        x = Math.max(0, Math.min(x, width - 60)); // Subtract player width
-        y = Math.max(0, Math.min(y, pitchHeight - 80)); // Subtract player height
+        x = Math.max(0, Math.min(x, width - 60));
+        y = Math.max(0, Math.min(y, pitchHeight - 80));
       }
 
       const normalizedX = x / width;
       const normalizedY = y / pitchHeight;
 
-      // Call onDragEnd prop from parent component with updated player position
       onDragEnd(player, x, y, normalizedX, normalizedY);
 
-      // Reset dragging state and Animated.Value for next drag
       setDragging(false);
       pan.setValue({ x: 0, y: 0 });
     },
@@ -69,7 +64,7 @@ const DraggablePlayer = ({ player, width, pitchHeight, onDragEnd }) => {
       style={[
         styles.player,
         {
-          opacity: dragging ? 0.5 : 1, // Reduce opacity when dragging
+          opacity: dragging ? 0.5 : 1,
           transform: [{ translateX: pan.x }, { translateY: pan.y }],
         },
       ]}
