@@ -126,6 +126,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const forgotPassword = async (email) => {
+    try {
+      const response = await axiosInstance.post("/auth/reset-password", {
+        email,
+        newPassword: "123456789", // Assuming default new password
+      });
+      console.log(
+        "Password reset email sent successfully:",
+        response.data.message
+      );
+      return response.data; // Return the response for handling in the component
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      throw error; // Throw error to handle in the component
+    }
+  };
+
   const logout = async () => {
     setToken(null);
     setUserId(null);
@@ -136,7 +153,15 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ token, currentPlayer, login, register, resetPassword, logout }}
+      value={{
+        token,
+        currentPlayer,
+        login,
+        register,
+        resetPassword,
+        forgotPassword,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

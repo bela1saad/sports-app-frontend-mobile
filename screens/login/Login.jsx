@@ -56,7 +56,7 @@ const Login = ({ navigation }) => {
 
   const handleForgotPassword = () => {
     // Navigate to the forgot password screen
-    navigation.navigate("ForgotPassword");
+    navigation.navigate("EnterEmail");
   };
 
   return (

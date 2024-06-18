@@ -533,7 +533,7 @@ const ProfileScreen = ({ route }) => {
               <Text style={styles.name}>{profileData.team.name}</Text>
 
               {/* Followers, Following, Trophies */}
-              <View style={styles.countContainer}>
+              <View style={styles.countContainer2}>
                 <TouchableOpacity
                   onPress={() => navigateToFollowersFollowing(profileType, id)}
                   style={styles.countItem}
@@ -543,15 +543,7 @@ const ProfileScreen = ({ route }) => {
                   </Text>
                   <Text style={styles.countLabel}>Followers</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() =>
-                    navigateToFollowersFollowing(profileType, profileId)
-                  }
-                  style={styles.countItem}
-                >
-                  <Text style={styles.countNumber}>{formatCount(5)}</Text>
-                  <Text style={styles.countLabel}>Following</Text>
-                </TouchableOpacity>
+
                 <TouchableOpacity
                   onPress={navigateToTrophies}
                   style={styles.countItem}
@@ -670,12 +662,6 @@ const ProfileScreen = ({ route }) => {
             <Text style={styles.infoTitle}>Description</Text>
             <Text style={styles.infoText}>{profileData.team.description}</Text>
           </View>
-          {/* Barrier */}
-          <View style={styles.barrier} />
-          {/*formation*/}
-          <View style={styles.lineupGrid}></View>
-          {/* Barrier */}
-          <View style={styles.barrier2} />
           {/* Lineup */}
           <View style={styles.lineupContainer}>
             <Text style={styles.lineupTitle}>Lineup</Text>
@@ -715,9 +701,12 @@ const ProfileScreen = ({ route }) => {
               </View>
             ))}
           </View>
-
           {/* Barrier */}
           <View style={styles.barrier} />
+          {/*formation*/}
+          <View style={styles.lineupGrid}>
+            <LineupGrid lineup={lineupData} />
+          </View>
         </ScrollView>
       </SafeAreaView>
     );
@@ -1099,12 +1088,27 @@ const styles = StyleSheet.create({
     marginBottom: windowWidth * 0.01,
     marginTop: windowWidth * 0.05,
   },
+  countContainer2: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: windowWidth * 0.01,
+    marginTop: windowWidth * 0.05,
+  },
+
+  countTeamContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: windowWidth * 0.01,
+    marginTop: windowWidth * 0.05,
+  },
   countItem: {
     marginRight: 20,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
   },
+
   countNumber: {
     fontSize: Math.min(windowWidth * 0.06, maxFontSize),
     fontWeight: "bold",

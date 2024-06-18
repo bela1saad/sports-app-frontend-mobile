@@ -32,6 +32,9 @@ import JoinTeamScreen from "../screens/JoinTeamScreen";
 import EditTeamScreen from "../screens/EditTeamScreen";
 import InvitePlayersScreen from "../screens/InvitePlayers";
 import LineupEditScreen from "../screens/LineupEditScreen";
+import EnterEmailScreen from "../screens/login/EnterEmailScreen";
+import EnterCodeScreen from "../screens/login/EnterCodeScreen";
+import ResetPasswordScreen from "../screens/login/ResetPasswordScreen";
 
 const Stack = createStackNavigator();
 
@@ -97,6 +100,9 @@ const StackNavigator = () => {
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Verification" component={VerificationScreen} />
           <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+          <Stack.Screen name="EnterEmail" component={EnterEmailScreen} />
+          <Stack.Screen name="EnterCode" component={EnterCodeScreen} />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
         </>
       )}
     </Stack.Navigator>
