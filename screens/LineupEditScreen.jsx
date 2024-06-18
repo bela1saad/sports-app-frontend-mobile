@@ -14,7 +14,6 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import axiosInstance from "../utils/axios";
 import DraggablePlayer from "../components/DraggablePlayer";
-import LinearGradient from "react-native-linear-gradient";
 
 const { width } = Dimensions.get("window");
 const pitchHeight = width * 1.5;
@@ -173,7 +172,9 @@ const LineupEditScreen = ({ route, navigation }) => {
                     {item.player ? item.player.name : "Unnamed"}
                   </Text>
                   <Text style={styles.benchPosition}>
-                    {item.position ? item.position.name : "Unknown Position"}
+                    {item.player.position.key
+                      ? item.player.position.key
+                      : "Unknown Position"}
                   </Text>
                 </View>
               </TouchableOpacity>

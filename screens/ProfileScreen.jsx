@@ -28,6 +28,7 @@ import axiosInstance from "../utils/axios";
 import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
 import MapView, { Marker } from "react-native-maps";
+import { AirbnbRating } from "react-native-ratings";
 
 function convertTo12HourFormat(time24) {
   // Parse the 24-hour time string using Moment.js
@@ -55,6 +56,13 @@ const ProfileScreen = ({ route }) => {
   const [teamName, setTeamName] = useState(null);
   const [lineupData, setLineupData] = useState([]);
   const [isCurrentTeam, setIsCurrentTeam] = useState(false);
+  const [utilities, setUtilities] = useState([]);
+  const [loadingUtilities, setLoadingUtilities] = useState(true);
+  const [error, setError] = useState(null);
+  const [rating, setRating] = useState(0);
+  const [averageRating, setAverageRating] = useState(null);
+
+  const [lastRating, setLastRating] = useState(null); // State to hold last rating data
 
   useEffect(() => {
     console.log("Profile Type:", profileType);
@@ -123,10 +131,23 @@ const ProfileScreen = ({ route }) => {
 
     const fetchFollowersCount = async () => {
       try {
-        const response = await axiosInstance.get(
-          `/follow/followers-count/${id}`
-        );
+        let url;
+        switch (profileType) {
+          case "player":
+            url = `/follow/followers-count/${id}`;
+            break;
+          case "team":
+            url = `/team-follow/followers-count/${id}`;
+            break;
+          case "club":
+            url = `/club-follow/followers-count/${id}`;
+            break;
+          default:
+            console.error("Invalid profile type");
+            return;
+        }
 
+        const response = await axiosInstance.get(url);
         setFollowersCount(response.data.followersCount);
       } catch (error) {
         console.error("Error fetching followers count:", error);
@@ -143,9 +164,50 @@ const ProfileScreen = ({ route }) => {
       }
     };
 
+    const fetchAverageRating = async () => {
+      try {
+        const response = await axiosInstance.get(`/club_rating/${id}`);
+        setAverageRating(response.data.average); // Assuming your API response returns averageRating field
+        console.log("Average rating:", response.data.averageRating);
+      } catch (error) {
+        console.error("Error fetching average club rating:", error);
+      }
+    };
+
+    // Fetch last rating data for the club
+    const fetchLastRating = async () => {
+      console.log("club id:", id);
+      try {
+        const response = await axiosInstance.get(
+          `/club_rating/current/rate/${id}`
+        );
+        if (response.data) {
+          setLastRating(response.data);
+          console.log("Last rating data:", response.data);
+          setRating(response.data.rating_value); // Set current rating based on last rating
+        }
+      } catch (error) {
+        console.error("Error fetching last rating:", error);
+      }
+    };
+
+    const fetchUtilities = async () => {
+      try {
+        const response = await axiosInstance.get(`/utilities/club/${id}`);
+        setUtilities(response.data);
+        setLoadingUtilities(false);
+      } catch (error) {
+        setError("Failed to fetch utilities");
+        setLoadingUtilities(false);
+      }
+    };
+
     fetchData();
     fetchFollowersCount();
     fetchFollowedPlayersCount();
+    fetchUtilities();
+    fetchLastRating();
+    fetchAverageRating();
   }, [profileType, id]);
 
   const getSportById = async (sport_id) => {
@@ -278,6 +340,20 @@ const ProfileScreen = ({ route }) => {
 
       // Display error message in a pop-out
       alert(errorMessage);
+    }
+  };
+  const handleRatingCompleted = async (newRating) => {
+    try {
+      const response = await axiosInstance.post(`/club_rating/rate`, {
+        player_id: currentPlayer.id, // Assuming currentPlayer.id is accessible
+        club_id: profileData.id,
+        rating_value: newRating.toString(), // Ensure rating_value is a string
+      });
+      setRating(newRating);
+      console.log("Rating submission response:", response.data); // Log the response data
+      // You can also display the response data in your UI if needed
+    } catch (error) {
+      console.error("Error submitting rating:", error);
     }
   };
 
@@ -690,11 +766,13 @@ const ProfileScreen = ({ route }) => {
                         )}
                       </Text>
                     </TouchableOpacity>
-                    <Text style={styles.playerPosition}>{player.position}</Text>
+                    <Text style={styles.playerPosition}>
+                      {player.player.position.name}
+                    </Text>
                   </View>
                   <View style={styles.jerseyNumberContainer}>
                     <Text style={styles.jerseyNumberText}>
-                      {player.jerseyNumber}
+                      {player.player.position.key}
                     </Text>
                   </View>
                 </View>
@@ -738,40 +816,31 @@ const ProfileScreen = ({ route }) => {
             <TouchableOpacity
               onPress={() => navigateToProfilePhotos(profileData.photo)}
             >
-              <Image source={profileData.photo} style={styles.profilePhoto} />
+              <Image
+                source={{ uri: profileData.pic }}
+                style={styles.profilePhoto}
+              />
             </TouchableOpacity>
 
             <View style={styles.headerText}>
               <Text style={styles.name}>{profileData.name}</Text>
               {/* Followers, Following, Trophies */}
-              <View style={styles.countContainer}>
+              <View style={styles.countContainer2}>
                 <TouchableOpacity
                   onPress={() =>
                     navigateToFollowersFollowing(profileType, profileId)
                   }
                   style={styles.countItem}
                 >
-                  <Text style={styles.countNumber}>
-                    {formatCount(profileData.followers)}
-                  </Text>
+                  <Text style={styles.countNumber}>{formatCount(10)}</Text>
                   <Text style={styles.countLabel}>Followers</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={navigateToFields}
-                  style={styles.countItem}
-                >
-                  <Text style={styles.countNumber}>{profileData.fields}</Text>
-                  <Text style={styles.countLabel}>Fields</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
                   onPress={navigateToFollowersFollowing}
                   style={styles.countItem}
                 >
-                  <Text style={styles.countNumberRating}>
-                    {" "}
-                    {profileData.rating}
-                  </Text>
+                  <Text style={styles.countNumberRating}> {averageRating}</Text>
 
                   <Text style={styles.countLabelRating}>Rating </Text>
                 </TouchableOpacity>
@@ -836,22 +905,6 @@ const ProfileScreen = ({ route }) => {
           </Modal>
           {/* Club information */}
           <View style={styles.infoContainer}>
-            {/* Sports */}
-            <View style={styles.infoItemclub}>
-              <Icon
-                name="soccer"
-                size={20}
-                color="#05a759"
-                style={styles.iconclub}
-              />
-              <View style={styles.infoTextContainerclub}>
-                <Text style={styles.infoLabelclub}>Sports:</Text>
-                <Text style={styles.infoTextclub}>
-                  {profileData.sports.join(", ")}
-                </Text>
-              </View>
-            </View>
-
             {/* Opening Hours */}
             <View style={styles.infoItemclub}>
               <Icon
@@ -864,12 +917,13 @@ const ProfileScreen = ({ route }) => {
                 <Text style={styles.infoLabelclub}>Opening Hours:</Text>
                 <Text style={styles.infoTextclub}>
                   {formatOpeningHours(
-                    profileData.openingHours.open,
-                    profileData.openingHours.close
+                    profileData.workingHoursStart,
+                    profileData.workingHoursEnd
                   )}
                 </Text>
               </View>
             </View>
+
             {/* Location */}
             <View style={styles.infoItemclub}>
               <Icon
@@ -880,18 +934,22 @@ const ProfileScreen = ({ route }) => {
               />
               <View style={styles.infoTextContainerclub}>
                 <Text style={styles.infoLabelclub}>Location:</Text>
-                <Text style={styles.infoTextclub}>
-                  {profileData.city}, {profileData.country}
-                </Text>
+                <Text style={styles.infoTextclub}>{profileData.location}</Text>
               </View>
             </View>
+          </View>
+
+          {/* Description */}
+          <View style={styles.infoContainer}>
+            <Text style={styles.infoTitle}>Description :</Text>
+            <Text style={styles.infoText}>{profileData.description}</Text>
           </View>
 
           {/* Utilities */}
           <View style={styles.utilityContainer}>
             <Text style={styles.utilityTitle}>Utilities</Text>
             <View style={styles.utilityList}>
-              {profileData.utilities.map((utility, index) => (
+              {utilities.map((utility, index) => (
                 <View
                   key={index}
                   style={index % 2 === 0 ? styles.utilityColumn : null}
@@ -903,9 +961,12 @@ const ProfileScreen = ({ route }) => {
                       color="#05a759"
                       style={styles.utilityIcon}
                     />
-                    <Text style={styles.utilityText}>
-                      {utility.description}
-                    </Text>
+                    <View style={styles.utilityTextContainer}>
+                      <Text style={styles.utilityName}>{utility.name}</Text>
+                      <Text style={styles.utilityText}>
+                        {utility.description}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               ))}
@@ -925,8 +986,8 @@ const ProfileScreen = ({ route }) => {
             <MapView
               style={styles.map}
               region={{
-                latitude: profileData.location.latitude,
-                longitude: profileData.location.longitude,
+                latitude: profileData.lat,
+                longitude: profileData.lon,
                 latitudeDelta: 0.05, // Adjust the delta values as needed
                 longitudeDelta: 0.05,
               }} // Set region to club's location
@@ -934,8 +995,8 @@ const ProfileScreen = ({ route }) => {
               {/* Add marker for the club location */}
               <Marker
                 coordinate={{
-                  latitude: profileData.location.latitude,
-                  longitude: profileData.location.longitude,
+                  latitude: profileData.lat,
+                  longitude: profileData.lon,
                 }}
                 title={profileData.name} // Club name as marker title
               />
@@ -943,18 +1004,15 @@ const ProfileScreen = ({ route }) => {
           </View>
           {/* Barrier */}
           <View style={styles.barrier} />
-          {/* Profile photos */}
-          <View style={styles.photosContainer}>
-            {profileData.profilePhotos.map((photo, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => navigateToProfilePhotos(photo)}
-                style={styles.photoItem}
-              >
-                <Image source={photo} style={styles.photo} />
-              </TouchableOpacity>
-            ))}
-          </View>
+          <AirbnbRating
+            count={5}
+            defaultRating={rating}
+            size={20}
+            showRating={false}
+            onFinishRating={handleRatingCompleted}
+            style={styles.rating}
+          />
+          <Text style={styles.ratingLabel}>Rating</Text>
         </ScrollView>
       </SafeAreaView>
     );
@@ -983,10 +1041,10 @@ const getIconNameForUtility = (utilityName) => {
 
   const utility = utilityName.toLowerCase();
   switch (utility) {
-    case "wifi":
-      return "wifi";
     case "parking":
       return "parking";
+    case "wi-fi":
+      return "wifi";
     case "hot tub":
       return "hot-tub";
     case "gym":
@@ -1353,6 +1411,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     flexWrap: "wrap", // Allow items to wrap to the next line
   },
+  utilityTextContainer: {
+    marginLeft: 5,
+    marginBottom: "3%", // Responsive margin bottom
+  },
   utilityColumn: {
     width: "48%", // Adjust as needed to fit two columns
     marginBottom: "3%", // Adjust as needed for spacing between items
@@ -1383,6 +1445,14 @@ const styles = StyleSheet.create({
   utilityIcon: {
     marginRight: "3%", // Responsive margin right
     marginTop: "1%", // Responsive margin top
+  },
+  utilityName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    flexWrap: "wrap", // Allow items to wrap to the next line
+    color: "white", // Adjust as needed
   },
   utilityText: {
     fontSize: 16, // Adjust as needed
@@ -1440,6 +1510,14 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: "#05a759",
     alignItems: "center",
+  },
+  rating: {
+    marginBottom: 10,
+  },
+  ratingLabel: {
+    fontSize: 16,
+    color: "#05a759",
+    fontWeight: "bold",
   },
 });
 
