@@ -358,7 +358,7 @@ const TeamScreen = ({ route }) => {
     <SafeAreaView style={styles.container}>
       <FlatList
         style={{ flex: 1 }} // Ensure FlatList takes full height
-        contentContainerStyle={styles.content}
+        contentContainerStyle={styles.flatListContent} // Added contentContainerStyle
         data={[{ key: "team" }]} // Dummy data to ensure FlatList works
         renderItem={({ item }) => (
           <>
@@ -483,17 +483,6 @@ const TeamScreen = ({ route }) => {
                 )}
               />
             </View>
-            {/* Divider */}
-            <View style={styles.divider} />
-            <TouchableOpacity
-              style={styles.leaveButton}
-              onPress={handleEditLineupTeam}
-            >
-              <Text style={styles.leaveButtonText}>Edit Team Lineup</Text>
-            </TouchableOpacity>
-
-            {/* Divider */}
-            <View style={styles.divider} />
 
             {/* Divider */}
             <View style={styles.divider} />
@@ -505,6 +494,21 @@ const TeamScreen = ({ route }) => {
             >
               <Text style={styles.leaveButtonText}>Leave Team</Text>
             </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.buttoneditlineupContainer}
+              onPress={handleEditLineupTeam}
+            >
+              <Icon name="square-edit-outline" size={24} color="white" />
+              <Text style={styles.buttoneditlineupText}>Edit Team Lineup</Text>
+            </TouchableOpacity>
+
+            <View style={styles.lineupContainer}>
+              <LineupGrid lineup={lineup} />
+            </View>
           </>
         )}
       />
@@ -517,11 +521,20 @@ const windowHeight = Dimensions.get("window").height;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "flex-start",
-    alignItems: "center",
     backgroundColor: "#101010",
     paddingHorizontal: 20,
     paddingTop: 20,
+  },
+  lineupContainer: {
+    marginVertical: 10, // Adjust margin as needed
+    marginHorizontal: 10, // Adjust margin as needed
+    flex: 1,
+    justifyContent: "center",
+  },
+  flatListContent: {
+    flexGrow: 1,
+    paddingBottom: 20, // Adjust as needed
+    minHeight: "200%",
   },
   contentContainer: {
     flex: 1,
@@ -740,6 +753,26 @@ const styles = StyleSheet.create({
   inviteButtonText: {
     color: COLORS.white,
     marginLeft: 5, // Add space between icon and text
+  },
+  buttoneditlineupContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#007BFF",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    elevation: 3, // for Android
+    shadowColor: "#000", // for iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  buttoneditlineupText: {
+    color: "white",
+    marginLeft: 10,
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

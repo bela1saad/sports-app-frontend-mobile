@@ -5,6 +5,10 @@ import { Ionicons } from "@expo/vector-icons";
 const footballFieldImage = require("../assets/football_field.jpg");
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
+// Constants for field dimensions
+const fieldWidth = screenWidth - 40;
+const fieldHeight = fieldWidth * 1.5;
+
 const LineupGrid = ({ lineup }) => {
   return (
     <View style={styles.container}>
@@ -15,28 +19,22 @@ const LineupGrid = ({ lineup }) => {
           style={[
             styles.playerContainer,
             {
-              left: player.x * screenWidth,
-              top: player.y * screenHeight,
+              left: player.x * fieldWidth,
+              top: player.y * fieldHeight,
             },
           ]}
         >
-          <Image source={player.photo} style={styles.playerImage} />
+          <Image
+            source={{ uri: player.player.pic }}
+            style={styles.playerImage}
+            resizeMode="cover"
+          />
           {player.isCaptain && (
-            <View style={styles.captainIconContainer}>
-              <Ionicons
-                name="star"
-                size={screenWidth * 0.05} // Adjust size dynamically
-                color="gold"
-              />
+            <View style={styles.captainBadge}>
+              <Text style={styles.captainText}>C</Text>
             </View>
           )}
-          <Text style={styles.playerName}>{player.name}</Text>
-          <View style={styles.positionContainer}>
-            <Text style={styles.position}>{player.position}</Text>
-          </View>
-          <View style={styles.jerseyContainer}>
-            <Text style={styles.jerseyNumber}>{player.jerseyNumber}</Text>
-          </View>
+          <Text style={styles.playerName}>{player.player.name}</Text>
         </View>
       ))}
     </View>
@@ -47,67 +45,51 @@ const styles = StyleSheet.create({
   container: {
     position: "relative",
     width: "100%",
-    aspectRatio: 1.16,
+    aspectRatio: 3 / 4,
+  },
+  captainBadge: {
+    position: "absolute",
+    top: -fieldWidth * 0.03,
+    right: -fieldWidth * 0.03,
+    backgroundColor: "#FFD700",
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  captainText: {
+    color: "#000",
+    fontWeight: "bold",
   },
   backgroundImage: {
     ...StyleSheet.absoluteFillObject,
     resizeMode: "cover",
-    width: screenWidth * 0.99, // Use screenWidth as the width
-    height: screenHeight * 0.6, // Use screenHeight as the height
-    marginHorizontal: -20,
+    width: "100%",
+    height: "100%",
   },
-
   playerContainer: {
     position: "absolute",
     alignItems: "center",
   },
   playerImage: {
-    width: screenWidth * 0.12, // Adjust size dynamically
-    height: screenWidth * 0.12, // Adjust size dynamically
-    borderRadius: (screenWidth * 0.1) / 2, // Adjust size dynamically
+    width: fieldWidth * 0.12,
+    height: fieldWidth * 0.12,
+    borderRadius: (fieldWidth * 0.12) / 2,
+    borderWidth: 1,
+    borderColor: "#fff",
   },
   captainIconContainer: {
     position: "absolute",
-    top: -screenWidth * 0.03, // Adjust position dynamically
-    left: 0, // Adjust position dynamically
-    right: screenWidth * 0.07, // Center horizontally
-    alignItems: "center", // Center vertically
+    top: -fieldWidth * 0.03,
+    right: -fieldWidth * 0.03,
+    alignItems: "center",
   },
   playerName: {
-    bottom: screenWidth * 0.0001, // Adjust position dynamically
-    top: screenWidth * 0.02, // Adjust position dynamically
+    marginTop: fieldWidth * 0.02,
     textAlign: "center",
-    fontSize: screenWidth * 0.025, // Adjust size dynamically
+    fontSize: fieldWidth * 0.025,
     color: "#d3d3d3",
-    fontWeight: "bold",
-  },
-  positionContainer: {
-    position: "absolute",
-    right: screenWidth * 0.099, // Adjust position dynamically
-    bottom: screenWidth * 0.02, // Adjust position dynamically
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    paddingHorizontal: screenWidth * 0.01, // Adjust size dynamically
-    paddingVertical: screenWidth * 0.005, // Adjust size dynamically
-    borderRadius: screenWidth * 0.02, // Adjust size dynamically
-    marginLeft: screenWidth * 0.02,
-  },
-  jerseyContainer: {
-    position: "absolute",
-    left: screenWidth * 0.099,
-    bottom: screenWidth * 0.02, // Adjust position dynamically
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    paddingHorizontal: screenWidth * 0.01, // Adjust size dynamically
-    paddingVertical: screenWidth * 0.003, // Adjust size dynamically
-    borderRadius: screenWidth * 0.02, // Adjust size dynamically
-  },
-  position: {
-    fontSize: screenWidth * 0.02, // Adjust size dynamically
-    color: "white",
-    fontWeight: "bold",
-  },
-  jerseyNumber: {
-    fontSize: screenWidth * 0.02, // Adjust size dynamically
-    color: "white",
     fontWeight: "bold",
   },
 });

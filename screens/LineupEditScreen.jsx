@@ -14,6 +14,7 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import axiosInstance from "../utils/axios";
 import DraggablePlayer from "../components/DraggablePlayer";
+import LinearGradient from "react-native-linear-gradient";
 
 const { width } = Dimensions.get("window");
 const pitchHeight = width * 1.5;
@@ -33,7 +34,7 @@ const LineupEditScreen = ({ route, navigation }) => {
         const response = await axiosInstance.get(`/lineup/${teamId}`);
         const fetchedLineup = response.data.lineup.map((player) => ({
           ...player,
-          isBenched: player.x === null && player.y === null,
+          isBenched: player.isBenched, // Ensure this field is used correctly
         }));
         setLineup(fetchedLineup);
         setLoading(false);
@@ -108,16 +109,9 @@ const LineupEditScreen = ({ route, navigation }) => {
   };
 
   const handleBenchPress = async (player) => {
-    const benchPosition = {
-      x: 0.5, // Placeholder or default value for x when benched
-      y: 0.5, // Placeholder or default value for y when benched
-    };
-
     const updatedPlayer = {
       ...player,
-      isBenched: true,
-      x: benchPosition.x,
-      y: benchPosition.y,
+      isBenched: !player.isBenched, // Toggle bench status
     };
 
     const updatedLineup = lineup.map((p) =>
@@ -127,9 +121,9 @@ const LineupEditScreen = ({ route, navigation }) => {
 
     try {
       await axiosInstance.put(`/lineup/update/${player.id}`, {
-        x: benchPosition.x,
-        y: benchPosition.y,
-        isBenched: true,
+        x: updatedPlayer.x,
+        y: updatedPlayer.y,
+        isBenched: updatedPlayer.isBenched,
       });
 
       console.log(
@@ -139,7 +133,6 @@ const LineupEditScreen = ({ route, navigation }) => {
       console.error("Error updating lineup:", error);
     }
   };
-
   const renderField = () => {
     const onFieldPlayers = lineup.filter((player) => !player.isBenched);
     const benchPlayers = lineup.filter((player) => player.isBenched);
@@ -159,6 +152,7 @@ const LineupEditScreen = ({ route, navigation }) => {
                 width={fieldWidth}
                 pitchHeight={pitchHeight}
                 onDragEnd={handleDragEnd}
+                style={styles.playerCard}
               />
             ))}
           </View>
@@ -203,6 +197,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     justifyContent: "space-between",
+    backgroundColor: "#101010",
   },
   container: {
     flex: 1,
@@ -211,11 +206,22 @@ const styles = StyleSheet.create({
   fieldContainer: {
     width: "100%",
     alignItems: "center",
+    padding: 10,
   },
   pitchContainer: {
     position: "relative",
     width: "100%",
     aspectRatio: 3 / 4,
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.51,
+    shadowRadius: 13.16,
+    elevation: 20,
   },
   pitchBackground: {
     width: "100%",
@@ -225,19 +231,24 @@ const styles = StyleSheet.create({
   },
   benchContainer: {
     width: "100%",
-    paddingVertical: 10,
+    paddingVertical: 20,
     borderTopWidth: 1,
     borderColor: "#444",
     alignItems: "center",
+    backgroundColor: "#222",
   },
   benchTitle: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "bold",
     marginBottom: 10,
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
   benchScroll: {
     flexDirection: "row",
+    paddingHorizontal: 10,
   },
   benchCard: {
     backgroundColor: "#333",
@@ -245,12 +256,22 @@ const styles = StyleSheet.create({
     padding: 10,
     alignItems: "center",
     marginRight: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.36,
+    shadowRadius: 6.68,
+    elevation: 11,
   },
   benchImage: {
     width: 50,
     height: 50,
     borderRadius: 25,
     marginBottom: 5,
+    borderWidth: 1,
+    borderColor: "#fff",
   },
   benchName: {
     color: "#fff",
@@ -260,6 +281,21 @@ const styles = StyleSheet.create({
   benchPosition: {
     color: "#aaa",
     fontSize: 12,
+  },
+  playerCard: {
+    borderRadius: 10,
+    padding: 10,
+    backgroundColor: "#555",
+    borderWidth: 1,
+    borderColor: "#aaa",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.36,
+    shadowRadius: 6.68,
+    elevation: 11,
   },
 });
 

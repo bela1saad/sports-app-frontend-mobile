@@ -6,7 +6,10 @@ import {
   PanResponder,
   Animated,
   Text,
+  Dimensions,
 } from "react-native";
+
+const { width: screenWidth } = Dimensions.get("window");
 
 const DraggablePlayer = ({ player, width, pitchHeight, onDragEnd }) => {
   const [dragging, setDragging] = useState(false);
@@ -64,7 +67,7 @@ const DraggablePlayer = ({ player, width, pitchHeight, onDragEnd }) => {
       style={[
         styles.player,
         {
-          opacity: dragging ? 0.5 : 1,
+          opacity: dragging ? 0 : 1,
           transform: [{ translateX: pan.x }, { translateY: pan.y }],
         },
       ]}
@@ -83,6 +86,7 @@ const DraggablePlayer = ({ player, width, pitchHeight, onDragEnd }) => {
   );
 };
 
+const fieldWidth = screenWidth - 40;
 const styles = StyleSheet.create({
   player: {
     alignItems: "center",
@@ -94,17 +98,17 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   playerImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: fieldWidth * 0.12, // Adjusted to match LineupGrid's player image size
+    height: fieldWidth * 0.12, // Adjusted to match LineupGrid's player image size
+    borderRadius: (fieldWidth * 0.12) / 2,
     borderWidth: 2,
     borderColor: "#fff",
     marginBottom: 5,
   },
   captainBadge: {
     position: "absolute",
-    top: -5,
-    right: -5,
+    top: -fieldWidth * 0.03,
+    right: -fieldWidth * 0.03,
     backgroundColor: "#FFD700",
     borderRadius: 12,
     width: 24,
