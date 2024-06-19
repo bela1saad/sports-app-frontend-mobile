@@ -60,7 +60,6 @@ const ProfileScreen = ({ route }) => {
   const [loadingUtilities, setLoadingUtilities] = useState(true);
   const [error, setError] = useState(null);
   const [rating, setRating] = useState(0);
-  const [averageRating, setAverageRating] = useState(null);
 
   const [lastRating, setLastRating] = useState(null); // State to hold last rating data
 
@@ -350,8 +349,11 @@ const ProfileScreen = ({ route }) => {
           url = `/follow/unfollow/${id}`;
           break;
         case "team":
+          console.log("Following team with ID:", id);
+          const teamid = id.toString();
+          console.log("Current team with ID:", teamid);
           url = `/team-follow/unfollow`;
-          body = { playerId: currentPlayer.id, teamId: id }; // Ensure playerId and teamId are correctly defined
+          body = { playerId: currentPlayer.id, teamId: teamid }; // Ensure playerId and teamId are correctly defined
           break;
         case "club":
           url = `/club-follow/unfollow`;
@@ -361,7 +363,7 @@ const ProfileScreen = ({ route }) => {
           return;
       }
 
-      const response = await axiosInstance.delete(url, body); // Use 'data' option for Axios DELETE request
+      const response = await axiosInstance.delete(url, { data: body }); // Use 'data' option for Axios DELETE request
       if (![200, 201].includes(response.status)) {
         throw new Error(response.data.message || "An unknown error occurred.");
       }

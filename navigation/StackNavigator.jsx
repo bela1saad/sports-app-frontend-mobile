@@ -36,6 +36,8 @@ import EnterEmailScreen from "../screens/login/EnterEmailScreen";
 import EnterCodeScreen from "../screens/login/EnterCodeScreen";
 import ResetPasswordScreen from "../screens/login/ResetPasswordScreen";
 import ClubProfileScreen from "../screens/ClubProfileScreen";
+import FieldsScreen from "../screens/FieldsScreen";
+import ReservationScreen from "../screens/ReservationScreen";
 
 const Stack = createStackNavigator();
 
@@ -85,6 +87,8 @@ const StackNavigator = () => {
             name="ClubProfileScreen"
             component={ClubProfileScreen}
           />
+          <Stack.Screen name="FieldsScreen" component={FieldsScreen} />
+          <Stack.Screen name="Reservation" component={ReservationScreen} />
 
           <Stack.Screen
             name="BookingsHistory"

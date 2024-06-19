@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useLayoutEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import {
   View,
   Text,
@@ -11,9 +11,11 @@ import {
   SafeAreaView,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import axiosInstance from "../utils/axios";
 
-const ClubsScreen = ({ navigation }) => {
+const ClubsScreen = () => {
+  const navigation = useNavigation();
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -23,11 +25,8 @@ const ClubsScreen = ({ navigation }) => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
-  useEffect(() => {
-    fetchClubs();
-  }, []);
-
   const fetchClubs = async () => {
+    setLoading(true);
     try {
       console.log("Fetching clubs...");
 
@@ -49,16 +48,18 @@ const ClubsScreen = ({ navigation }) => {
               ratingResponse.data
             );
 
-            // Use a default value if the rating is not found or is invalid
             const averageRating = parseFloat(ratingResponse.data.average) || 0;
 
-            // Assuming you get location data from the response, adding a placeholder here
             const location = "Madrid, Spain"; // Replace with actual location data
 
             return { ...club, rating: averageRating, location };
           } catch (error) {
             console.error(`Error fetching rating for club ${club.id}:`, error);
-            return { ...club, rating: 0, location: "Unknown location" }; // Assign a default rating and location in case of error
+            return {
+              ...club,
+              rating: 0,
+              location: "Unknown location",
+            };
           }
         })
       );
@@ -74,6 +75,16 @@ const ClubsScreen = ({ navigation }) => {
     }
   };
 
+  useEffect(() => {
+    fetchClubs();
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchClubs();
+    }, [])
+  );
+
   const handleRefresh = () => {
     setRefreshing(true);
     fetchClubs();
@@ -81,8 +92,9 @@ const ClubsScreen = ({ navigation }) => {
 
   const renderClub = ({ item }) => (
     <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate("ClubDetails", { club: item })}
+      onPress={() =>
+        navigation.navigate("ClubProfileScreen", { clubId: item.id })
+      }
     >
       <Image source={{ uri: item.pic }} style={styles.image} />
       <View style={styles.cardContent}>
