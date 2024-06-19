@@ -5,21 +5,27 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Modal,
   Button,
-  Calendar,
   Alert,
+  SafeAreaView,
 } from "react-native";
 import axiosInstance from "../utils/axios";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
+import { Calendar } from "react-native-calendars";
 
-const ReservationScreen = ({ route, navigation }) => {
-  const { fieldId } = route.params; // Extracting fieldId from route params
+const ReservationScreen = ({ route }) => {
+  const { fieldId } = route.params;
+  const navigation = useNavigation();
+
   const [durations, setDurations] = useState([]);
   const [selectedDuration, setSelectedDuration] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState("");
   const [availability, setAvailability] = useState([]);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [markedDates, setMarkedDates] = useState({});
+  const [minDate, setMinDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
@@ -48,7 +54,8 @@ const ReservationScreen = ({ route, navigation }) => {
         `/reservation/availability/${durationId}`
       );
       setAvailability(response.data);
-      setShowCalendar(true); // Show calendar once availability is fetched
+      markAvailableDates(response.data);
+      setShowCalendar(true);
     } catch (error) {
       console.error("Error fetching availability:", error);
       Alert.alert(
@@ -58,53 +65,98 @@ const ReservationScreen = ({ route, navigation }) => {
     }
   };
 
+  const markAvailableDates = (availableDates) => {
+    const markedDatesObject = {};
+    availableDates.forEach((date) => {
+      markedDatesObject[date.date] = {
+        marked: true,
+        dotColor: "#05a759",
+      };
+    });
+    setMarkedDates(markedDatesObject);
+  };
+
   const handleDurationSelect = (duration) => {
     setSelectedDuration(duration);
+    setSelectedDate(""); // Reset selected date when duration changes
     fetchAvailability(duration.id);
   };
 
-  const handleDateSelect = (date) => {
-    setSelectedDate(date.dateString);
+  const handleDateSelect = (day) => {
+    setSelectedDate(day.dateString); // Store the selected date in YYYY-MM-DD format
   };
 
-  const handleReservationPlayer = async () => {
+  const handleReservation = async (reservationType) => {
     if (!selectedDuration || !selectedDate) {
       Alert.alert("Incomplete Selection", "Please select duration and date.");
       return;
     }
-    try {
-      const response = await axiosInstance.post("/reservation/player", {
-        durationId: selectedDuration.id.toString(),
-        date: selectedDate,
-      });
-      console.log("Player Reservation Success:", response.data);
-      // Handle success scenario, navigate or show confirmation
-    } catch (error) {
-      console.error("Error making player reservation:", error);
-      Alert.alert("Error", "Failed to make reservation. Please try again.");
-    }
-  };
 
-  const handleReservationTeam = async () => {
-    if (!selectedDuration || !selectedDate) {
-      Alert.alert("Incomplete Selection", "Please select duration and date.");
-      return;
-    }
     try {
-      const response = await axiosInstance.post("/reservation/team", {
+      let endpoint = "";
+      if (reservationType === "player") {
+        endpoint = "/reservation/player";
+      } else if (reservationType === "team") {
+        endpoint = "/reservation/team";
+      }
+
+      console.log("LOG Sending player reservation request...");
+      console.log(
+        `LOG Request body: ${JSON.stringify({
+          durationId: selectedDuration.id.toString(),
+          date: selectedDate,
+        })}`
+      );
+
+      const response = await axiosInstance.post(endpoint, {
         durationId: selectedDuration.id.toString(),
         date: selectedDate,
       });
-      console.log("Team Reservation Success:", response.data);
-      // Handle success scenario, navigate or show confirmation
+
+      // Check if the response has a message and error to display
+      if (response.data && response.data.message) {
+        const { message, error } = response.data;
+        if (error) {
+          Alert.alert("Reservation Error", `${message}\n${error}`);
+        } else {
+          Alert.alert(`${reservationType} Reservation Success`, message);
+        }
+      } else {
+        console.log(`${reservationType} Reservation Success:`, response.data);
+        // Handle success scenario, navigate or show confirmation
+      }
     } catch (error) {
-      console.error("Error making team reservation:", error);
-      Alert.alert("Error", "Failed to make reservation. Please try again.");
+      if (error.response) {
+        console.error(
+          `Error making ${reservationType} reservation:`,
+          error.response.data
+        );
+        const { message, error: errorMsg } = error.response.data;
+        Alert.alert("Reservation Error", ` ${message}`);
+      } else if (error.request) {
+        console.error(
+          `Error making ${reservationType} reservation: No response received.`,
+          error.request
+        );
+        Alert.alert(
+          "Reservation Error",
+          "No response received from server. Please check your internet connection and try again."
+        );
+      } else {
+        console.error(
+          `Error making ${reservationType} reservation:`,
+          error.message
+        );
+        Alert.alert(
+          "Reservation Error",
+          `Failed to make reservation. Error: ${error.message}`
+        );
+      }
     }
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Make a Reservation</Text>
       </View>
@@ -128,34 +180,67 @@ const ReservationScreen = ({ route, navigation }) => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.durationList}
         />
-        {showCalendar && (
-          <>
-            <Text style={styles.sectionTitle}>Select Date:</Text>
-            <Calendar
-              current={new Date()}
-              onDayPress={(day) => handleDateSelect(day)}
-              markedDates={{
-                [selectedDate]: { selected: true, selectedColor: "#05a759" },
-              }}
-              minDate={new Date()}
-              style={styles.calendar}
-            />
-          </>
-        )}
+        <View style={styles.calendarContainer}>
+          {showCalendar && (
+            <>
+              <Text style={styles.sectionTitle}>Select Date:</Text>
+              <Calendar
+                current={selectedDate}
+                markedDates={markedDates}
+                minDate={minDate}
+                onDayPress={(day) => handleDateSelect(day)}
+                monthFormat={"MMMM yyyy"}
+                hideArrows={false}
+                hideExtraDays={true}
+                disableMonthChange={false}
+                firstDay={1}
+                hideDayNames={false}
+                showWeekNumbers={false}
+                onPressArrowLeft={(subtractMonth) =>
+                  subtractMonth && subtractMonth()
+                }
+                onPressArrowRight={(addMonth) => addMonth && addMonth()}
+                theme={{
+                  textSectionTitleColor: "#b6c1cd",
+                  selectedDayBackgroundColor: "#05a759",
+                  selectedDayTextColor: "#ffffff",
+                  todayTextColor: "#05a759",
+                  dayTextColor: "#2d4150",
+                  textDisabledColor: "#d9e1e8",
+                  dotColor: "#05a759",
+                  selectedDotColor: "#ffffff",
+                  arrowColor: "#05a759",
+                  monthTextColor: "#05a759",
+                  indicatorColor: "#05a759",
+                }}
+                style={styles.calendarStyle}
+              />
+              {selectedDate ? (
+                <Text style={styles.selectedDateText}>
+                  Selected Date: {selectedDate}
+                </Text>
+              ) : null}
+            </>
+          )}
+        </View>
         <View style={styles.buttonContainer}>
-          <Button
-            title="Reserve as Player"
-            onPress={handleReservationPlayer}
+          <TouchableOpacity
+            style={[styles.button, styles.playerButton]}
+            onPress={() => handleReservation("player")}
             disabled={!selectedDuration || !selectedDate}
-          />
-          <Button
-            title="Reserve as Team"
-            onPress={handleReservationTeam}
+          >
+            <Text style={styles.buttonText}>Reserve as Player</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.teamButton]}
+            onPress={() => handleReservation("team")}
             disabled={!selectedDuration || !selectedDate}
-          />
+          >
+            <Text style={styles.buttonText}>Reserve as Team</Text>
+          </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -163,12 +248,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#101010",
+    padding: 10,
   },
   header: {
     backgroundColor: "#05a759",
     paddingVertical: 15,
     paddingHorizontal: 20,
-    justifyContent: "center",
+    marginBottom: 20,
     alignItems: "center",
   },
   headerTitle: {
@@ -178,7 +264,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
   },
   sectionTitle: {
     fontSize: 18,
@@ -187,10 +273,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   durationList: {
+    maxHeight: 50,
     marginBottom: 20,
   },
   durationItem: {
-    padding: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: "#05a759",
@@ -202,17 +290,54 @@ const styles = StyleSheet.create({
   durationText: {
     color: "#fff",
     fontSize: 16,
+    textAlign: "center",
   },
-  calendar: {
-    marginTop: 20,
-    marginBottom: 20,
+  calendarContainer: {
     backgroundColor: "#1e1e1e",
     borderRadius: 10,
+    marginBottom: 20,
+    padding: 20,
+  },
+  calendarStyle: {
+    marginBottom: 10,
+  },
+  selectedDateText: {
+    color: "#fff",
+    fontSize: 16,
+    marginTop: 10,
+    textAlign: "center",
   },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginTop: 20,
+    marginBottom: 20,
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 15,
+    alignItems: "center",
+    borderRadius: 10,
+    elevation: 3, // For Android shadow
+    shadowColor: "#000", // For iOS shadow
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  playerButton: {
+    backgroundColor: "#05a759",
+    marginRight: 10,
+  },
+  teamButton: {
+    backgroundColor: "#0e6ba8",
+    marginLeft: 10,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

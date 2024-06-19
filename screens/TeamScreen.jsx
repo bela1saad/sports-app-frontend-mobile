@@ -497,14 +497,17 @@ const TeamScreen = ({ route }) => {
 
             {/* Divider */}
             <View style={styles.divider} />
-
-            <TouchableOpacity
-              style={styles.buttoneditlineupContainer}
-              onPress={handleEditLineupTeam}
-            >
-              <Icon name="square-edit-outline" size={24} color="white" />
-              <Text style={styles.buttoneditlineupText}>Edit Team Lineup</Text>
-            </TouchableOpacity>
+            {isCaptain && item.id !== team.captain_id && (
+              <TouchableOpacity
+                style={styles.buttoneditlineupContainer}
+                onPress={handleEditLineupTeam}
+              >
+                <Icon name="square-edit-outline" size={24} color="white" />
+                <Text style={styles.buttoneditlineupText}>
+                  Edit Team Lineup
+                </Text>
+              </TouchableOpacity>
+            )}
 
             <View style={styles.lineupContainer}>
               <LineupGrid lineup={lineup} />

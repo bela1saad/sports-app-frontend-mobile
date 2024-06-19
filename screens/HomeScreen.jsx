@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import {
   ScrollView,
   View,
@@ -19,7 +19,7 @@ import NotificationsIcon from "../components/NotificationsIcon";
 import SearchBar from "../components/SearchBar";
 import { dummyPosts } from "../Data/dummyData";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLayoutEffect } from "react";
+import { useAuth } from "../auth/AuthContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -29,6 +29,7 @@ const HomeScreen = ({ navigation }) => {
   const [selectedSport, setSelectedSport] = useState("All");
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const { currentPlayer } = useAuth(); // Get currentPlayer from AuthContext
 
   useEffect(() => {
     filterPosts();
@@ -77,12 +78,29 @@ const HomeScreen = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <TouchableOpacity onPress={goToEditProfile} style={styles.profilePhoto}>
-          <Image
-            source={require("../assets/profile_photo.png")}
-            style={styles.profileImage}
-          />
-        </TouchableOpacity>
+        <View style={styles.profileContainer}>
+          <TouchableOpacity
+            onPress={goToEditProfile}
+            style={styles.profilePhoto}
+          >
+            <Image
+              source={
+                currentPlayer && currentPlayer.pic
+                  ? { uri: currentPlayer.pic }
+                  : require("../assets/profile_photo.png")
+              }
+              style={styles.profileImage}
+            />
+          </TouchableOpacity>
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName}>
+              {currentPlayer ? currentPlayer.name : "Loading..."}
+            </Text>
+            <Text style={styles.profileLocation}>
+              {currentPlayer ? currentPlayer.location : ""}
+            </Text>
+          </View>
+        </View>
 
         <TouchableOpacity
           onPress={() => navigation.navigate("Sidebar")}
@@ -133,11 +151,13 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: width * 0.05,
   },
+  profileContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: width * 0.05,
+  },
   profilePhoto: {
-    position: "absolute",
-    top: height * 0.02,
-    left: width * 0.05,
-    zIndex: 1,
+    marginRight: width * 0.03,
   },
   profileImage: {
     width: width * 0.15,
@@ -145,6 +165,18 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.075,
     borderWidth: 2,
     borderColor: COLORS.Green,
+  },
+  profileInfo: {
+    justifyContent: "center",
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: COLORS.white,
+  },
+  profileLocation: {
+    fontSize: 14,
+    color: COLORS.grey500,
   },
   sidebarButton: {
     position: "absolute",
@@ -159,7 +191,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   contentContainer: {
-    marginTop: height * 0.1,
+    marginTop: height * 0.05,
     marginBottom: width * 0.05,
   },
   adsContainer: {

@@ -29,6 +29,7 @@ import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
 import MapView, { Marker } from "react-native-maps";
 import { AirbnbRating } from "react-native-ratings";
+import { ActivityIndicator } from "react-native";
 
 function convertTo12HourFormat(time24) {
   // Parse the 24-hour time string using Moment.js
@@ -60,6 +61,7 @@ const ProfileScreen = ({ route }) => {
   const [loadingUtilities, setLoadingUtilities] = useState(true);
   const [error, setError] = useState(null);
   const [rating, setRating] = useState(0);
+  const [averageRating, setAverageRating] = useState(null);
 
   const [lastRating, setLastRating] = useState(null); // State to hold last rating data
 
@@ -636,10 +638,36 @@ const ProfileScreen = ({ route }) => {
   // Render team profile UI
   function renderTeamProfile() {
     console.log("Profile Data:", profileData);
-    if (!profileData) {
-      // Handle case when profileData is undefined or lineup is missing
-      return null;
+
+    // Check if profileData is undefined or null
+    if (!profileData || !profileData.team) {
+      // Handle case when profileData or profileData.team is undefined
+      return (
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#1a1a1a" }}>
+          <ScrollView
+            contentContainerStyle={[styles.container]}
+            scrollEnabled={true} // Ensure scrolling is enabled
+          >
+            {/* Return Arrow */}
+            <TouchableOpacity
+              style={styles.returnArrow}
+              onPress={() => navigation.goBack()}
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }} // Increase touch area
+            >
+              <Icon name="arrow-left" size={24} color="#05a759" />
+            </TouchableOpacity>
+
+            {/* Placeholder or loading indicator */}
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#05a759" />
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      );
     }
+
+    // Destructure profileData for easier access
+    const { team } = profileData;
 
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: "#1a1a1a" }}>
@@ -655,19 +683,22 @@ const ProfileScreen = ({ route }) => {
           >
             <Icon name="arrow-left" size={24} color="#05a759" />
           </TouchableOpacity>
+
           {/* Profile header */}
           <View style={styles.header}>
+            {/* Profile photo */}
             <TouchableOpacity
               onPress={() => navigateToProfilePhotos(profileData.id)}
             >
-              <Image
-                source={{ uri: profileData.team.pic }}
-                style={styles.profilePhoto}
-              />
+              {/* Check if team.pic is defined before using it */}
+              {team.pic && (
+                <Image source={{ uri: team.pic }} style={styles.profilePhoto} />
+              )}
             </TouchableOpacity>
 
             <View style={styles.headerText}>
-              <Text style={styles.name}>{profileData.team.name}</Text>
+              {/* Team name */}
+              <Text style={styles.name}>{team.name}</Text>
 
               {/* Followers, Following, Trophies */}
               <View style={styles.countContainer2}>
@@ -685,96 +716,88 @@ const ProfileScreen = ({ route }) => {
                   onPress={navigateToTrophies}
                   style={styles.countItem}
                 >
-                  <Text style={styles.countNumber}>
-                    {profileData.team.max_number}
-                  </Text>
+                  <Text style={styles.countNumber}>{team.max_number}</Text>
                   <Text style={styles.countLabel}>Trophies</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
+
           {/* Follow and Invite buttons */}
           <View style={styles.buttonRow}>
-            {/* Follow/Unfollow button */}
             {/* Conditionally render Follow/Unfollow button */}
-            {currentPlayer &&
-              profileData &&
-              currentPlayer.team_id !== profileData.team.id && (
-                <>
-                  {/* Follow/Unfollow button */}
-                  <TouchableOpacity
-                    style={[
-                      styles.button,
+            {currentPlayer && currentPlayer.team_id !== team.id && (
+              <>
+                {/* Follow/Unfollow button */}
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    isFollowing ? styles.unfollowButton : null,
+                  ]}
+                  onPress={isFollowing ? handleUnfollow : handleFollow}
+                >
+                  <Text style={styles.buttonText}>
+                    {isFollowing ? "Unfollow" : "Follow"}
+                  </Text>
+                </TouchableOpacity>
 
-                      isFollowing ? styles.unfollowButton : null,
-                    ]}
-                    onPress={isFollowing ? handleUnfollow : handleFollow}
+                {/* Unfollow confirmation modal */}
+                <Modal
+                  visible={showUnfollowConfirmation}
+                  transparent
+                  animationType="fade"
+                  onRequestClose={() => setShowUnfollowConfirmation(false)}
+                >
+                  <View
+                    style={{
+                      flex: 1,
+                      justifyContent: "center",
+                      alignItems: "center",
+                      backgroundColor: "rgba(0, 0, 0, 0.5)",
+                    }}
                   >
-                    <Text style={styles.buttonText}>
-                      {isFollowing ? "Unfollow" : "Follow"}
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* Unfollow confirmation modal */}
-                  <Modal
-                    visible={showUnfollowConfirmation}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={() => setShowUnfollowConfirmation(false)}
-                  >
-                    <View
-                      style={{
-                        flex: 1,
-                        justifyContent: "center",
-                        alignItems: "center",
-                        backgroundColor: "rgba(0, 0, 0, 0.5)",
-                      }}
-                    >
-                      <View style={styles.modal}>
-                        <Text style={styles.modalText}>
-                          Are you sure you want to unfollow?
-                        </Text>
-                        <TouchableOpacity
-                          style={styles.modalButton}
-                          onPress={confirmUnfollow}
-                        >
-                          <Text style={styles.modalButtonText}>Yes</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.modalButton}
-                          onPress={() => setShowUnfollowConfirmation(false)}
-                        >
-                          <Text style={styles.modalButtonText}>Cancel</Text>
-                        </TouchableOpacity>
-                      </View>
+                    <View style={styles.modal}>
+                      <Text style={styles.modalText}>
+                        Are you sure you want to unfollow?
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.modalButton}
+                        onPress={confirmUnfollow}
+                      >
+                        <Text style={styles.modalButtonText}>Yes</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.modalButton}
+                        onPress={() => setShowUnfollowConfirmation(false)}
+                      >
+                        <Text style={styles.modalButtonText}>Cancel</Text>
+                      </TouchableOpacity>
                     </View>
-                  </Modal>
-                </>
-              )}
+                  </View>
+                </Modal>
+              </>
+            )}
           </View>
+
           {/* Additional team info */}
           <View style={styles.infoContainer}>
             <View style={styles.infoItem}>
               <Icon
-                name={
-                  profileData.team.up_for_game ? "check-circle" : "close-circle"
-                }
+                name={team.up_for_game ? "check-circle" : "close-circle"}
                 size={20}
-                color={profileData.team.up_for_game ? "#05a759" : "#e53935"}
+                color={team.up_for_game ? "#05a759" : "#e53935"}
                 style={styles.icon}
               />
               <Text
                 style={[
                   styles.infoText,
                   {
-                    color: profileData.team.up_for_game ? "#05a759" : "#e53935",
+                    color: team.up_for_game ? "#05a759" : "#e53935",
                     fontWeight: "bold",
                   },
                 ]}
               >
-                {profileData.team.up_for_game
-                  ? "Open for a Game"
-                  : "Not Available "}
+                {team.up_for_game ? "Open for a Game" : "Not Available "}
               </Text>
             </View>
             <View style={styles.infoItem}>
@@ -793,14 +816,16 @@ const ProfileScreen = ({ route }) => {
                 color="#05a759"
                 style={styles.icon}
               />
-              <Text style={styles.infoText}>{profileData.team.level}</Text>
+              <Text style={styles.infoText}>{team.level}</Text>
             </View>
           </View>
+
           {/* Description */}
           <View style={styles.infoContainer}>
             <Text style={styles.infoTitle}>Description</Text>
-            <Text style={styles.infoText}>{profileData.team.description}</Text>
+            <Text style={styles.infoText}>{team.description}</Text>
           </View>
+
           {/* Lineup */}
           <View style={styles.lineupContainer}>
             <Text style={styles.lineupTitle}>Lineup</Text>
@@ -842,9 +867,11 @@ const ProfileScreen = ({ route }) => {
               </View>
             ))}
           </View>
+
           {/* Barrier */}
           <View style={styles.barrier} />
-          {/*formation*/}
+
+          {/* Formation */}
           <View style={styles.lineupGrid}>
             <LineupGrid lineup={lineupData} />
           </View>

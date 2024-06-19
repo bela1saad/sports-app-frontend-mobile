@@ -1,158 +1,224 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
+  Image,
+  ActivityIndicator,
   TouchableOpacity,
-  Button,
-  Alert,
-  Calendar,
   SafeAreaView,
+  Alert,
+  RefreshControl,
+  TextInput,
+  Modal,
+  Button,
 } from "react-native";
+import Icon from "react-native-vector-icons/FontAwesome";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import axiosInstance from "../utils/axios";
-import { useNavigation } from "@react-navigation/native";
+import { Picker } from "@react-native-picker/picker";
 
-const ReservationScreen = ({ route }) => {
-  const { fieldId } = route.params;
+const FieldsScreen = ({ route }) => {
+  const { profileData } = route.params;
   const navigation = useNavigation();
+  const [fields, setFields] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [sports, setSports] = useState([]);
+  const [selectedSport, setSelectedSport] = useState("");
+  const [sizeFilter, setSizeFilter] = useState("");
+  const [showSportPicker, setShowSportPicker] = useState(false);
 
-  const [durations, setDurations] = useState([]);
-  const [selectedDuration, setSelectedDuration] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [availability, setAvailability] = useState([]);
-  const [showCalendar, setShowCalendar] = useState(false);
+  useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
+
+  const fetchSports = async () => {
+    try {
+      const response = await axiosInstance.get("/sport/all");
+      setSports(response.data);
+    } catch (error) {
+      console.error("Error fetching sports:", error);
+      Alert.alert("Error", "Failed to fetch sports. Please try again later.");
+    }
+  };
 
   useEffect(() => {
-    fetchDurations();
+    fetchSports();
   }, []);
 
-  const fetchDurations = async () => {
-    try {
-      const response = await axiosInstance.get(`/duration/by-field/${fieldId}`);
-      setDurations(response.data);
-    } catch (error) {
-      console.error("Error fetching durations:", error);
-      Alert.alert(
-        "Error",
-        "Failed to fetch durations. Please try again later."
-      );
-    }
-  };
-
-  const fetchAvailability = async (durationId) => {
+  const fetchFields = async () => {
+    setLoading(true);
     try {
       const response = await axiosInstance.get(
-        `/reservation/availability/${durationId}`
+        `/field/by-club/?clubId=${profileData.id}`
       );
-      setAvailability(response.data);
-      setShowCalendar(true);
+      setFields(response.data);
     } catch (error) {
-      console.error("Error fetching availability:", error);
-      Alert.alert(
-        "Error",
-        "Failed to fetch availability. Please try again later."
-      );
+      console.error("Error fetching fields:", error);
+      Alert.alert("Error", "Failed to fetch fields. Please try again later.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDurationSelect = (duration) => {
-    setSelectedDuration(duration);
-    fetchAvailability(duration.id);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchFields();
+    }, [profileData])
+  );
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchFields().finally(() => setRefreshing(false));
   };
 
-  const handleDateSelect = (date) => {
-    setSelectedDate(date.dateString);
+  const handleFieldPress = (item) => {
+    navigation.navigate("Reservation", { fieldId: item.id });
   };
 
-  const handleReservationPlayer = async () => {
-    if (!selectedDuration || !selectedDate) {
-      Alert.alert("Incomplete Selection", "Please select duration and date.");
-      return;
-    }
-    try {
-      const response = await axiosInstance.post("/reservation/player", {
-        durationId: selectedDuration.id.toString(),
-        date: selectedDate,
-      });
-      console.log("Player Reservation Success:", response.data);
-      // Handle success scenario, navigate or show confirmation
-    } catch (error) {
-      console.error("Error making player reservation:", error);
-      Alert.alert("Error", "Failed to make reservation. Please try again.");
-    }
+  const applyFilters = () => {
+    return fields.filter((field) => {
+      const matchesSport = selectedSport
+        ? field.sport_id === parseInt(selectedSport)
+        : true;
+      const matchesSize = sizeFilter
+        ? field.size === parseInt(sizeFilter)
+        : true;
+      return matchesSport && matchesSize;
+    });
   };
 
-  const handleReservationTeam = async () => {
-    if (!selectedDuration || !selectedDate) {
-      Alert.alert("Incomplete Selection", "Please select duration and date.");
-      return;
-    }
-    try {
-      const response = await axiosInstance.post("/reservation/team", {
-        durationId: selectedDuration.id.toString(),
-        date: selectedDate,
-      });
-      console.log("Team Reservation Success:", response.data);
-      // Handle success scenario, navigate or show confirmation
-    } catch (error) {
-      console.error("Error making team reservation:", error);
-      Alert.alert("Error", "Failed to make reservation. Please try again.");
-    }
-  };
+  const renderField = ({ item }) => (
+    <TouchableOpacity
+      style={styles.fieldCard}
+      onPress={() => handleFieldPress(item)}
+    >
+      <Image
+        source={{
+          uri: item.pic || "https://via.placeholder.com/80x80?text=No+Image",
+        }}
+        style={styles.fieldImage}
+      />
+      <View style={styles.fieldCardContent}>
+        <Text style={styles.fieldDescription}>{item.description}</Text>
+        <View style={styles.fieldInfoRow}>
+          <Icon name="tag" size={14} color="#05a759" />
+          <Text style={styles.fieldInfo}>Type: {item.type}</Text>
+        </View>
+        <View style={styles.fieldInfoRow}>
+          <Icon name="futbol-o" size={14} color="#05a759" />
+          <Text style={styles.fieldInfo}>
+            Sport:{" "}
+            {sports.find((sport) => sport.id === item.sport_id)?.name || "N/A"}
+          </Text>
+        </View>
+        <View style={styles.fieldInfoRow}>
+          <Icon name="arrows-alt" size={14} color="#05a759" />
+          <Text style={styles.fieldInfo}>Size: {item.size}</Text>
+        </View>
+        <View style={styles.fieldInfoRow}>
+          <Icon name="clock-o" size={14} color="#05a759" />
+          <Text style={styles.fieldInfo}>Duration: {item.duration} hours</Text>
+        </View>
+        <View style={styles.fieldInfoRow}>
+          <Icon name="dollar" size={14} color="#05a759" />
+          <Text style={styles.fieldInfo}>Price: ${item.price}</Text>
+        </View>
+        <Text
+          style={
+            item.isUnderMaintenance
+              ? styles.maintenanceText
+              : styles.availableText
+          }
+        >
+          {item.isUnderMaintenance ? "Under Maintenance" : "Available"}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
 
+  const handleSelectSport = (itemValue) => {
+    setSelectedSport(itemValue);
+    setShowSportPicker(false);
+  };
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Make a Reservation</Text>
+        <Text style={styles.headerTitle}>Fields</Text>
       </View>
-      <View style={styles.content}>
-        <Text style={styles.sectionTitle}>Select Duration:</Text>
-        <FlatList
-          data={durations}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.durationItem,
-                selectedDuration?.id === item.id && styles.selectedDuration,
-              ]}
-              onPress={() => handleDurationSelect(item)}
-            >
-              <Text style={styles.durationText}>{item.time} hours</Text>
-            </TouchableOpacity>
-          )}
-          keyExtractor={(item) => item.id.toString()}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.durationList}
+      <View style={styles.filtersContainer}>
+        <TouchableOpacity
+          onPress={() => setShowSportPicker(true)}
+          style={styles.pickerButton}
+        >
+          <Text style={styles.pickerButtonText}>
+            {selectedSport
+              ? sports.find((sport) => sport.id === parseInt(selectedSport))
+                  .name
+              : "Select Sport"}
+          </Text>
+        </TouchableOpacity>
+        <TextInput
+          style={styles.sizeInput}
+          placeholder="Size"
+          placeholderTextColor="#888"
+          value={sizeFilter}
+          onChangeText={setSizeFilter}
+          keyboardType="numeric"
         />
-        {showCalendar && (
-          <>
-            <Text style={styles.sectionTitle}>Select Date:</Text>
-            <Calendar
-              current={new Date()}
-              onDayPress={(day) => handleDateSelect(day)}
-              markedDates={{
-                [selectedDate]: { selected: true, selectedColor: "#05a759" },
-              }}
-              minDate={new Date()}
-              style={styles.calendar}
-            />
-          </>
-        )}
-        <View style={styles.buttonContainer}>
-          <Button
-            title="Reserve as Player"
-            onPress={handleReservationPlayer}
-            disabled={!selectedDuration || !selectedDate}
-          />
-          <Button
-            title="Reserve as Team"
-            onPress={handleReservationTeam}
-            disabled={!selectedDuration || !selectedDate}
-          />
-        </View>
       </View>
+      <Modal
+        visible={showSportPicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowSportPicker(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Sport</Text>
+            <Picker
+              selectedValue={selectedSport}
+              onValueChange={handleSelectSport}
+            >
+              <Picker.Item label="Select Sport" value="" />
+              {sports.map((sport) => (
+                <Picker.Item
+                  label={sport.name}
+                  value={sport.id.toString()}
+                  key={sport.id}
+                />
+              ))}
+            </Picker>
+            <Button
+              title="Close"
+              onPress={() => setShowSportPicker(false)}
+              style={styles.modalButton}
+            />
+          </View>
+        </View>
+      </Modal>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#05a759" />
+        </View>
+      ) : (
+        <FlatList
+          data={applyFilters()}
+          renderItem={renderField}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.flatListContainer}
+          ListEmptyComponent={
+            <View style={styles.emptyList}>
+              <Text style={styles.emptyText}>No fields available</Text>
+            </View>
+          }
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -164,8 +230,7 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: "#05a759",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
+    padding: 15,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -174,44 +239,127 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#fff",
   },
-  content: {
-    flex: 1,
-    padding: 20,
+  filtersContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 10,
   },
-  sectionTitle: {
+  pickerButton: {
+    flex: 1,
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    borderColor: "#05a759",
+    borderWidth: 1,
+    borderRadius: 10,
+    backgroundColor: "#1e1e1e",
+    marginRight: 10,
+  },
+  pickerButtonText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+  sizeInput: {
+    height: 50,
+    borderColor: "#05a759",
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 10,
+    color: "#fff",
+    backgroundColor: "#1e1e1e",
+    flex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 20,
+    width: "80%",
+  },
+  modalTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#fff",
     marginBottom: 10,
   },
-  durationList: {
-    marginBottom: 20,
-  },
-  durationItem: {
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#05a759",
-    marginRight: 10,
-  },
-  selectedDuration: {
+  modalButton: {
+    marginTop: 10,
     backgroundColor: "#05a759",
+    paddingVertical: 10,
+    borderRadius: 5,
   },
-  durationText: {
+  modalButtonText: {
     color: "#fff",
-    fontSize: 16,
+    textAlign: "center",
+    fontWeight: "bold",
   },
-  calendar: {
-    marginTop: 20,
-    marginBottom: 20,
+  flatListContainer: {
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  fieldCard: {
+    flexDirection: "row",
     backgroundColor: "#1e1e1e",
     borderRadius: 10,
+    marginVertical: 8,
+    padding: 10,
+    elevation: 2,
   },
-  buttonContainer: {
+  fieldImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    marginRight: 10,
+  },
+  fieldCardContent: {
+    flex: 1,
+  },
+  fieldDescription: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 8,
+  },
+  fieldInfoRow: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 20,
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  fieldInfo: {
+    fontSize: 14,
+    color: "#d3d3d3",
+    marginLeft: 5,
+  },
+  maintenanceText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 5,
+  },
+  availableText: {
+    color: "green",
+    fontSize: 12,
+    marginTop: 5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyList: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 50,
+  },
+  emptyText: {
+    fontSize: 18,
+    color: "#fff",
   },
 });
 
-export default ReservationScreen;
+export default FieldsScreen;
