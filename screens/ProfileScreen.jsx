@@ -157,7 +157,6 @@ const ProfileScreen = ({ route }) => {
     const fetchFollowedPlayersCount = async () => {
       try {
         const response = await axiosInstance.get(`/follow/followed-count`);
-
         setFollowedPlayersCount(response.data.followedPlayersCount);
       } catch (error) {
         console.error("Error fetching followed players count:", error);
@@ -167,8 +166,8 @@ const ProfileScreen = ({ route }) => {
     const fetchAverageRating = async () => {
       try {
         const response = await axiosInstance.get(`/club_rating/${id}`);
-        setAverageRating(response.data.average); // Assuming your API response returns averageRating field
-        console.log("Average rating:", response.data.averageRating);
+        setAverageRating(response.data.average); // Assuming your API response returns average field
+        console.log("Average rating:", response.data.average);
       } catch (error) {
         console.error("Error fetching average club rating:", error);
       }
@@ -206,8 +205,12 @@ const ProfileScreen = ({ route }) => {
     fetchFollowersCount();
     fetchFollowedPlayersCount();
     fetchUtilities();
-    fetchLastRating();
-    fetchAverageRating();
+
+    if (profileType === "club") {
+      fetchLastRating();
+      fetchAverageRating();
+    }
+    checkIfFollowed();
   }, [profileType, id]);
 
   const getSportById = async (sport_id) => {
@@ -227,22 +230,17 @@ const ProfileScreen = ({ route }) => {
     }
   }, [profileData]); // Trigger scroll to top whenever profileData changes
 
-  // Rest of your component code...
-  // Define the formatOpeningHours function outside the component
   const formatOpeningHours = (open = "00:00:00", close = "00:00:00") => {
     // Format opening and closing time using Moment.js
     const openingTime = moment(open, "HH:mm:ss").format("h:mm A");
     const closingTime = moment(close, "HH:mm:ss").format("h:mm A");
     return `${openingTime} - ${closingTime}`;
   };
+
   const navigateToProfilePhotos = (photoUrl) => {
-    // Navigate to the PhotoFullScreen screen with the provided photoUrl
-    navigation.navigate("PhotoFullScreen", {
-      photoUrl: photoUrl,
-    });
+    navigation.navigate("PhotoFullScreen", { photoUrl });
   };
 
-  // ProfileScreen.js
   const navigateToFollowersFollowing = (profileType, profileId) => {
     navigation.navigate("FollowersFollowing", {
       profileType,
@@ -255,68 +253,133 @@ const ProfileScreen = ({ route }) => {
   };
 
   const navigateToRating = () => {
-    // Navigate to the FollowingScreen with profile data
     navigation.navigate("Rating", { profileData });
   };
+
   const navigateToTrophies = () => {
-    // Navigate to the TrophiesScreen with profile data
     navigation.navigate("Trophies", { trophies: profileData.trophies });
   };
+
   const navigateToProfile = (profileType, id) => {
     navigation.navigate("Profile", { profileType, profileId: id });
   };
+
   const navigateToFields = () => {
     // Navigate to the club fields screen
   };
 
+  const checkIfFollowed = async () => {
+    let url;
+    switch (profileType) {
+      case "player":
+        url = `/follow/isFollowed/${id}`;
+        break;
+      case "team":
+        url = `/team-follow/isFollowed/${id}`;
+        break;
+      case "club":
+        url = `/club-follow/isFollowed/${id}`;
+        break;
+      default:
+        return;
+    }
+
+    try {
+      const response = await axiosInstance.get(url);
+      setIsFollowing(response.data.isFollowing);
+      console.log("Follow status:", response.data.isFollowing);
+    } catch (error) {
+      console.error("Error checking follow status:", error);
+      // Handle error cases, log additional information if needed
+    }
+  };
+
   const handleFollow = async () => {
     try {
-      const response = await axiosInstance.post(`/team-follow/follow`);
+      let url;
+      let body = {};
+
+      switch (profileType) {
+        case "player":
+          url = `/follow/add`;
+          body = { playerId: profileData.id };
+          break;
+        case "team":
+          url = `/team-follow/follow`;
+          body = { playerId: currentPlayer.id, teamId: id };
+          break;
+        case "club":
+          url = `/club-follow/follow`;
+          body = { playerId: currentPlayer.id, clubId: id };
+          break;
+        default:
+          console.error("Invalid profile type");
+          return;
+      }
+
+      const response = await axiosInstance.post(url, body);
       if (![200, 201].includes(response.status)) {
         throw new Error(response.data.message || "An unknown error occurred.");
       }
       // Follow successful, update state
       setIsFollowing(true);
-      // Display success message or perform any other necessary actions
     } catch (error) {
       // Handle errors
-      console.error("Error following team:", error);
-      // Display error message
+      console.error("Error following:", error);
       alert(
         error.response?.data.message ||
-          "An error occurred while following the team. Please try again later."
+          "An error occurred while following. Please try again later."
       );
     }
   };
 
-  const handleUnfollow = () => {
-    // Display confirmation modal to confirm unfollowing
+  const handleUnfollow = async () => {
     setShowUnfollowConfirmation(true);
   };
 
   const confirmUnfollow = async () => {
     try {
-      const response = await axiosInstance.del(`/team-follow/unfollow`);
+      let url;
+      let body = {};
+
+      console.log("Following team with ID:", id);
+      console.log("Current player ID:", currentPlayer.id);
+
+      switch (profileType) {
+        case "player":
+          url = `/follow/unfollow/${id}`;
+          break;
+        case "team":
+          url = `/team-follow/unfollow`;
+          body = { playerId: currentPlayer.id, teamId: id }; // Ensure playerId and teamId are correctly defined
+          break;
+        case "club":
+          url = `/club-follow/unfollow`;
+          body = { playerId: currentPlayer.id, clubId: id }; // Ensure playerId and clubId are correctly defined
+          break;
+        default:
+          return;
+      }
+
+      const response = await axiosInstance.delete(url, body); // Use 'data' option for Axios DELETE request
       if (![200, 201].includes(response.status)) {
         throw new Error(response.data.message || "An unknown error occurred.");
       }
-      // Unfollow successful, update state
+
       setIsFollowing(false);
-      // Close modal or perform any other necessary actions
       setShowUnfollowConfirmation(false);
     } catch (error) {
-      // Handle errors
-      console.error("Error unfollowing team:", error);
-      // Display error message
+      console.error("Error unfollowing:", error);
       alert(
         error.response?.data.message ||
-          "An error occurred while unfollowing the team. Please try again later."
+          "An error occurred while unfollowing. Please try again later."
       );
     }
   };
+
   const handleInviteToTeam = async () => {
     try {
-      const playerId = profileData.id; // Assuming playerId is available in profileData
+      const playerId = profileData.id;
       const response = await axiosInstance.post(
         `/request/team/invite/${playerId}`
       );
@@ -325,21 +388,16 @@ const ProfileScreen = ({ route }) => {
         throw new Error(response.data.message || "An unknown error occurred.");
       }
 
-      // Invitation successful, display success message
-      const successMessage = response.data.message;
-      alert(successMessage);
+      alert(response.data.message);
     } catch (error) {
-      // Extract error message from the response if available
-      const errorMessage = error.response
-        ? error.response.data.message
-        : error.message ||
-          "An error occurred while sending the invitation. Please try again later.";
-
-      // Log the error message without triggering Expo or console error reporting
-      console.log("Error inviting to team:", errorMessage);
-
-      // Display error message in a pop-out
-      alert(errorMessage);
+      console.log(
+        "Error inviting to team:",
+        error.response?.data.message || error.message
+      );
+      alert(
+        error.response?.data.message ||
+          "An error occurred while sending the invitation. Please try again later."
+      );
     }
   };
   const handleRatingCompleted = async (newRating) => {
@@ -458,6 +516,7 @@ const ProfileScreen = ({ route }) => {
               <TouchableOpacity
                 style={[
                   styles.button,
+
                   isFollowing ? styles.unfollowButton : null,
                 ]}
                 onPress={isFollowing ? handleUnfollow : handleFollow}
@@ -640,9 +699,11 @@ const ProfileScreen = ({ route }) => {
               profileData &&
               currentPlayer.team_id !== profileData.team.id && (
                 <>
+                  {/* Follow/Unfollow button */}
                   <TouchableOpacity
                     style={[
-                      styles.buttonteamfollow,
+                      styles.button,
+
                       isFollowing ? styles.unfollowButton : null,
                     ]}
                     onPress={isFollowing ? handleUnfollow : handleFollow}
