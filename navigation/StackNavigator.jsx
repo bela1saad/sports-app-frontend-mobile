@@ -3,7 +3,7 @@ import { AuthProvider } from "../auth/AuthContext";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import HomeScreen from "../screens/HomeScreen";
-import FieldsScreen from "../screens/FieldsScreen";
+import ClubsScreen from "../screens/ClubsScreen";
 import TeamScreen from "../screens/TeamScreen";
 import TournamentsScreen from "../screens/TournamentsScreen";
 import Welcome from "../screens/login/Welcome";
@@ -35,6 +35,7 @@ import LineupEditScreen from "../screens/LineupEditScreen";
 import EnterEmailScreen from "../screens/login/EnterEmailScreen";
 import EnterCodeScreen from "../screens/login/EnterCodeScreen";
 import ResetPasswordScreen from "../screens/login/ResetPasswordScreen";
+import ClubProfileScreen from "../screens/ClubProfileScreen";
 
 const Stack = createStackNavigator();
 
@@ -80,6 +81,10 @@ const StackNavigator = () => {
           <Stack.Screen name="EditTeamScreen" component={EditTeamScreen} />
           <Stack.Screen name="InvitePlayers" component={InvitePlayersScreen} />
           <Stack.Screen name="LineupEditScreen" component={LineupEditScreen} />
+          <Stack.Screen
+            name="ClubProfileScreen"
+            component={ClubProfileScreen}
+          />
 
           <Stack.Screen
             name="BookingsHistory"

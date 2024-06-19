@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import HomeScreen from "../screens/HomeScreen";
-import FieldsScreen from "../screens/FieldsScreen";
+import ClubsScreen from "../screens/ClubsScreen";
 import TeamScreen from "../screens/TeamScreen";
 import TournamentsScreen from "../screens/TournamentsScreen";
 
@@ -18,7 +18,7 @@ const BottomTabNavigator = () => {
 
           if (route.name === "Home") {
             iconName = "home";
-          } else if (route.name === "Fields") {
+          } else if (route.name === "Clubs") {
             iconName = "soccer-field";
           } else if (route.name === "Team") {
             iconName = "account-group-outline";
@@ -46,7 +46,7 @@ const BottomTabNavigator = () => {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Fields" component={FieldsScreen} />
+      <Tab.Screen name="Clubs" component={ClubsScreen} />
       <Tab.Screen name="Team" component={TeamScreen} />
       <Tab.Screen name="Tournaments" component={TournamentsScreen} />
     </Tab.Navigator>
