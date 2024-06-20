@@ -133,7 +133,9 @@ const FieldsScreen = ({ route }) => {
               : styles.availableText
           }
         >
-          {item.isUnderMaintenance ? "Under Maintenance" : "Available"}
+          {item.isUnderMaintenance
+            ? `Under Maintenance\n${item.start_date} - ${item.end_date}`
+            : "Available"}
         </Text>
       </View>
     </TouchableOpacity>

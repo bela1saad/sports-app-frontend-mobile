@@ -22,8 +22,9 @@
     "@react-navigation/native": "^6.1.12",
     "@react-navigation/native-stack": "^6.9.20",
     "@react-navigation/stack": "^6.3.29",
+    "@stripe/stripe-react-native": "^0.38.0",
     "@supabase/supabase-js": "^2.43.1",
-    "axios": "^1.6.8",
+    "axios": "^1.7.2",
     "base64-arraybuffer": "^1.0.2",
     "country-flag-icons": "^1.5.12",
     "date-fns": "^3.3.1",
@@ -71,7 +72,8 @@
     "react-native-swiper": "^1.6.0",
     "react-native-url-polyfill": "^2.0.0",
     "react-native-vector-icons": "^10.0.3",
-    "react-native-web": "~0.19.10"
+    "react-native-web": "~0.19.10",
+    "stripe": "^15.12.0"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",

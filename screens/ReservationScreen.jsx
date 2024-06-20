@@ -70,7 +70,7 @@ const ReservationScreen = ({ route }) => {
     availableDates.forEach((date) => {
       markedDatesObject[date.date] = {
         marked: true,
-        dotColor: "#05a759",
+        dotColor: date.isAvailable ? "#05a759" : "red",
       };
     });
     setMarkedDates(markedDatesObject);
@@ -113,17 +113,22 @@ const ReservationScreen = ({ route }) => {
         date: selectedDate,
       });
 
-      // Check if the response has a message and error to display
-      if (response.data && response.data.message) {
+      console.log("LOG Response data:", response.data);
+
+      if (response.data) {
         const { message, error } = response.data;
         if (error) {
           Alert.alert("Reservation Error", `${message}\n${error}`);
+        } else if (message) {
+          Alert.alert("Reservation Success", message);
         } else {
-          Alert.alert(`${reservationType} Reservation Success`, message);
+          Alert.alert(
+            "Reservation Success",
+            "Your reservation was successful."
+          );
         }
       } else {
-        console.log(`${reservationType} Reservation Success:`, response.data);
-        // Handle success scenario, navigate or show confirmation
+        Alert.alert("Reservation Success", "Your reservation was successful.");
       }
     } catch (error) {
       if (error.response) {
