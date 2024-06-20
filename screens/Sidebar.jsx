@@ -27,6 +27,11 @@ const Sidebar = () => {
     navigation.navigate("EditProfile");
   };
 
+  // Function to navigate to the Reset Password screen
+  const goToResetPassword = () => {
+    navigation.navigate("ResetpPassword");
+  };
+
   // Function to handle navigation to different sections
   const navigateToSection = (section) => {
     navigation.navigate(section);
@@ -87,12 +92,32 @@ const Sidebar = () => {
             style={styles.profilePhoto}
           />
           <Text style={styles.userName}>{currentPlayer.name}</Text>
-          <TouchableOpacity
-            style={styles.editProfileButton}
-            onPress={goToEditProfile}
-          >
-            <Text style={styles.editProfileButtonText}>Edit Profile</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.editProfileButton}
+              onPress={goToEditProfile}
+            >
+              <Icon
+                name="pencil"
+                size={width * 0.04}
+                color="#fff"
+                style={styles.buttonIcon}
+              />
+              <Text style={styles.editProfileButtonText}>Edit Profile</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.resetPasswordButton}
+              onPress={goToResetPassword}
+            >
+              <Icon
+                name="lock-reset"
+                size={width * 0.04}
+                color="#fff"
+                style={styles.buttonIcon}
+              />
+              <Text style={styles.resetPasswordButtonText}>Reset Password</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Navigation Links */}
@@ -239,16 +264,42 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
   },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
   editProfileButton: {
     backgroundColor: "#05a759",
     paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: 15,
     borderRadius: 5,
-    marginBottom: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 10,
   },
   editProfileButtonText: {
     color: "#fff",
     fontSize: Dimensions.get("window").width * 0.04,
+    marginLeft: 5,
+  },
+  resetPasswordButton: {
+    backgroundColor: "#05a759",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  resetPasswordButtonText: {
+    color: "#fff",
+    fontSize: Dimensions.get("window").width * 0.04,
+    marginLeft: 5,
+  },
+  buttonIcon: {
+    marginRight: 5,
   },
   navigationSection: {
     flex: 1,
