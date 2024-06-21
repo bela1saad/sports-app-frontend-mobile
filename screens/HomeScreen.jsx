@@ -17,9 +17,9 @@ import Post from "../components/Post";
 import Ads from "../components/Ads";
 import NotificationsIcon from "../components/NotificationsIcon";
 import SearchBar from "../components/SearchBar";
-import { dummyPosts } from "../Data/dummyData";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../auth/AuthContext";
+import axiosInstance from "../utils/axios";
 
 const { width, height } = Dimensions.get("window");
 
@@ -27,22 +27,39 @@ const HomeScreen = ({ navigation }) => {
   const notificationCount = 100;
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [selectedSport, setSelectedSport] = useState("All");
+  const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const { currentPlayer } = useAuth(); // Get currentPlayer from AuthContext
 
   useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  useEffect(() => {
     filterPosts();
-  }, [selectedFilter, selectedSport]);
+  }, [selectedFilter, selectedSport, posts]);
+
+  const fetchPosts = async () => {
+    try {
+      const response = await axiosInstance.get(`/posts/recommended`);
+      console.log(response.data);
+      console.log(JSON.stringify(response.data, null, 2)); // Better logging
+      setPosts(response.data);
+      filterPosts(response.data); // Initial filtering
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    }
+  };
 
   const onRefresh = () => {
     setRefreshing(true);
-    filterPosts();
+    fetchPosts();
     setRefreshing(false);
   };
 
-  const filterPosts = () => {
-    let filtered = dummyPosts;
+  const filterPosts = (postsToFilter = posts) => {
+    let filtered = postsToFilter;
 
     // Filter based on selected filter
     if (selectedFilter !== "All") {
@@ -55,10 +72,28 @@ const HomeScreen = ({ navigation }) => {
 
     // Filter based on selected sport
     if (selectedSport !== "All") {
-      filtered = filtered.filter((post) => post.sport === selectedSport);
+      filtered = filtered.filter((post) => {
+        // Ensure post.reservation and nested properties are not null
+        return (
+          post.reservation &&
+          post.reservation.duration &&
+          post.reservation.duration.field &&
+          post.reservation.duration.field.sport_id === selectedSport
+        );
+      });
     }
 
     setFilteredPosts(filtered);
+  };
+
+  const getSportId = (sportName) => {
+    const sportsMapping = {
+      Football: 11,
+      Basketball: 12,
+      Tennis: 13,
+      // Add other sports and their respective IDs as needed
+    };
+    return sportsMapping[sportName] || null;
   };
 
   useLayoutEffect(() => {

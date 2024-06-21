@@ -25,7 +25,8 @@ const Post = ({ post }) => {
   };
 
   let formattedDate = "";
-  if (moment(post.date, "D/M/YYYY", true).isValid()) {
+
+  if (moment(post.reservation.date, "D/M/YYYY", true).isValid()) {
     const dateMoment = moment(post.date, "D/M/YYYY");
     formattedDate = `${dateMoment.format("D/M/YYYY")} ${dateMoment.format(
       "dddd"
@@ -41,9 +42,13 @@ const Post = ({ post }) => {
       <View style={styles.container}>
         <View style={styles.header}>
           <PostHeader
-            profilePhoto={post.profilePhoto}
-            name={post.name}
-            postedAt={post.postedAt} // Pass the postedAt prop
+            profilePhoto={
+              post.player.pic
+                ? { uri: post.player.pic }
+                : require("../assets/profile_photo.png")
+            }
+            name={post.player.name}
+            postedAt={new Date(post.createdAt)}
           />
           <Icon
             name={getIconForType(post.type)}
@@ -59,8 +64,8 @@ const Post = ({ post }) => {
         </View>
 
         <ReservationDetails
-          time={formattedTime}
-          date={formattedDate}
+          time={post.reservation.duration.time}
+          date={post.reservation.date}
           club={post.club}
           level={post.level}
           sport={post.sport}
@@ -79,8 +84,8 @@ const Post = ({ post }) => {
               <Text style={styles.modalText}>Booking Details</Text>
               {/* Reservation Details */}
               <ReservationDetails
-                time={formattedTime}
-                date={formattedDate}
+                time={post.reservation.duration.time}
+                date={post.reservation.date}
                 club={post.club}
                 level={post.level}
                 sport={post.sport}
@@ -89,11 +94,11 @@ const Post = ({ post }) => {
               {/* You can display temperature and weather icons here */}
               <View style={styles.weatherContainer}>
                 <WeatherForecast
-                  lat={post.lat} // Pass latitude from clubLocation
-                  lon={post.lon} // Pass longitude from clubLocation
+                  lat={40.453053} // Pass latitude from clubLocation
+                  lon={-3.688344} // Pass longitude from clubLocation
                   apiKey={apiKey}
-                  bookingDate={post.date} // Pass booking date
-                  bookingTime={post.time} // Pass booking time
+                  bookingDate={post.reservation.date} // Pass booking date
+                  bookingTime={post.reservation.duration.time} // Pass booking time
                 />
                 {/* Add weather icons here */}
               </View>
@@ -124,9 +129,9 @@ const Post = ({ post }) => {
 };
 const getIconForType = (type) => {
   switch (type) {
-    case "player":
+    case "needPlayer":
       return "account";
-    case "team":
+    case "needEnemyTeam":
       return "account-group";
     // Add more types and their respective icons as needed
     default:

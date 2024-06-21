@@ -78,6 +78,7 @@ const StackNavigator = () => {
           <Stack.Screen name="Search" component={SearchScreen} />
           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
           <Stack.Screen name="Friends" component={FriendsScreen} />
+          <Stack.Screen name="Bookings" component={BookingsHistoryScreen} />
           <Stack.Screen name="Wallet" component={WalletScreen} />
           <Stack.Screen
             name="ResetpPassword"

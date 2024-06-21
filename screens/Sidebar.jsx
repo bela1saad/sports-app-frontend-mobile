@@ -29,7 +29,7 @@ const Sidebar = () => {
 
   // Function to navigate to the Reset Password screen
   const goToResetPassword = () => {
-    navigation.navigate("ResetpPassword");
+    navigation.navigate("ResetPassword");
   };
 
   // Function to handle navigation to different sections
@@ -86,39 +86,43 @@ const Sidebar = () => {
       {/* Scrollable content */}
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         {/* User Account Section */}
-        <View style={styles.userAccountSection}>
-          <Image
-            source={{ uri: currentPlayer.pic }}
-            style={styles.profilePhoto}
-          />
-          <Text style={styles.userName}>{currentPlayer.name}</Text>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.editProfileButton}
-              onPress={goToEditProfile}
-            >
-              <Icon
-                name="pencil"
-                size={width * 0.04}
-                color="#fff"
-                style={styles.buttonIcon}
-              />
-              <Text style={styles.editProfileButtonText}>Edit Profile</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.resetPasswordButton}
-              onPress={goToResetPassword}
-            >
-              <Icon
-                name="lock-reset"
-                size={width * 0.04}
-                color="#fff"
-                style={styles.buttonIcon}
-              />
-              <Text style={styles.resetPasswordButtonText}>Reset Password</Text>
-            </TouchableOpacity>
+        {currentPlayer && (
+          <View style={styles.userAccountSection}>
+            <Image
+              source={{ uri: currentPlayer.pic }}
+              style={styles.profilePhoto}
+            />
+            <Text style={styles.userName}>{currentPlayer.name}</Text>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.editProfileButton}
+                onPress={goToEditProfile}
+              >
+                <Icon
+                  name="pencil"
+                  size={width * 0.04}
+                  color="#fff"
+                  style={styles.buttonIcon}
+                />
+                <Text style={styles.editProfileButtonText}>Edit Profile</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.resetPasswordButton}
+                onPress={goToResetPassword}
+              >
+                <Icon
+                  name="lock-reset"
+                  size={width * 0.04}
+                  color="#fff"
+                  style={styles.buttonIcon}
+                />
+                <Text style={styles.resetPasswordButtonText}>
+                  Reset Password
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Navigation Links */}
         <View style={styles.navigationSection}>
@@ -146,18 +150,16 @@ const Sidebar = () => {
               Wallet
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => navigateToSection("Bookings History")}
-          >
+          <TouchableOpacity onPress={() => navigateToSection("Bookings")}>
             <Text style={styles.navigationLink}>
               <Icon
-                name="history"
+                name="calendar-check"
                 size={width * 0.05}
                 color="#05a759"
                 style={styles.icon}
               />
               {"  "}
-              Bookings History
+              Bookings
             </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigateToSection("Transaction")}>
