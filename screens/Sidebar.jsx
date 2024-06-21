@@ -10,39 +10,37 @@ import {
   Modal,
   ScrollView,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import {
+  useNavigation,
+  useFocusEffect,
+  CommonActions,
+} from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import COLORS from "../constants/colors";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "../auth/AuthContext";
-import { CommonActions } from "@react-navigation/native";
 
 const Sidebar = () => {
   const navigation = useNavigation();
-  const { logout, currentPlayer } = useAuth(); // Destructure currentPlayer and logout from useAuth
+  const { logout, currentPlayer } = useAuth();
   const [showConfirmation, setShowConfirmation] = useState(false);
 
-  // Function to navigate to the Edit Profile screen
   const goToEditProfile = () => {
     navigation.navigate("EditProfile");
   };
 
-  // Function to navigate to the Reset Password screen
   const goToResetPassword = () => {
-    navigation.navigate("ResetPassword");
+    navigation.navigate("ResetpPassword");
   };
 
-  // Function to handle navigation to different sections
   const navigateToSection = (section) => {
     navigation.navigate(section);
   };
 
-  // Function to handle logout process
   const handleLogout = () => {
     setShowConfirmation(true);
   };
 
-  // Function to confirm logout
   const confirmLogout = async () => {
     await logout();
     navigation.dispatch(
@@ -54,38 +52,32 @@ const Sidebar = () => {
     setShowConfirmation(false);
   };
 
-  // Function to cancel logout
   const cancelLogout = () => {
     setShowConfirmation(false);
   };
 
-  // Effect hook to hide header when component mounts
-  useEffect(() => {
-    navigation.setOptions({
-      headerShown: false,
-    });
-  }, [navigation]);
+  useFocusEffect(
+    React.useCallback(() => {
+      navigation.setOptions({
+        headerShown: false,
+      });
+    }, [navigation])
+  );
 
-  // Dimensions of the current window
   const { width, height } = Dimensions.get("window");
-
-  // Responsive styles based on screen height
-  const SPACING = height * 0.02; // Adjust as needed
+  const SPACING = height * 0.02;
 
   return (
     <LinearGradient colors={["#333333", "#1a1a1a"]} style={styles.container}>
-      {/* Return Arrow */}
       <TouchableOpacity
         style={styles.returnArrow}
         onPress={() => navigation.goBack()}
-        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }} // Increase touch area
+        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
       >
         <Icon name="arrow-left" size={width * 0.06} color="#05a759" />
       </TouchableOpacity>
 
-      {/* Scrollable content */}
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        {/* User Account Section */}
         {currentPlayer && (
           <View style={styles.userAccountSection}>
             <Image
@@ -93,38 +85,36 @@ const Sidebar = () => {
               style={styles.profilePhoto}
             />
             <Text style={styles.userName}>{currentPlayer.name}</Text>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.editProfileButton}
-                onPress={goToEditProfile}
-              >
-                <Icon
-                  name="pencil"
-                  size={width * 0.04}
-                  color="#fff"
-                  style={styles.buttonIcon}
-                />
-                <Text style={styles.editProfileButtonText}>Edit Profile</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.resetPasswordButton}
-                onPress={goToResetPassword}
-              >
-                <Icon
-                  name="lock-reset"
-                  size={width * 0.04}
-                  color="#fff"
-                  style={styles.buttonIcon}
-                />
-                <Text style={styles.resetPasswordButtonText}>
-                  Reset Password
-                </Text>
-              </TouchableOpacity>
-            </View>
           </View>
         )}
 
-        {/* Navigation Links */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.editProfileButton}
+            onPress={goToEditProfile}
+          >
+            <Icon
+              name="pencil"
+              size={width * 0.04}
+              color="#fff"
+              style={styles.buttonIcon}
+            />
+            <Text style={styles.editProfileButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.resetPasswordButton}
+            onPress={goToResetPassword}
+          >
+            <Icon
+              name="lock-reset"
+              size={width * 0.04}
+              color="#fff"
+              style={styles.buttonIcon}
+            />
+            <Text style={styles.resetPasswordButtonText}>Reset Password</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.navigationSection}>
           <TouchableOpacity onPress={() => navigateToSection("Friends")}>
             <Text style={styles.navigationLink}>
@@ -201,7 +191,6 @@ const Sidebar = () => {
         </View>
       </ScrollView>
 
-      {/* Logout Confirmation Modal */}
       <Modal
         visible={showConfirmation}
         transparent
@@ -226,7 +215,6 @@ const Sidebar = () => {
         </View>
       </Modal>
 
-      {/* Copyright Section */}
       <View style={styles.footer}>
         <Text style={styles.copyRightText}>
           &copy; 2024 Your Company. All rights reserved.
@@ -256,7 +244,7 @@ const styles = StyleSheet.create({
   },
   profilePhoto: {
     width: Dimensions.get("window").width * 0.99,
-    height: Dimensions.get("window").width * 0.33,
+    height: Dimensions.get("window").width * 0.75,
     borderRadius: Dimensions.get("window").width * 0.05,
     marginBottom: 20,
   },

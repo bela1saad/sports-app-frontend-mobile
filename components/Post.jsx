@@ -6,27 +6,60 @@ import {
   TouchableOpacity,
   Modal,
   Dimensions,
+  Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons"; // Import MaterialCommunityIcons package
 import moment from "moment";
 import { PostHeader, ReservationDetails, PostText } from "./PostComponents";
 import WeatherForecast from "./WeatherForecast";
+import axiosInstance from "../utils/axios";
 
 const { width } = Dimensions.get("window");
 
 const Post = ({ post }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const apiKey = "71f13b1bfc72af220956260686155e4d";
-  const handleSendRequest = () => {
-    // Logic to send request
-    // For demonstration, we're just setting the state
-    setRequestSent(true);
+
+  const handleSendRequest = async () => {
+    try {
+      const response = await axiosInstance.post(`/request/post/${post.id}`);
+      if (response.status === 200) {
+        setRequestSent(true);
+        showSuccessMessage();
+      }
+    } catch (error) {
+      console.error("Failed to send request:", error);
+      if (error.response && error.response.status === 400) {
+        const errorMessage =
+          error.response.data.message || "Unknown error occurred";
+        setErrorMessage(errorMessage);
+        showErrorAlert(errorMessage);
+      } else {
+        showErrorAlert("An unexpected error occurred");
+      }
+    }
+  };
+
+  const showSuccessMessage = () => {
+    Alert.alert(
+      "Success",
+      "Request Sent Successfully!",
+      [{ text: "OK", onPress: () => setModalVisible(false) }],
+      { cancelable: false }
+    );
+  };
+
+  const showErrorAlert = (message) => {
+    Alert.alert("Error", message, [{ text: "OK", onPress: () => {} }], {
+      cancelable: false,
+    });
   };
 
   let formattedDate = "";
-
-  if (moment(post.reservation.date, "D/M/YYYY", true).isValid()) {
+  if (moment(post.date, "D/M/YYYY", true).isValid()) {
     const dateMoment = moment(post.date, "D/M/YYYY");
     formattedDate = `${dateMoment.format("D/M/YYYY")} ${dateMoment.format(
       "dddd"
@@ -35,7 +68,7 @@ const Post = ({ post }) => {
     formattedDate = "Invalid Date";
   }
 
-  const formattedTime = moment(post.time, "hh:mm A").format("h:mm A"); // Format time with AM/PM indicator
+  const formattedTime = moment(post.time, "hh:mm A").format("h:mm A");
 
   return (
     <TouchableOpacity onPress={() => setModalVisible(true)}>
@@ -43,11 +76,11 @@ const Post = ({ post }) => {
         <View style={styles.header}>
           <PostHeader
             profilePhoto={
-              post.player.pic
-                ? { uri: post.player.pic }
+              post.profilePhoto
+                ? { uri: post.profilePhoto }
                 : require("../assets/profile_photo.png")
             }
-            name={post.player.name}
+            name={post.name}
             postedAt={new Date(post.createdAt)}
           />
           <Icon
@@ -55,7 +88,6 @@ const Post = ({ post }) => {
             size={width * 0.06}
             color="#05a759"
           />
-          {/* Use MaterialCommunityIcons for sports */}
           <Icon
             name={getSportIcon(post.sport)}
             size={width * 0.06}
@@ -64,15 +96,14 @@ const Post = ({ post }) => {
         </View>
 
         <ReservationDetails
-          time={post.reservation.duration.time}
-          date={post.reservation.date}
+          time={post.time}
+          date={post.date}
           club={post.club}
           level={post.level}
           sport={post.sport}
         />
         <PostText text={post.text} />
 
-        {/* Modal Pop-up for Additional Details */}
         <Modal
           animationType="slide"
           transparent={true}
@@ -82,27 +113,22 @@ const Post = ({ post }) => {
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalText}>Booking Details</Text>
-              {/* Reservation Details */}
               <ReservationDetails
-                time={post.reservation.duration.time}
-                date={post.reservation.date}
+                time={post.time}
+                date={post.date}
                 club={post.club}
                 level={post.level}
                 sport={post.sport}
               />
-              {/* Weather Information */}
-              {/* You can display temperature and weather icons here */}
               <View style={styles.weatherContainer}>
                 <WeatherForecast
-                  lat={40.453053} // Pass latitude from clubLocation
-                  lon={-3.688344} // Pass longitude from clubLocation
+                  lat={40.453053}
+                  lon={-3.688344}
                   apiKey={apiKey}
-                  bookingDate={post.reservation.date} // Pass booking date
-                  bookingTime={post.reservation.duration.time} // Pass booking time
+                  bookingDate={post.date}
+                  bookingTime={post.time}
                 />
-                {/* Add weather icons here */}
               </View>
-              {/* Buttons */}
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
                   style={[styles.modalButton, { backgroundColor: "#05a759" }]}
@@ -127,18 +153,18 @@ const Post = ({ post }) => {
     </TouchableOpacity>
   );
 };
+
 const getIconForType = (type) => {
   switch (type) {
     case "needPlayer":
       return "account";
     case "needEnemyTeam":
       return "account-group";
-    // Add more types and their respective icons as needed
     default:
-      return "help-circle"; // Default icon if type not found
+      return "help-circle";
   }
 };
-// Mapping of sports to MaterialCommunityIcons names
+
 const getSportIcon = (sport) => {
   switch (sport) {
     case "Football":
@@ -147,9 +173,8 @@ const getSportIcon = (sport) => {
       return "basketball";
     case "Tennis":
       return "tennis";
-    // Add more sports and their respective icons as needed
     default:
-      return "help-circle"; // Default icon if sport not found
+      return "help-circle";
   }
 };
 
@@ -162,7 +187,6 @@ const styles = StyleSheet.create({
     elevation: 2,
     top: width * 0.04,
   },
-
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -193,10 +217,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#ccc",
     paddingTop: width * 0.025,
-  },
-  weatherText: {
-    fontSize: width * 0.04,
-    color: "#333",
   },
   buttonContainer: {
     flexDirection: "row",

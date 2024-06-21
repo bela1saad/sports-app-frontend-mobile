@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect } from "react";
+import React, { useState, useLayoutEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -15,10 +15,10 @@ import {
   Platform,
 } from "react-native";
 import axiosInstance from "../../utils/axios";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useAuth } from "../../auth/AuthContext";
-import { RadioButton } from "react-native-paper"; // Import RadioButton from react-native-paper
+import { RadioButton } from "react-native-paper";
 
 const BookingsHistoryScreen = () => {
   const [bookings, setBookings] = useState([]);
@@ -27,69 +27,102 @@ const BookingsHistoryScreen = () => {
   const [completeBookings, setCompleteBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [refundModalVisible, setRefundModalVisible] = useState(false);
   const [selectedReservationId, setSelectedReservationId] = useState(null);
   const [postContent, setPostContent] = useState("");
   const [postType, setPostType] = useState("needPlayer");
-  const { currentPlayer } = useAuth(); // Destructure currentPlayer from useAuth
+  const { currentPlayer } = useAuth();
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
-  useEffect(() => {
-    axiosInstance
-      .get(`/reservation/by-user/${currentPlayer.id}`)
-      .then((response) => {
-        const fetchedBookings = response.data;
-        setBookings(fetchedBookings);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchBookings = () => {
+        setLoading(true);
+        axiosInstance
+          .get(`/reservation/by-user/${currentPlayer.id}`)
+          .then((response) => {
+            const fetchedBookings = response.data;
+            setBookings(fetchedBookings);
 
-        const incomplete = fetchedBookings.filter(
-          (booking) => booking.status === "incomplete"
-        );
-        const complete = fetchedBookings.filter(
-          (booking) => booking.status === "complete"
-        );
+            const incomplete = fetchedBookings.filter(
+              (booking) => booking.status === "incomplete"
+            );
+            const complete = fetchedBookings.filter(
+              (booking) => booking.status === "complete"
+            );
 
-        setIncompleteBookings(
-          incomplete.sort(
-            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-          )
-        );
-        setCompleteBookings(
-          complete.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        );
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching bookings:", error);
-        setLoading(false);
-      });
-  }, []);
+            setIncompleteBookings(
+              incomplete.sort(
+                (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+              )
+            );
+            setCompleteBookings(
+              complete.sort(
+                (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+              )
+            );
+            setLoading(false);
+          })
+          .catch((error) => {
+            console.error("Error fetching bookings:", error);
+            setLoading(false);
+          });
+      };
+
+      fetchBookings();
+    }, [currentPlayer.id])
+  );
 
   const handleCreatePost = () => {
-    console.log("Creating post with the following details:");
-    console.log("Player ID:", currentPlayer.id);
-    console.log("Reservation ID:", selectedReservationId);
-    console.log("Post Type:", postType);
-    console.log("Post Content:", postContent);
-
     axiosInstance
       .post(`/posts/add`, {
-        playerId: currentPlayer.id, // Use the currentPlayer's id
+        playerId: currentPlayer.id,
         reservationId: selectedReservationId,
         type: postType,
         content: postContent,
       })
       .then((response) => {
-        console.log("Post creation response:", response);
         Alert.alert("Post Created", "Your post has been created successfully!");
         setModalVisible(false);
         setPostContent("");
       })
       .catch((error) => {
         console.error("Error creating post:", error);
-        console.error("Error response:", error.response.data);
-        Alert.alert("Error", "There was an error creating your post.");
+        const errorMessage =
+          error.response?.data?.message ||
+          "There was an error creating your post.";
+        Alert.alert("Error", errorMessage);
+      });
+  };
+
+  console.log("selectedReservationId", selectedReservationId);
+
+  const handleRefund = () => {
+    axiosInstance
+      .post(`/reservation/refund/${selectedReservationId}`)
+      .then((response) => {
+        Alert.alert(
+          "Refund Processed",
+          `Amount refunded: ${response.data.amountRefunded}`
+        );
+        setRefundModalVisible(false);
+        setBookings(
+          bookings.map((booking) =>
+            booking.id === selectedReservationId
+              ? { ...booking, status: "refunded" }
+              : booking
+          )
+        );
+      })
+      .catch((error) => {
+        console.error("Error processing refund:", error);
+        const errorMessage =
+          error.response?.data?.message ||
+          "There was an error processing the refund.";
+        Alert.alert("Error", errorMessage);
       });
   };
 
@@ -104,21 +137,31 @@ const BookingsHistoryScreen = () => {
           Created At: {new Date(item.createdAt).toLocaleDateString()}
         </Text>
       </View>
-      {item.status === "incomplete" && (
+      <View style={styles.actionButtons}>
+        {item.status === "incomplete" && (
+          <TouchableOpacity
+            style={styles.postButton}
+            onPress={() => {
+              setSelectedReservationId(item.id);
+              setModalVisible(true);
+            }}
+          >
+            <Text style={styles.postButtonText}>Create Post</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
-          style={styles.postButton}
+          style={styles.refundButton}
           onPress={() => {
             setSelectedReservationId(item.id);
-            setModalVisible(true);
+            setRefundModalVisible(true);
           }}
         >
-          <Text style={styles.postButtonText}>Create Post</Text>
+          <Text style={styles.refundButtonText}>Refund</Text>
         </TouchableOpacity>
-      )}
+      </View>
     </View>
   );
 
-  // Function to dismiss keyboard
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
@@ -203,6 +246,40 @@ const BookingsHistoryScreen = () => {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={refundModalVisible}
+        onRequestClose={() => {
+          setRefundModalVisible(!refundModalVisible);
+        }}
+      >
+        <TouchableWithoutFeedback onPress={dismissKeyboard}>
+          <View style={styles.modalView}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Confirm Refund</Text>
+              <Text style={styles.confirmText}>
+                Are you sure you want to refund this reservation?
+              </Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.button, styles.buttonClose]}
+                  onPress={() => setRefundModalVisible(!refundModalVisible)}
+                >
+                  <Text style={styles.textStyle}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.buttonCreate]}
+                  onPress={handleRefund}
+                >
+                  <Text style={styles.textStyle}>Confirm</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -226,14 +303,14 @@ const styles = StyleSheet.create({
   bookingItem: {
     flexDirection: "row",
     backgroundColor: "#1e1e1e",
-    padding: 20,
+    padding: 15,
     marginVertical: 10,
     borderRadius: 10,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowRadius: 4,
+    elevation: 5,
     alignItems: "center",
   },
   bookingDetails: {
@@ -241,18 +318,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bookingText: {
-    fontSize: 18,
-    color: "#fff",
+    fontSize: 16,
+    color: "#ccc",
     marginBottom: 5,
+  },
+  actionButtons: {
+    flexDirection: "column", // Change from "row" to "column"
+    alignItems: "flex-start", // Optional: Adjust alignment to your preference
+    marginTop: 10, // Optional: Add margin to create space between buttons
   },
   postButton: {
     backgroundColor: "#05a759",
     padding: 10,
     borderRadius: 5,
+    marginBottom: 10,
+    marginRight: 10,
   },
   postButtonText: {
     color: "#fff",
     fontWeight: "bold",
+    fontSize: 14,
+  },
+  refundButton: {
+    backgroundColor: "#d9534f",
+    padding: 10,
+    borderRadius: 5,
+  },
+  refundButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
   },
   modalView: {
     flex: 1,
@@ -287,6 +382,12 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginBottom: 20,
     backgroundColor: "#2c2c2c",
+  },
+  confirmText: {
+    fontSize: 18,
+    color: "#fff",
+    marginBottom: 20,
+    textAlign: "center",
   },
   radioButtonLabel: {
     fontSize: 18,

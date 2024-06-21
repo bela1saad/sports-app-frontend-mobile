@@ -6,31 +6,27 @@ import {
   SafeAreaView,
   TouchableOpacity,
   FlatList,
-  TextInput,
 } from "react-native";
 import axiosInstance from "../utils/axios";
 import { useNavigation } from "@react-navigation/native";
-import Icon from "react-native-vector-icons/MaterialCommunityIcons"; // Using MaterialCommunityIcons for icons
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 
-const TournamentsScreen = () => {
+const MyTournamentsScreen = () => {
   const navigation = useNavigation();
   const [tournaments, setTournaments] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filteredTournaments, setFilteredTournaments] = useState([]);
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
-  }, []);
+  }, [navigation]);
 
   useEffect(() => {
-    fetchTournaments();
+    fetchMyTournaments();
   }, []);
 
-  const fetchTournaments = async () => {
+  const fetchMyTournaments = async () => {
     try {
-      const response = await axiosInstance.get("/tournament/all");
+      const response = await axiosInstance.get("/tournament/participated");
       setTournaments(response.data);
-      setFilteredTournaments(response.data); // Initialize filtered tournaments with all tournaments
     } catch (error) {
       console.error("Error fetching tournaments:", error);
     }
@@ -38,18 +34,6 @@ const TournamentsScreen = () => {
 
   const navigateToTournamentInfo = (tournamentId) => {
     navigation.navigate("TournamentInfo", { tournamentId });
-  };
-
-  const navigateToMyTournaments = () => {
-    navigation.navigate("MyTournaments");
-  };
-
-  const handleSearch = (text) => {
-    setSearchQuery(text);
-    const filtered = tournaments.filter((tournament) =>
-      tournament.name.toLowerCase().includes(text.toLowerCase())
-    );
-    setFilteredTournaments(filtered);
   };
 
   const renderTournamentCard = ({ item }) => (
@@ -87,30 +71,10 @@ const TournamentsScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.screenTitle}>Tournaments</Text>
-        <TouchableOpacity
-          onPress={navigateToMyTournaments}
-          style={styles.button}
-        >
-          <Icon name="account" size={24} color="#fff" />
-          <Text style={styles.buttonText}>My Tournaments</Text>
-        </TouchableOpacity>
+        <Text style={styles.screenTitle}>My Tournaments</Text>
       </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Icon name="magnify" size={24} color="#ccc" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search tournaments..."
-          placeholderTextColor="#ccc"
-          onChangeText={handleSearch}
-          value={searchQuery}
-        />
-      </View>
-
       <FlatList
-        data={filteredTournaments}
+        data={tournaments}
         renderItem={renderTournamentCard}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.flatListContent}
@@ -126,28 +90,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     marginBottom: 16,
-  },
-  button: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#05a759",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    marginLeft: 8,
   },
   screenTitle: {
     fontSize: 24,
     fontWeight: "bold",
     color: "#fff",
+    textAlign: "center",
   },
   flatListContent: {
     paddingBottom: 16,
@@ -178,22 +127,6 @@ const styles = StyleSheet.create({
     color: "#ccc",
     marginLeft: 8,
   },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1e1e1e",
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 16,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    color: "#ccc",
-    fontSize: 16,
-  },
 });
 
-export default TournamentsScreen;
+export default MyTournamentsScreen;

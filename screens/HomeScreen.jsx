@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import {
-  ScrollView,
   View,
   Text,
   TouchableOpacity,
@@ -9,6 +8,7 @@ import {
   Dimensions,
   StatusBar,
   RefreshControl,
+  FlatList,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import COLORS from "../constants/colors";
@@ -20,6 +20,7 @@ import SearchBar from "../components/SearchBar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../auth/AuthContext";
 import axiosInstance from "../utils/axios";
+import { useFocusEffect } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
@@ -32,25 +33,25 @@ const HomeScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const { currentPlayer } = useAuth(); // Get currentPlayer from AuthContext
 
-  useEffect(() => {
-    fetchPosts();
-  }, []);
-
-  useEffect(() => {
-    filterPosts();
-  }, [selectedFilter, selectedSport, posts]);
-
   const fetchPosts = async () => {
     try {
       const response = await axiosInstance.get(`/posts/recommended`);
-      console.log(response.data);
-      console.log(JSON.stringify(response.data, null, 2)); // Better logging
       setPosts(response.data);
       filterPosts(response.data); // Initial filtering
     } catch (error) {
       console.error("Error fetching posts:", error);
     }
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchPosts();
+    }, [])
+  );
+
+  useEffect(() => {
+    filterPosts();
+  }, [selectedFilter, selectedSport, posts]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -64,8 +65,11 @@ const HomeScreen = ({ navigation }) => {
     // Filter based on selected filter
     if (selectedFilter !== "All") {
       if (selectedFilter === "Team" || selectedFilter === "Player") {
+        // Modify filter condition to check if type starts with "need" and ends with selectedFilter
         filtered = filtered.filter(
-          (post) => post.type.toLowerCase() === selectedFilter.toLowerCase()
+          (post) =>
+            post.type.toLowerCase().startsWith("need") &&
+            post.type.toLowerCase().endsWith(selectedFilter.toLowerCase())
         );
       }
     }
@@ -74,26 +78,11 @@ const HomeScreen = ({ navigation }) => {
     if (selectedSport !== "All") {
       filtered = filtered.filter((post) => {
         // Ensure post.reservation and nested properties are not null
-        return (
-          post.reservation &&
-          post.reservation.duration &&
-          post.reservation.duration.field &&
-          post.reservation.duration.field.sport_id === selectedSport
-        );
+        return post.sport === selectedSport;
       });
     }
 
     setFilteredPosts(filtered);
-  };
-
-  const getSportId = (sportName) => {
-    const sportsMapping = {
-      Football: 11,
-      Basketball: 12,
-      Tennis: 13,
-      // Add other sports and their respective IDs as needed
-    };
-    return sportsMapping[sportName] || null;
   };
 
   useLayoutEffect(() => {
@@ -104,75 +93,78 @@ const HomeScreen = ({ navigation }) => {
     navigation.navigate("EditProfile");
   };
 
+  const renderHeader = () => (
+    <>
+      <View style={styles.profileContainer}>
+        <TouchableOpacity onPress={goToEditProfile} style={styles.profilePhoto}>
+          <Image
+            source={
+              currentPlayer && currentPlayer.pic
+                ? { uri: currentPlayer.pic }
+                : require("../assets/profile_photo.png")
+            }
+            style={styles.profileImage}
+          />
+        </TouchableOpacity>
+        <View style={styles.profileInfo}>
+          <Text style={styles.profileName}>
+            {currentPlayer ? currentPlayer.name : "Loading..."}
+          </Text>
+          <Text style={styles.profileLocation}>
+            {currentPlayer ? currentPlayer.location : ""}
+          </Text>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        onPress={() => navigation.navigate("Sidebar")}
+        style={styles.sidebarButton}
+      >
+        <Text>
+          <Icon name="bars" size={width * 0.08} color={COLORS.white} />
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => navigation.navigate("Notifications")}
+        style={styles.notificationIcon}
+      >
+        <NotificationsIcon count={notificationCount} size={width * 0.08} />
+      </TouchableOpacity>
+
+      <View style={styles.contentContainer}>
+        <SearchBar
+          placeholder="Search"
+          onChangeText={(text) => console.log(text)}
+        />
+
+        <Ads style={styles.adsContainer} />
+
+        <Filters
+          selectedFilter={selectedFilter}
+          setSelectedFilter={setSelectedFilter}
+          selectedSport={selectedSport}
+          setSelectedSport={setSelectedSport}
+        />
+      </View>
+    </>
+  );
+
+  const renderPost = ({ item }) => <Post key={item.id} post={item} />;
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.grey1000} />
-      <ScrollView
-        contentContainerStyle={styles.scrollViewContent}
+      <FlatList
+        data={filteredPosts}
+        renderItem={renderPost}
+        keyExtractor={(item) => item.id.toString()}
+        ListHeaderComponent={renderHeader}
+        contentContainerStyle={styles.flatListContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-      >
-        <View style={styles.profileContainer}>
-          <TouchableOpacity
-            onPress={goToEditProfile}
-            style={styles.profilePhoto}
-          >
-            <Image
-              source={
-                currentPlayer && currentPlayer.pic
-                  ? { uri: currentPlayer.pic }
-                  : require("../assets/profile_photo.png")
-              }
-              style={styles.profileImage}
-            />
-          </TouchableOpacity>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>
-              {currentPlayer ? currentPlayer.name : "Loading..."}
-            </Text>
-            <Text style={styles.profileLocation}>
-              {currentPlayer ? currentPlayer.location : ""}
-            </Text>
-          </View>
-        </View>
-
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Sidebar")}
-          style={styles.sidebarButton}
-        >
-          <Text>
-            <Icon name="bars" size={width * 0.08} color={COLORS.white} />
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Notifications")}
-          style={styles.notificationIcon}
-        >
-          <NotificationsIcon count={notificationCount} size={width * 0.08} />
-        </TouchableOpacity>
-
-        <View style={styles.contentContainer}>
-          <SearchBar
-            placeholder="Search"
-            onChangeText={(text) => console.log(text)}
-          />
-
-          <Ads style={styles.adsContainer} />
-
-          <Filters
-            selectedFilter={selectedFilter}
-            setSelectedFilter={setSelectedFilter}
-            selectedSport={selectedSport}
-            setSelectedSport={setSelectedSport}
-          />
-
-          {filteredPosts.map((post) => (
-            <Post key={post.id} post={post} />
-          ))}
-        </View>
-      </ScrollView>
+      />
     </SafeAreaView>
   );
 };
@@ -182,8 +174,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.grey1000,
   },
-  scrollViewContent: {
-    flexGrow: 1,
+  flatListContent: {
     padding: width * 0.05,
   },
   profileContainer: {

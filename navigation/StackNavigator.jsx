@@ -40,6 +40,8 @@ import FieldsScreen from "../screens/FieldsScreen";
 import ReservationScreen from "../screens/ReservationScreen";
 import TransactionScreen from "../screens/SidebarScreens/TransactionScreen";
 import ResetPasswordpScreen from "../screens/ResetPasswordpScreen";
+import TournamentInfoScreen from "../screens/TournamentInfoScreen";
+import MyTournamentsScreen from "../screens/MyTournaments";
 
 const Stack = createStackNavigator();
 
@@ -95,6 +97,12 @@ const StackNavigator = () => {
             name="ClubProfileScreen"
             component={ClubProfileScreen}
           />
+          <Stack.Screen
+            name="TournamentInfo"
+            component={TournamentInfoScreen}
+          />
+          <Stack.Screen name="MyTournaments" component={MyTournamentsScreen} />
+
           <Stack.Screen name="FieldsScreen" component={FieldsScreen} />
           <Stack.Screen name="Reservation" component={ReservationScreen} />
 

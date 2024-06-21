@@ -6,21 +6,34 @@ import {
   StyleSheet,
   Dimensions,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
+import axiosInstance from "../utils/axios";
+import { useNavigation } from "@react-navigation/native";
 
 const { width } = Dimensions.get("window");
 const ITEM_WIDTH = width * 0.9;
 
 const Ads = () => {
+  const [ads, setAds] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef(null);
   const [autoplayInterval, setAutoplayInterval] = useState(5000); // Auto-scroll interval
+  const navigation = useNavigation();
 
-  const ads = [
-    { imageUrl: "https://source.unsplash.com/random/600x400?sig=1" },
-    { imageUrl: "https://source.unsplash.com/random/600x400?sig=2" },
-    { imageUrl: "https://source.unsplash.com/random/600x400?sig=3" },
-  ];
+  useEffect(() => {
+    axiosInstance
+      .get("/ads/get")
+      .then((response) => {
+        setAds(response.data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching ads:", error);
+        setLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -30,19 +43,30 @@ const Ads = () => {
     return () => clearInterval(interval);
   }, [activeIndex]);
 
+  const handleAdPress = (type, id) => {
+    navigation.navigate(type === "field" ? "FieldProfile" : "ClubProfile", {
+      id,
+    });
+  };
+
   const renderAdItem = ({ item }) => (
-    <TouchableOpacity onPress={() => console.log("Ad clicked")}>
-      <Image source={{ uri: item.imageUrl }} style={styles.adImage} />
+    <TouchableOpacity onPress={() => handleAdPress(item.type, item.id)}>
+      <Image
+        source={{ uri: item.pic || "https://via.placeholder.com/600x400" }}
+        style={styles.adImage}
+      />
     </TouchableOpacity>
   );
 
   const scrollToIndex = (index) => {
-    const newIndex = index >= 0 ? index % ads.length : ads.length - 1;
-    setActiveIndex(newIndex);
-    flatListRef.current.scrollToIndex({
-      animated: true,
-      index: newIndex,
-    });
+    if (ads.length > 0) {
+      const newIndex = index >= 0 ? index % ads.length : ads.length - 1;
+      setActiveIndex(newIndex);
+      flatListRef.current?.scrollToIndex({
+        animated: true,
+        index: newIndex,
+      });
+    }
   };
 
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
@@ -62,6 +86,16 @@ const Ads = () => {
       />
     ));
   };
+
+  if (loading) {
+    return (
+      <ActivityIndicator
+        size="large"
+        color="#05a759"
+        style={styles.loadingIndicator}
+      />
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -111,6 +145,9 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 5,
     marginHorizontal: 5,
+  },
+  loadingIndicator: {
+    marginTop: 20,
   },
 });
 
