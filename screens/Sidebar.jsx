@@ -255,9 +255,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   profilePhoto: {
-    width: Dimensions.get("window").width * 0.5,
-    height: Dimensions.get("window").width * 0.5,
-    borderRadius: Dimensions.get("window").width * 0.25,
+    width: Dimensions.get("window").width * 0.99,
+    height: Dimensions.get("window").width * 0.33,
+    borderRadius: Dimensions.get("window").width * 0.05,
     marginBottom: 20,
   },
   userName: {
