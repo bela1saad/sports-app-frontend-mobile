@@ -21,7 +21,7 @@ const TournamentInfoScreen = () => {
   const { currentPlayer } = useAuth();
   const [tournament, setTournament] = useState(null);
   const [participatedTournaments, setParticipatedTournaments] = useState([]);
-  const [teamNames, setTeamNames] = useState({});
+  const [teamNames, setTeamNames] = useState([]);
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerShown: false });
@@ -30,6 +30,7 @@ const TournamentInfoScreen = () => {
   useEffect(() => {
     fetchTournamentInfo();
     fetchParticipatedTournaments(); // Fetch tournaments the player is participating in
+    fetchTeamNames(); // Fetch team names for the tournament
   }, []);
 
   // Use useFocusEffect to refresh data on screen focus
@@ -37,20 +38,14 @@ const TournamentInfoScreen = () => {
     React.useCallback(() => {
       fetchTournamentInfo();
       fetchParticipatedTournaments();
+      fetchTeamNames();
     }, [])
   );
-
-  useEffect(() => {
-    // Only fetch team names when tournament and participatedTournaments are fetched
-    if (tournament && participatedTournaments.length > 0) {
-      fetchTeamNames();
-    }
-  }, [tournament, participatedTournaments]);
 
   const fetchTournamentInfo = async () => {
     try {
       const response = await axiosInstance.get(
-        `/tournament/by-id/${tournamentId}`
+        `/tournament/belal-request/${tournamentId}`
       );
       setTournament(response.data);
     } catch (error) {
@@ -68,36 +63,13 @@ const TournamentInfoScreen = () => {
   };
 
   const fetchTeamNames = async () => {
-    const names = {};
     try {
-      if (tournament.winner_team_id) {
-        names[tournament.winner_team_id] = await fetchTeamInfo(
-          tournament.winner_team_id
-        );
-      }
-      for (const match of tournament.matches) {
-        if (!names[match.first_team_id]) {
-          names[match.first_team_id] = await fetchTeamInfo(match.first_team_id);
-        }
-        if (!names[match.second_team_id]) {
-          names[match.second_team_id] = await fetchTeamInfo(
-            match.second_team_id
-          );
-        }
-      }
-      setTeamNames(names);
+      const response = await axiosInstance.get(
+        `/tournament/belal-request/${tournamentId}`
+      );
+      setTeamNames(response.data.teams);
     } catch (error) {
       console.error("Error fetching team names:", error);
-    }
-  };
-
-  const fetchTeamInfo = async (teamId) => {
-    try {
-      const response = await axiosInstance.get(`/team/by-team/${teamId}`);
-      return response.data.name; // Assuming the response contains a 'name' field for the team
-    } catch (error) {
-      console.error("Error fetching team info:", error);
-      return "Team Name"; // Default name or handle error as per your app's logic
     }
   };
 
@@ -144,39 +116,33 @@ const TournamentInfoScreen = () => {
     }
   };
 
-  const renderMatchCard = ({ item }) => {
-    const firstTeamName = teamNames[item.first_team_id] || "Team Name";
-    const secondTeamName = teamNames[item.second_team_id] || "Team Name";
-    const winnerTeamName = teamNames[item.winner_team_id] || "Team Name";
-
-    return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>Round {item.round}</Text>
-          <Icon name="calendar" size={24} color="#05a759" />
-        </View>
-        <View style={styles.cardInfo}>
-          <Text style={styles.cardText}>
-            {firstTeamName} vs {secondTeamName}
-          </Text>
-        </View>
-        <View style={styles.cardInfo}>
-          <Icon name="calendar" size={18} color="#05a759" />
-          <Text style={styles.cardText}>{`Date: ${item.date || "TBD"}`}</Text>
-        </View>
-        <View style={styles.cardInfo}>
-          <Icon name="information" size={18} color="#05a759" />
-          <Text style={styles.cardText}>{`Status: ${item.status}`}</Text>
-        </View>
-        {item.status === "completed" && (
-          <View style={styles.cardInfo}>
-            <Icon name="trophy" size={18} color="#05a759" />
-            <Text style={styles.cardText}>{`Winner: ${winnerTeamName}`}</Text>
-          </View>
-        )}
+  const renderMatchCard = ({ item }) => (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>Round {item.round}</Text>
+        <Icon name="calendar" size={24} color="#05a759" />
       </View>
-    );
-  };
+      <View style={styles.cardInfo}>
+        <Text style={styles.cardText}>
+          {item.firstTeam} vs {item.secondTeam}
+        </Text>
+      </View>
+      <View style={styles.cardInfo}>
+        <Icon name="calendar" size={18} color="#05a759" />
+        <Text style={styles.cardText}>{`Date: ${item.date || "TBD"}`}</Text>
+      </View>
+      <View style={styles.cardInfo}>
+        <Icon name="information" size={18} color="#05a759" />
+        <Text style={styles.cardText}>{`Status: ${item.status}`}</Text>
+      </View>
+      {item.status === "completed" && (
+        <View style={styles.cardInfo}>
+          <Icon name="trophy" size={18} color="#05a759" />
+          <Text style={styles.cardText}>{`Winner: ${item.winnerTeam}`}</Text>
+        </View>
+      )}
+    </View>
+  );
 
   if (!tournament) {
     return (
@@ -260,9 +226,9 @@ const TournamentInfoScreen = () => {
       <View style={{ flex: 1 }}>
         {tournament.status === "completed" && (
           <View style={styles.winnerContainer}>
-            <Text style={styles.winnerText}>{`Winner: ${
-              teamNames[tournament.winner_team_id] || "Team Name"
-            }`}</Text>
+            <Text
+              style={styles.winnerText}
+            >{`Winner: ${tournament.winner_team_name}`}</Text>
           </View>
         )}
         <FlatList
@@ -272,11 +238,9 @@ const TournamentInfoScreen = () => {
               <Text style={styles.roundText}>Round {item}</Text>
               {groupedMatches[item].map((match) => (
                 <View key={match.id} style={styles.card}>
-                  <Text style={styles.matchTitle}>{`${
-                    teamNames[match.first_team_id] || "Team Name"
-                  } vs ${
-                    teamNames[match.second_team_id] || "Team Name"
-                  }`}</Text>
+                  <Text
+                    style={styles.matchTitle}
+                  >{`${match.firstTeam} vs ${match.secondTeam}`}</Text>
                   <Text style={styles.matchDate}>{`Date: ${
                     match.date || "TBD"
                   }`}</Text>
@@ -284,9 +248,9 @@ const TournamentInfoScreen = () => {
                     style={styles.matchStatus}
                   >{`Status: ${match.status}`}</Text>
                   {match.status === "completed" && (
-                    <Text style={styles.matchWinner}>{`Winner: ${
-                      teamNames[match.winner_team_id] || "Team Name"
-                    }`}</Text>
+                    <Text
+                      style={styles.matchWinner}
+                    >{`Winner: ${match.winnerTeam}`}</Text>
                   )}
                 </View>
               ))}
@@ -303,8 +267,8 @@ const TournamentInfoScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#101010",
-    paddingHorizontal: 16,
+    backgroundColor: "#1e1e1e",
+    padding: 16,
   },
   loadingText: {
     color: "#fff",
@@ -313,7 +277,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   tournamentInfo: {
-    backgroundColor: "#1e1e1e",
+    backgroundColor: "#2e2e2e",
     borderRadius: 8,
     padding: 16,
     marginBottom: 16,
@@ -322,25 +286,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
   },
   title: {
+    color: "#fff",
     fontSize: 24,
     fontWeight: "bold",
-    color: "#fff",
   },
   statusContainer: {
-    backgroundColor: "#05a759",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    backgroundColor: "#2e2e2e",
+    borderRadius: 8,
+    padding: 4,
   },
   statusText: {
-    color: "#fff",
+    color: "#05a759",
     fontSize: 16,
   },
   details: {
-    marginBottom: 12,
+    marginTop: 16,
   },
   detailRow: {
     flexDirection: "row",
@@ -348,60 +310,44 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   detailText: {
-    color: "#ccc",
+    color: "#fff",
     fontSize: 16,
     marginLeft: 8,
   },
   buttonContainer: {
-    alignItems: "center",
-    marginBottom: 16,
+    marginTop: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   button: {
-    backgroundColor: "#05a759",
-    paddingVertical: 12,
-    paddingHorizontal: 24,
+    flex: 1,
     borderRadius: 8,
+    padding: 12,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  joinButton: {
+    backgroundColor: "#05a759",
+    marginRight: 8,
+  },
+  leaveButton: {
+    backgroundColor: "#d9534f",
   },
   buttonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
   },
-  joinButton: {
-    backgroundColor: "#05a759",
-  },
-  leaveButton: {
-    backgroundColor: "#FF6347",
-  },
-  flatList: {
-    paddingBottom: 16,
-  },
-  card: {
-    backgroundColor: "#1e1e1e",
+  winnerContainer: {
+    backgroundColor: "#2e2e2e",
     borderRadius: 8,
-    padding: 16,
+    padding: 8,
     marginBottom: 16,
   },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  cardTitle: {
+  winnerText: {
+    color: "#05a759",
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  cardInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  cardText: {
-    color: "#ccc",
-    marginLeft: 8,
+    textAlign: "center",
   },
   roundContainer: {
     marginBottom: 16,
@@ -412,33 +358,48 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 8,
   },
-  matchTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  matchDate: {
-    color: "#ccc",
-    marginBottom: 4,
-  },
-  matchStatus: {
-    color: "#ccc",
-    marginBottom: 4,
-  },
-  matchWinner: {
-    color: "#05a759",
-  },
-  winnerContainer: {
+  card: {
     backgroundColor: "#1e1e1e",
     borderRadius: 8,
     padding: 16,
-    marginBottom: 16,
-    alignItems: "center",
+    marginBottom: 8,
   },
-  winnerText: {
-    color: "#05a759",
-    fontSize: 20,
+  matchTitle: {
+    color: "#fff",
+    fontSize: 18,
     fontWeight: "bold",
+  },
+  matchDate: {
+    color: "#ccc",
+    fontSize: 16,
+    marginTop: 4,
+  },
+  matchStatus: {
+    color: "#ccc",
+    fontSize: 16,
+    marginTop: 4,
+  },
+  matchWinner: {
+    color: "#05a759",
+    fontSize: 16,
+    marginTop: 4,
+  },
+  flatList: {
+    paddingBottom: 16,
+  },
+  teamContainer: {
+    marginTop: 16,
+  },
+  teamTitle: {
+    color: "#05a759",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  teamName: {
+    color: "#fff",
+    fontSize: 16,
+    marginBottom: 4,
   },
 });
 

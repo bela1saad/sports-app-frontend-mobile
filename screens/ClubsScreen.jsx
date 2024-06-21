@@ -168,7 +168,6 @@ const ClubsScreen = () => {
         keyExtractor={(item) => item.id.toString()}
         refreshing={refreshing}
         onRefresh={handleRefresh}
-        numColumns={2}
         key={(
           search + (filteredClubs.length ? filteredClubs[0].id : "")
         ).toString()}

@@ -81,7 +81,7 @@ const Post = ({ post }) => {
                 : require("../assets/profile_photo.png")
             }
             name={post.name}
-            postedAt={new Date(post.createdAt)}
+            postedAt={new Date(post.postedAt)}
           />
           <Icon
             name={getIconForType(post.type)}
