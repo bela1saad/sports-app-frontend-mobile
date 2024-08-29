@@ -24,3 +24,4 @@ clubs.
 ![photo_26_2024-06-30_18-12-36](https://github.com/user-attachments/assets/daa8fa72-17a1-4d79-8a49-e181a5ce145c)
 ![photo_29_2024-06-30_18-12-36](https://github.com/user-attachments/assets/f9c62606-afa8-40a2-9291-6f85e168a3ff)
 ![photo_2024-06-30_18-19-32](https://github.com/user-attachments/assets/25ca1d78-a1d7-4f36-8d6b-f8f46db5279b)
+![photo_21_2024-06-30_18-12-36](https://github.com/user-attachments/assets/708ca175-f524-433d-b786-a5470c480175)
