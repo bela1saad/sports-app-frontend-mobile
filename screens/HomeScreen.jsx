@@ -9,6 +9,7 @@ import {
   StatusBar,
   RefreshControl,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import COLORS from "../constants/colors";
@@ -23,6 +24,7 @@ import axiosInstance from "../utils/axios";
 import { useFocusEffect } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
+const PAGE_SIZE = 10; // Number of posts to load per page
 
 const HomeScreen = ({ navigation }) => {
   const notificationCount = 100;
@@ -30,16 +32,24 @@ const HomeScreen = ({ navigation }) => {
   const [selectedSport, setSelectedSport] = useState("All");
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
+  const [displayedPosts, setDisplayedPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [fetchingMore, setFetchingMore] = useState(false);
+  const [lastPostIndex, setLastPostIndex] = useState(0);
   const { currentPlayer } = useAuth(); // Get currentPlayer from AuthContext
 
   const fetchPosts = async () => {
     try {
+      setLoading(true);
       const response = await axiosInstance.get(`/posts/recommended`);
+
       setPosts(response.data);
       filterPosts(response.data); // Initial filtering
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching posts:", error);
+      setLoading(false);
     }
   };
 
@@ -53,6 +63,11 @@ const HomeScreen = ({ navigation }) => {
     filterPosts();
   }, [selectedFilter, selectedSport, posts]);
 
+  useEffect(() => {
+    // Load the initial set of posts to display
+    loadMorePosts();
+  }, [filteredPosts]);
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchPosts();
@@ -65,7 +80,6 @@ const HomeScreen = ({ navigation }) => {
     // Filter based on selected filter
     if (selectedFilter !== "All") {
       if (selectedFilter === "Team" || selectedFilter === "Player") {
-        // Modify filter condition to check if type starts with "need" and ends with selectedFilter
         filtered = filtered.filter(
           (post) =>
             post.type.toLowerCase().startsWith("need") &&
@@ -76,13 +90,28 @@ const HomeScreen = ({ navigation }) => {
 
     // Filter based on selected sport
     if (selectedSport !== "All") {
-      filtered = filtered.filter((post) => {
-        // Ensure post.reservation and nested properties are not null
-        return post.sport === selectedSport;
-      });
+      filtered = filtered.filter((post) => post.sport === selectedSport);
     }
 
     setFilteredPosts(filtered);
+    setLastPostIndex(0); // Reset the index when filters change
+    setDisplayedPosts([]); // Reset displayed posts when filters change
+  };
+
+  const loadMorePosts = () => {
+    if (fetchingMore || lastPostIndex >= filteredPosts.length) return;
+
+    setFetchingMore(true);
+    const nextPosts = filteredPosts.slice(
+      lastPostIndex,
+      lastPostIndex + PAGE_SIZE
+    );
+    setDisplayedPosts((prevDisplayedPosts) => [
+      ...prevDisplayedPosts,
+      ...nextPosts,
+    ]);
+    setLastPostIndex(lastPostIndex + PAGE_SIZE);
+    setFetchingMore(false);
   };
 
   useLayoutEffect(() => {
@@ -152,11 +181,22 @@ const HomeScreen = ({ navigation }) => {
 
   const renderPost = ({ item }) => <Post key={item.id} post={item} />;
 
+  const renderFooter = () => {
+    if (!fetchingMore) return null;
+    return (
+      <ActivityIndicator
+        size="large"
+        color={COLORS.Green}
+        style={{ margin: 20 }}
+      />
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.grey1000} />
       <FlatList
-        data={filteredPosts}
+        data={displayedPosts}
         renderItem={renderPost}
         keyExtractor={(item) => item.id.toString()}
         ListHeaderComponent={renderHeader}
@@ -164,6 +204,9 @@ const HomeScreen = ({ navigation }) => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        onEndReached={loadMorePosts}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={renderFooter}
       />
     </SafeAreaView>
   );

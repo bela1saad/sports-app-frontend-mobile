@@ -22,7 +22,7 @@ import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 
 // Configuration (replace with your actual values)
-const stripePublishableKey = process.env.STRIPE_PUBLISHABLE_KEY; // Replace with your actual Stripe publishable key
+const stripePublishableKey = process.env.stripePublishableKey; // Replace with your actual Stripe publishable key
 
 const WalletScreen = () => {
   const [amount, setAmount] = useState("");

@@ -129,18 +129,9 @@ const Welcome = () => {
                 style={{
                   fontSize: 16,
                   color: COLORS.white,
-                  marginVertical: 4,
                 }}
               >
-                Connect with each other with sport
-              </Text>
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: COLORS.white,
-                }}
-              >
-                Enjoy Safe and private sports
+                Sport has the power to change the world...
               </Text>
             </View>
 

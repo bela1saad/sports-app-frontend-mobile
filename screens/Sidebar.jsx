@@ -125,7 +125,7 @@ const Sidebar = () => {
                 style={styles.icon}
               />
               {"  "}
-              Friends
+              Followers
             </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => navigateToSection("Wallet")}>

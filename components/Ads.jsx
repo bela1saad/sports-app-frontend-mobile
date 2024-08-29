@@ -43,11 +43,7 @@ const Ads = () => {
     return () => clearInterval(interval);
   }, [activeIndex]);
 
-  const handleAdPress = (type, id) => {
-    navigation.navigate(type === "field" ? "FieldProfile" : "ClubProfile", {
-      id,
-    });
-  };
+  const handleAdPress = (type, id) => {};
 
   const renderAdItem = ({ item }) => (
     <TouchableOpacity onPress={() => handleAdPress(item.type, item.id)}>
